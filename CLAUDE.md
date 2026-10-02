@@ -1,8 +1,8 @@
-# pinTodo (고정 투두)
+# PickTodo (저장소·패키지명은 pinTodo / com.ganglike.pintodo)
 
 완료할 때까지 알림창에 고정되는 개인용 안드로이드 투두 앱. Kotlin + Jetpack Compose(Material 3), 외부 서버 없음.
 
-- **현재 버전**: v0.3.0 (스토어 출시 전이라 0.x, 출시 시 1.0.0) | GitHub: https://github.com/ganglike248/pinTodo (main 브랜치)
+- **현재 버전**: v0.4.0 (스토어 출시 전이라 0.x, 출시 시 1.0.0) | GitHub: https://github.com/ganglike248/pinTodo (main 브랜치)
 - 사용 기기: 갤럭시 S26 울트라 (One UI / Android 16)
 
 ## 버전 관리 규칙 (필수)
@@ -10,6 +10,8 @@
 - `version.txt`
 - `app/build.gradle.kts`의 `versionName`(= version.txt와 동일), `versionCode`(+1, 절대 낮추면 안 됨 — 폰에 덮어쓰기 설치가 막힘)
 - 이 파일의 "현재 버전"
+- `ui/Changelog.kt`의 `RELEASES` 맨 위에 새 버전 추가 — **사용자가 체감하는 변화만**(새 기능/개선/변경(위치·동작이 바뀐 것)/수정), 내부 리팩터링은 제외. 앱의 설정 > 버전에서 보임
+- README의 버전 표
 
 커밋 메시지 형식: `vX.Y.Z - type: 요약` (type: feat / fix / refactor / docs / release), 본문은 `-` 목록으로 변경 내용 정리.
 커밋할 때는 항상 모든 파일 포함(`git add .`).
@@ -22,6 +24,7 @@ adb install -r app/build/outputs/apk/release/app-release.apk
 - release도 디버그 키(`~/.android/debug.keystore`)로 서명 — 다른 PC에서 빌드하면 서명이 달라 기존 설치본 위에 덮어쓰기 불가(삭제 후 재설치 필요, 데이터 사라짐)
 
 ## 핵심 설계 (수정 시 주의)
+- 앱 표시 이름은 **PickTodo**(`app_name`). 패키지명 `com.ganglike.pintodo`는 바꾸면 다른 앱으로 인식돼 기존 설치·데이터가 이어지지 않으므로 변경 금지
 - **Android 14+는 ongoing 알림도 스와이프로 지워짐** → `deleteIntent`로 감지해 `ActionReceiver`에서 즉시 재게시. 그룹째 지우면 알림마다 호출되므로 전체 Sync가 아니라 해당 알림만 재게시
 - **소리·진동 1회**: 처음 게시는 알림 방식별 HIGH 채널, 재게시는 `quiet` 채널. `Todo.alertedKey`(이미 울린 회차 키)와 `alertKey(now)`(회차 시작 또는 미루기 종료 시각)를 비교해 결정. 알림 채널 설정은 생성 후 변경 불가 → 바꾸려면 새 채널 ID 사용
 - **모든 상태 반영은 `Sync.run()` 하나로**: 할 일 표시/숨김 + 다음 상태 변경 시각(`Todo.nextChange`)에 정확한 알람 예약

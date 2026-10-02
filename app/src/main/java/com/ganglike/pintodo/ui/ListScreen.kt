@@ -95,7 +95,7 @@ fun TodoScreen(
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         item(key = "header") {
-            ScreenHeader("고정 투두", if (active.isEmpty()) "할 일이 없어요" else "알림 중 ${showing}개 · 예정 ${upcoming.size}개")
+            ScreenHeader("PickTodo", if (active.isEmpty()) "할 일이 없어요" else "알림 중 ${showing}개 · 예정 ${upcoming.size}개")
         }
         item(key = "banners") { Banners() }
         if (active.isEmpty()) item(key = "empty") { EmptyState() }

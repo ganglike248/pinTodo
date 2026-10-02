@@ -4,9 +4,7 @@ import android.app.StatusBarManager
 import android.appwidget.AppWidgetManager
 import android.content.ComponentName
 import android.content.Context
-import android.content.Intent
 import android.graphics.drawable.Icon
-import android.net.Uri
 import android.os.Build
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
@@ -20,7 +18,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.BatteryChargingFull
-import androidx.compose.material.icons.rounded.Code
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.Notifications
 import androidx.compose.material.icons.rounded.Palette
@@ -60,6 +57,7 @@ fun SettingsScreen(contentPadding: PaddingValues) {
     val ctx = LocalContext.current
     val s by SettingsStore.flow(ctx).collectAsStateWithLifecycle()
     var sheet by remember { mutableStateOf<SettingSheet?>(null) }
+    var showChangelog by remember { mutableStateOf(false) }
     var batteryOk by remember { mutableStateOf(ignoringBattery(ctx)) }
     LifecycleResumeEffect(Unit) {
         batteryOk = ignoringBattery(ctx)
@@ -197,13 +195,11 @@ fun SettingsScreen(contentPadding: PaddingValues) {
 
         item {
             Section("정보") {
-                SettingRow(title = "버전", value = appVersion(ctx), icon = Icons.Rounded.Info)
-                Divider()
                 SettingRow(
-                    title = "GitHub",
-                    value = "ganglike248/pinTodo",
-                    icon = Icons.Rounded.Code,
-                    onClick = { ctx.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/ganglike248/pinTodo"))) },
+                    title = "버전",
+                    value = "${appVersion(ctx)} · 업데이트 기록 보기",
+                    icon = Icons.Rounded.Info,
+                    onClick = { showChangelog = true },
                 )
             }
         }
@@ -228,6 +224,8 @@ fun SettingsScreen(contentPadding: PaddingValues) {
         }
         null -> {}
     }
+
+    if (showChangelog) ChangelogDialog(onClose = { showChangelog = false })
 }
 
 /** 알림 방식 4칸 + 현재 휴대폰 모드에서 실제 동작 안내 */
@@ -276,6 +274,6 @@ private fun addWidget(ctx: Context) {
     if (awm.isRequestPinAppWidgetSupported) {
         awm.requestPinAppWidget(ComponentName(ctx, TodoWidgetReceiver::class.java), null, null)
     } else {
-        Toast.makeText(ctx, "홈 화면을 길게 누르고 위젯 > 고정 투두를 추가하세요", Toast.LENGTH_LONG).show()
+        Toast.makeText(ctx, "홈 화면을 길게 누르고 위젯 > PickTodo를 추가하세요", Toast.LENGTH_LONG).show()
     }
 }

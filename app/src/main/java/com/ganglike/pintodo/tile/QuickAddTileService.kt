@@ -22,7 +22,7 @@ class QuickAddTileService : TileService() {
         tile.state = Tile.STATE_INACTIVE
         tile.label = "할 일 추가"
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            tile.subtitle = if (showing > 0) "알림 중 ${showing}개" else "고정 투두"
+            tile.subtitle = if (showing > 0) "알림 중 ${showing}개" else "PickTodo"
         }
         tile.updateTile()
     }
