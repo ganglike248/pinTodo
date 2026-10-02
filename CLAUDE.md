@@ -2,7 +2,7 @@
 
 완료할 때까지 알림창에 고정되는 개인용 안드로이드 투두 앱. Kotlin + Jetpack Compose(Material 3), 외부 서버 없음.
 
-- **현재 버전**: v0.1.0 (스토어 출시 전이라 0.x, 출시 시 1.0.0) | GitHub: https://github.com/ganglike248/pinTodo (main 브랜치)
+- **현재 버전**: v0.2.0 (스토어 출시 전이라 0.x, 출시 시 1.0.0) | GitHub: https://github.com/ganglike248/pinTodo (main 브랜치)
 - 사용 기기: 갤럭시 S26 울트라 (One UI / Android 16)
 
 ## 버전 관리 규칙 (필수)
@@ -28,3 +28,8 @@ adb install -r app/build/outputs/apk/release/app-release.apk
 - 목록 카드의 스와이프 상태는 `rememberSwipeToDismissBoxState`(saveable) 대신 `remember`로 생성 — saveable이면 실행 취소로 카드가 돌아올 때 '밀린 상태'로 복원되어 완료가 재실행되는 버그 있었음
 - 시스템 자동 그룹 요약 알림(tag 있음)은 `Notifier.activeIds`에서 제외
 - v1 데이터(`{id, text}`)는 `TodoStore.fromJson`에서 호환 처리
+- 디자인 토큰은 `ui/Theme.kt`(TDS 기반). 페이지 배경=`background`, 카드=`surface`, 칩·입력 채움=`surfaceVariant` 규칙 유지. Material You 사용 시 `asAppScheme()`으로 같은 규칙에 맞춤
+- 위젯·타일 갱신은 `Sync.run()` 끝에서 함께 처리 — 할 일을 바꾸는 경로는 반드시 `Sync.run()`을 거칠 것
+- 알림 버튼은 최대 3개: [완료][설정의 quickSnooze][미루기…(SnoozeActivity)]
+- 빠른 추가/미루기 시트는 투명 액티비티 위의 ModalBottomSheet. 시트 안 입력창 포커스는 시트 창이 붙은 뒤(delay) 요청해야 키보드가 올라옴
+- 휠 피커(`WheelPicker`)는 같은 값을 여러 번 반복한 LazyColumn + 가운데 스냅. 휴대폰 모드별 실제 울림(진동 모드에서 소리 채널 → 진동)은 에뮬레이터 `notification_alert` 로그로 검증함

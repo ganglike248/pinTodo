@@ -22,9 +22,24 @@ object Format {
             today -> "오늘"
             today.plusDays(1) -> "내일"
             today.minusDays(1) -> "어제"
-            else -> "${dt.monthValue}/${dt.dayOfMonth}(${DAY_NAMES[dt.dayOfWeek.value - 1]})"
+            else -> date(dt.toLocalDate())
         }
         return "$day $hm"
+    }
+
+    /** 10/3(토) */
+    fun date(d: LocalDate) = "${d.monthValue}/${d.dayOfMonth}(${DAY_NAMES[d.dayOfWeek.value - 1]})"
+
+    /** 기록 화면의 날짜 묶음 제목 */
+    fun dayLabel(ms: Long): String {
+        val zone = ZoneId.systemDefault()
+        val d = Instant.ofEpochMilli(ms).atZone(zone).toLocalDate()
+        val today = LocalDate.now(zone)
+        return when (d) {
+            today -> "오늘"
+            today.minusDays(1) -> "어제"
+            else -> date(d)
+        }
     }
 
     fun days(days: Set<Int>): String = when (days) {

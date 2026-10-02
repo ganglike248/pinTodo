@@ -1,6 +1,7 @@
 package com.ganglike.pintodo.notify
 
 import android.content.Context
+import com.ganglike.pintodo.data.SnoozeOption
 import com.ganglike.pintodo.data.Todo
 import com.ganglike.pintodo.data.TodoStore
 
@@ -11,6 +12,13 @@ object Actions {
         if (todo.isRepeat) todo.copy(hiddenKey = todo.windowAt(now)?.start, snoozeUntil = null)
         else todo.copy(doneAt = now, snoozeUntil = null)
 
+    /** 미루기. 선택지가 이미 지난 시각(예: 저녁 6시 이후의 '오늘 저녁')이면 무시 */
+    fun snooze(context: Context, id: Int, option: SnoozeOption) {
+        val until = option.until(System.currentTimeMillis()) ?: return
+        TodoStore.modify(context, id) { it.copy(snoozeUntil = until) }
+        Sync.run(context)
+    }
+
     fun save(context: Context, todo: Todo) {
         TodoStore.upsert(context, todo)
         Sync.run(context)
@@ -20,5 +28,6 @@ object Actions {
         TodoStore.remove(context, id)
         Notifier.cancel(context, id)
         Sync.cancelAlarm(context, id)
+        Sync.run(context)
     }
 }

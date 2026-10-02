@@ -3,6 +3,7 @@ package com.ganglike.pintodo.notify
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import com.ganglike.pintodo.data.SettingsStore
 import com.ganglike.pintodo.data.Status
 import com.ganglike.pintodo.data.TodoStore
 
@@ -13,7 +14,6 @@ class ActionReceiver : BroadcastReceiver() {
         const val ACTION_SNOOZE = "com.ganglike.pintodo.SNOOZE"
         const val ACTION_DISMISSED = "com.ganglike.pintodo.DISMISSED"
         const val EXTRA_ID = "id"
-        const val SNOOZE_MS = 60 * 60 * 1000L
     }
 
     override fun onReceive(context: Context, intent: Intent) {
@@ -23,7 +23,7 @@ class ActionReceiver : BroadcastReceiver() {
 
         when (intent.action) {
             ACTION_DONE -> TodoStore.modify(context, id) { Actions.complete(it, now) }
-            ACTION_SNOOZE -> TodoStore.modify(context, id) { it.copy(snoozeUntil = now + SNOOZE_MS) }
+            ACTION_SNOOZE -> Actions.snooze(context, id, SettingsStore.get(context).quickSnooze)
             ACTION_DISMISSED -> {
                 if (todo.pinned) {
                     // 고정: 이 알림만 조용히 다시 게시 (그룹째 지우면 알림마다 호출되므로 전체 Sync는 생략)

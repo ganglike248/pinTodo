@@ -6,6 +6,8 @@ import android.content.Context
 import android.content.Intent
 import com.ganglike.pintodo.data.Status
 import com.ganglike.pintodo.data.TodoStore
+import com.ganglike.pintodo.tile.QuickAddTileService
+import com.ganglike.pintodo.widget.TodoWidget
 
 /**
  * 저장된 할 일과 실제 알림/알람 상태를 맞춘다.
@@ -43,6 +45,10 @@ object Sync {
                 list.map { t -> alerted[t.id]?.let { t.copy(alertedKey = it) } ?: t }
             }
         }
+
+        // 홈 화면 위젯과 빠른 설정 타일도 최신 상태로
+        TodoWidget.refresh(context)
+        QuickAddTileService.refresh(context)
     }
 
     fun cancelAlarm(context: Context, id: Int) = scheduleAlarm(context, id, null)

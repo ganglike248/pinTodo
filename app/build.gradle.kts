@@ -12,8 +12,8 @@ android {
         applicationId = "com.ganglike.pintodo"
         minSdk = 26
         targetSdk = 36
-        versionCode = 3
-        versionName = "0.1.0"
+        versionCode = 4
+        versionName = "0.2.0"
     }
 
     buildTypes {
@@ -49,4 +49,5 @@ dependencies {
     implementation("androidx.compose.material:material-icons-extended")
     implementation("androidx.activity:activity-compose:1.11.0")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.9.4")
+    implementation("androidx.glance:glance-appwidget:1.1.1")
 }

@@ -10,8 +10,10 @@ import android.media.AudioAttributes
 import android.media.RingtoneManager
 import com.ganglike.pintodo.R
 import com.ganglike.pintodo.data.AlertMode
+import com.ganglike.pintodo.data.SettingsStore
 import com.ganglike.pintodo.data.Todo
 import com.ganglike.pintodo.ui.MainActivity
+import com.ganglike.pintodo.ui.SnoozeActivity
 import com.ganglike.pintodo.ui.Format
 
 /**
@@ -69,6 +71,7 @@ object Notifier {
             AlertMode.VIBRATE -> CH_VIBRATE
             AlertMode.BOTH -> CH_BOTH
         }
+        val quick = SettingsStore.get(context).quickSnooze
         val schedule = Format.notificationSchedule(todo, now)
         val body = todo.memo.ifBlank { schedule }
 
@@ -85,10 +88,12 @@ object Notifier {
             .setCategory(Notification.CATEGORY_REMINDER)
             .setContentIntent(openApp(context, todo.id))
             .setDeleteIntent(action(context, ActionReceiver.ACTION_DISMISSED, todo.id))
+            // 알림 버튼은 최대 3개: 완료 / 자주 쓰는 미루기 / 미루기 선택
             .addAction(Notification.Action.Builder(null, if (todo.isRepeat) "오늘 완료" else "완료",
                 action(context, ActionReceiver.ACTION_DONE, todo.id)).build())
-            .addAction(Notification.Action.Builder(null, "1시간 뒤에",
+            .addAction(Notification.Action.Builder(null, quick.buttonLabel,
                 action(context, ActionReceiver.ACTION_SNOOZE, todo.id)).build())
+            .addAction(Notification.Action.Builder(null, "미루기…", snoozeChooser(context, todo.id)).build())
         if (todo.memo.isNotBlank() && schedule.isNotEmpty()) builder.setSubText(schedule)
 
         manager(context).notify(todo.id, builder.build())
@@ -107,6 +112,14 @@ object Notifier {
         Intent(context, MainActivity::class.java)
             .putExtra(MainActivity.EXTRA_TODO_ID, id)
             .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP),
+        PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+    )
+
+    private fun snoozeChooser(context: Context, id: Int) = PendingIntent.getActivity(
+        context, id,
+        Intent(context, SnoozeActivity::class.java)
+            .putExtra(ActionReceiver.EXTRA_ID, id)
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_MULTIPLE_TASK),
         PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
     )
 

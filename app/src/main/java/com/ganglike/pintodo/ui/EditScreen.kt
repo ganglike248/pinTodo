@@ -2,6 +2,7 @@
 
 package com.ganglike.pintodo.ui
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -15,37 +16,29 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Alarm
 import androidx.compose.material.icons.rounded.Close
-import androidx.compose.material.icons.rounded.Delete
+import androidx.compose.material.icons.rounded.DeleteOutline
 import androidx.compose.material.icons.rounded.Flag
 import androidx.compose.material.icons.rounded.PushPin
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.AssistChip
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -55,13 +48,12 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
-import com.ganglike.pintodo.data.AlertMode
 import com.ganglike.pintodo.data.Todo
 import java.time.LocalDate
 import java.time.ZoneId
@@ -124,114 +116,105 @@ fun EditScreen(
     }
 
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             TopAppBar(
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background),
                 navigationIcon = { IconButton(onClick = onClose) { Icon(Icons.Rounded.Close, "닫기") } },
-                title = { Text(if (isNew) "새 할 일" else "할 일 수정") },
+                title = { Text(if (isNew) "새 할 일" else "할 일 수정", style = MaterialTheme.typography.titleMedium) },
                 actions = {
-                    TextButton(onClick = { onSave(build()) }, enabled = canSave) {
-                        Text("저장", fontWeight = FontWeight.Bold)
+                    if (!isNew) {
+                        IconButton(onClick = { confirmDelete = true }) {
+                            Icon(Icons.Rounded.DeleteOutline, "삭제", tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
                     }
                 },
             )
+        },
+        bottomBar = {
+            Column(
+                Modifier
+                    .background(MaterialTheme.colorScheme.background)
+                    .navigationBarsPadding()
+                    .imePadding()
+                    .padding(horizontal = Dimens.ScreenPadding, vertical = 12.dp),
+            ) {
+                if (error != null) {
+                    Text(
+                        error,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.padding(start = 4.dp, bottom = 8.dp),
+                    )
+                }
+                PrimaryButton(if (isNew) "추가하기" else "저장하기", { onSave(build()) }, enabled = canSave)
+            }
         },
     ) { padding ->
         Column(
             Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .imePadding()
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(24.dp),
+                .padding(horizontal = 16.dp, vertical = 4.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            // 제목/내용
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            // 제목 / 메모
+            GroupCard {
                 val focus = remember { FocusRequester() }
-                OutlinedTextField(
-                    value = title,
-                    onValueChange = { title = it },
-                    label = { Text("제목") },
-                    singleLine = true,
-                    shape = RoundedCornerShape(16.dp),
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next, capitalization = KeyboardCapitalization.Sentences),
-                    modifier = Modifier.fillMaxWidth().focusRequester(focus),
-                )
-                OutlinedTextField(
-                    value = memo,
-                    onValueChange = { memo = it },
-                    label = { Text("내용 (선택)") },
-                    minLines = 2,
-                    shape = RoundedCornerShape(16.dp),
-                    modifier = Modifier.fillMaxWidth(),
-                )
+                Column(Modifier.padding(horizontal = 16.dp, vertical = 10.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    AppTextField(title, { title = it }, "무엇을 해야 하나요?", Modifier.focusRequester(focus), imeAction = ImeAction.Next)
+                    AppTextField(memo, { memo = it }, "메모 (선택)", singleLine = false, minLines = 2)
+                }
                 if (isNew) LaunchedEffect(Unit) { focus.requestFocus() }
             }
 
-            SectionCard("알림") {
+            Section("알림") {
                 SettingRow(
-                    icon = Icons.Rounded.PushPin,
                     title = "알림창에 고정",
                     value = if (pinned) "밀어서 지워도 다시 나타나요" else "밀어서 지우면 이번엔 숨겨요",
+                    icon = Icons.Rounded.PushPin,
                     onClick = { pinned = !pinned },
                     trailing = { Switch(checked = pinned, onCheckedChange = { pinned = it }) },
                 )
                 HorizontalDivider(Modifier.padding(horizontal = 20.dp), color = MaterialTheme.colorScheme.outlineVariant)
-                Column(Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
-                    Text("알림 방식", style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(start = 4.dp, bottom = 10.dp))
-                    SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
-                        AlertMode.entries.forEachIndexed { i, mode ->
-                            SegmentedButton(
-                                selected = alertMode == mode,
-                                onClick = { alertMode = mode },
-                                shape = SegmentedButtonDefaults.itemShape(i, AlertMode.entries.size),
-                                icon = { Icon(mode.icon(), null, Modifier.padding(0.dp)) },
-                                label = { Text(mode.label.replace("소리+진동", "모두"), maxLines = 1) },
-                            )
-                        }
-                    }
-                    Text(
-                        if (alertMode == AlertMode.SILENT) "소리·진동 없이 알림창에만 표시돼요"
-                        else "처음 뜰 때 한 번만 울리고, 이후엔 조용히 표시돼요",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(start = 4.dp, top = 8.dp),
-                    )
+                Column(Modifier.padding(16.dp)) {
+                    Text("알림 방식", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium, modifier = Modifier.padding(start = 4.dp, bottom = 12.dp))
+                    AlertModePicker(alertMode) { alertMode = it }
                 }
             }
 
-            SectionCard("일정") {
-                SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
-                    SegmentedButton(selected = !repeat, onClick = { repeat = false }, shape = SegmentedButtonDefaults.itemShape(0, 2)) { Text("한 번") }
-                    SegmentedButton(selected = repeat, onClick = { repeat = true }, shape = SegmentedButtonDefaults.itemShape(1, 2)) { Text("반복") }
-                }
+            Section("일정") {
+                SegmentTabs(listOf("한 번", "반복"), if (repeat) 1 else 0, { repeat = it == 1 }, Modifier.padding(horizontal = 16.dp, vertical = 10.dp))
 
                 if (!repeat) {
                     SettingRow(
-                        icon = Icons.Rounded.Alarm,
                         title = "시작",
                         value = startAt?.let { Format.dateTime(it) } ?: "지금 바로",
+                        icon = Icons.Rounded.Alarm,
+                        valueColor = MaterialTheme.colorScheme.primary,
                         onClick = { picker = Picker.START },
-                        trailing = { if (startAt != null) ClearButton { startAt = null } },
                     )
                     FlowRow(
-                        Modifier.padding(start = 58.dp, end = 16.dp),
+                        Modifier.padding(start = 70.dp, end = 16.dp, bottom = 6.dp),
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
-                        QuickChip("30분 뒤") { startAt = roundMinute(now + 30 * 60_000L) }
-                        QuickChip("1시간 뒤") { startAt = roundMinute(now + 60 * 60_000L) }
-                        QuickChip("내일 아침 9시") { startAt = tomorrowAt(9 * 60) }
+                        SoftChip("지금", startAt == null) { startAt = null }
+                        SoftChip("30분 뒤") { startAt = roundMinute(now + 30 * 60_000L) }
+                        SoftChip("1시간 뒤") { startAt = roundMinute(now + 60 * 60_000L) }
+                        SoftChip("내일 아침") { startAt = tomorrowAt(9 * 60) }
                     }
                     SettingRow(
-                        icon = Icons.Rounded.Flag,
                         title = "종료",
                         value = endAt?.let { Format.dateTime(it) } ?: "완료할 때까지",
+                        icon = Icons.Rounded.Flag,
+                        valueColor = MaterialTheme.colorScheme.primary,
                         onClick = { picker = Picker.END },
-                        trailing = { if (endAt != null) ClearButton { endAt = null } },
                     )
                 } else {
                     Row(
-                        Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+                        Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp),
                         horizontalArrangement = Arrangement.spacedBy(6.dp),
                     ) {
                         (1..7).forEach { d ->
@@ -241,73 +224,70 @@ fun EditScreen(
                         }
                     }
                     FlowRow(
-                        Modifier.padding(horizontal = 16.dp),
+                        Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
-                        QuickChip("매일") { days = (1..7).toList() }
-                        QuickChip("평일") { days = (1..5).toList() }
-                        QuickChip("주말") { days = listOf(6, 7) }
+                        SoftChip("매일", days.toSet() == (1..7).toSet()) { days = (1..7).toList() }
+                        SoftChip("평일", days.toSet() == (1..5).toSet()) { days = (1..5).toList() }
+                        SoftChip("주말", days.toSet() == setOf(6, 7)) { days = listOf(6, 7) }
                     }
                     SettingRow(
-                        icon = Icons.Rounded.Alarm,
                         title = "시작 시각",
                         value = Format.time(dailyStart),
+                        icon = Icons.Rounded.Alarm,
+                        valueColor = MaterialTheme.colorScheme.primary,
                         onClick = { picker = Picker.DAILY_START },
                     )
                     SettingRow(
-                        icon = Icons.Rounded.Flag,
                         title = "종료 시각",
-                        value = dailyEnd?.let { Format.time(it) + if (it <= dailyStart) " (다음 날)" else "" } ?: "하루 끝까지",
+                        value = dailyEnd?.let { Format.time(it) + if (it <= dailyStart) " (다음 날)" else "" } ?: "자정까지",
+                        icon = Icons.Rounded.Flag,
+                        valueColor = MaterialTheme.colorScheme.primary,
                         onClick = { picker = Picker.DAILY_END },
-                        trailing = { if (dailyEnd != null) ClearButton { dailyEnd = null } },
                     )
                 }
 
                 Text(
-                    error ?: summary(repeat, days.toSet(), dailyStart, dailyEnd, startAt, endAt),
+                    summary(repeat, days.toSet(), dailyStart, dailyEnd, startAt, endAt),
                     style = MaterialTheme.typography.bodySmall,
-                    color = if (error != null) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(horizontal = 20.dp, vertical = 10.dp),
                 )
             }
-
-            if (!isNew) {
-                OutlinedButton(
-                    onClick = { confirmDelete = true },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
-                ) {
-                    Icon(Icons.Rounded.Delete, null)
-                    Spacer(Modifier.padding(4.dp))
-                    Text("삭제")
-                }
-            }
-            Spacer(Modifier.height(24.dp))
+            Spacer(Modifier.height(8.dp))
         }
     }
 
     when (picker) {
-        Picker.START -> DateTimePickerDialog(
+        Picker.START -> DateTimeSheet(
+            title = "언제부터 알릴까요?",
             initial = startAt ?: roundMinute(now + 60 * 60_000L),
             onDismiss = { picker = null },
             onConfirm = { startAt = it; picker = null },
+            clearLabel = "지금 바로",
+            onClear = { startAt = null; picker = null },
         )
-        Picker.END -> DateTimePickerDialog(
+        Picker.END -> DateTimeSheet(
+            title = "언제까지 알릴까요?",
             initial = endAt ?: roundMinute((startAt ?: now) + 60 * 60_000L),
             onDismiss = { picker = null },
             onConfirm = { endAt = it; picker = null },
+            clearLabel = "완료할 때까지",
+            onClear = { endAt = null; picker = null },
         )
-        Picker.DAILY_START -> TimePickerDialog(
-            title = "시작 시각",
+        Picker.DAILY_START -> TimeSheet(
+            title = "매일 몇 시부터?",
             initialMinute = dailyStart,
             onDismiss = { picker = null },
             onConfirm = { dailyStart = it; picker = null },
         )
-        Picker.DAILY_END -> TimePickerDialog(
-            title = "종료 시각",
+        Picker.DAILY_END -> TimeSheet(
+            title = "몇 시까지?",
             initialMinute = dailyEnd ?: (dailyStart + 60) % (24 * 60),
             onDismiss = { picker = null },
             onConfirm = { dailyEnd = it; picker = null },
+            clearLabel = "자정까지",
+            onClear = { dailyEnd = null; picker = null },
         )
         null -> {}
     }
@@ -326,26 +306,21 @@ fun EditScreen(
 @Composable
 private fun DayToggle(label: String, selected: Boolean, modifier: Modifier, onClick: () -> Unit) {
     val c = MaterialTheme.colorScheme
-    Surface(
-        shape = CircleShape,
-        color = if (selected) c.primary else c.surfaceContainerHighest,
-        contentColor = if (selected) c.onPrimary else c.onSurfaceVariant,
-        modifier = modifier.aspectRatio(1f).clickable(onClick = onClick),
+    Box(
+        modifier
+            .aspectRatio(1f)
+            .clip(CircleShape)
+            .background(if (selected) c.primary else c.surfaceVariant)
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center,
     ) {
-        Box(contentAlignment = Alignment.Center) {
-            Text(label, style = MaterialTheme.typography.labelLarge, fontWeight = if (selected) FontWeight.Bold else null)
-        }
+        Text(
+            label,
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+            color = if (selected) c.onPrimary else c.onSurfaceVariant,
+        )
     }
-}
-
-@Composable
-private fun QuickChip(label: String, onClick: () -> Unit) {
-    AssistChip(onClick = onClick, label = { Text(label) }, shape = CircleShape)
-}
-
-@Composable
-private fun ClearButton(onClick: () -> Unit) {
-    IconButton(onClick = onClick) { Icon(Icons.Rounded.Close, "지우기", tint = MaterialTheme.colorScheme.onSurfaceVariant) }
 }
 
 private fun summary(repeat: Boolean, days: Set<Int>, dailyStart: Int, dailyEnd: Int?, startAt: Long?, endAt: Long?): String {

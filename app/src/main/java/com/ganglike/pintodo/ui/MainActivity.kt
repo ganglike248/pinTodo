@@ -11,23 +11,44 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.CheckCircle
+import androidx.compose.material.icons.rounded.History
+import androidx.compose.material.icons.rounded.Settings
+import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Surface
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ganglike.pintodo.data.Todo
 import com.ganglike.pintodo.data.TodoStore
@@ -36,21 +57,27 @@ import com.ganglike.pintodo.notify.Sync
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
+/** 바깥(알림·위젯·빠른 추가)에서 들어온 요청 */
+sealed interface OpenRequest {
+    data class Edit(val id: Int) : OpenRequest
+    data class New(val title: String) : OpenRequest
+}
+
 class MainActivity : ComponentActivity() {
     companion object {
         const val EXTRA_TODO_ID = "todo_id"
+        const val EXTRA_NEW_TITLE = "new_title"
     }
 
-    // 알림을 눌러 들어오면 해당 할 일 편집 화면을 연다
-    private val openRequest = mutableStateOf<Int?>(null)
+    private val openRequest = mutableStateOf<OpenRequest?>(null)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        if (savedInstanceState == null) openRequest.value = intent.todoId()
+        if (savedInstanceState == null) openRequest.value = intent.toRequest()
         setContent {
             PinTodoTheme {
-                Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {
+                Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
                     App(openRequest)
                 }
             }
@@ -59,7 +86,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        openRequest.value = intent.todoId()
+        openRequest.value = intent.toRequest()
     }
 
     override fun onResume() {
@@ -68,16 +95,28 @@ class MainActivity : ComponentActivity() {
         Sync.run(this)
     }
 
-    private fun Intent.todoId() = getIntExtra(EXTRA_TODO_ID, -1).takeIf { it >= 0 }
+    private fun Intent.toRequest(): OpenRequest? = when {
+        hasExtra(EXTRA_NEW_TITLE) -> OpenRequest.New(getStringExtra(EXTRA_NEW_TITLE).orEmpty())
+        getIntExtra(EXTRA_TODO_ID, -1) >= 0 -> OpenRequest.Edit(getIntExtra(EXTRA_TODO_ID, -1))
+        else -> null
+    }
 }
 
 private data class EditTarget(val todo: Todo, val isNew: Boolean)
 
+private enum class Tab(val label: String, val icon: ImageVector) {
+    TODO("할 일", Icons.Rounded.CheckCircle),
+    HISTORY("기록", Icons.Rounded.History),
+    SETTINGS("설정", Icons.Rounded.Settings),
+}
+
 @Composable
-private fun App(openRequest: MutableState<Int?>) {
+private fun App(openRequest: MutableState<OpenRequest?>) {
     val ctx = LocalContext.current
     val todos by TodoStore.flow(ctx).collectAsStateWithLifecycle()
+    var tab by rememberSaveable { mutableIntStateOf(0) }
     var editing by remember { mutableStateOf<EditTarget?>(null) }
+    var snoozing by remember { mutableStateOf<Todo?>(null) }
     val snackbar = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
@@ -90,16 +129,19 @@ private fun App(openRequest: MutableState<Int?>) {
     }
 
     LaunchedEffect(openRequest.value, todos) {
-        val id = openRequest.value ?: return@LaunchedEffect
-        todos.find { it.id == id }?.let { editing = EditTarget(it, isNew = false) }
+        when (val req = openRequest.value) {
+            is OpenRequest.Edit -> todos.find { it.id == req.id }?.let { editing = EditTarget(it, isNew = false) }
+            is OpenRequest.New -> editing = EditTarget(newTodo(ctx, req.title), isNew = true)
+            null -> return@LaunchedEffect
+        }
+        tab = Tab.TODO.ordinal
         openRequest.value = null
     }
 
     BackHandler(enabled = editing != null) { editing = null }
 
     fun complete(todo: Todo) {
-        val t = System.currentTimeMillis()
-        Actions.save(ctx, Actions.complete(todo, t))
+        Actions.save(ctx, Actions.complete(todo, System.currentTimeMillis()))
         scope.launch {
             snackbar.currentSnackbarData?.dismiss()
             val result = snackbar.showSnackbar(
@@ -115,24 +157,10 @@ private fun App(openRequest: MutableState<Int?>) {
 
     AnimatedContent(
         targetState = editing,
-        transitionSpec = {
-            (fadeIn() + slideInVertically { it / 12 }) togetherWith fadeOut()
-        },
+        transitionSpec = { (fadeIn() + slideInVertically { it / 12 }) togetherWith fadeOut() },
         label = "screen",
     ) { target ->
-        if (target == null) {
-            ListScreen(
-                todos = todos,
-                now = now,
-                snackbar = snackbar,
-                onAdd = { editing = EditTarget(Todo(id = -1, title = ""), isNew = true) },
-                onEdit = { editing = EditTarget(it, isNew = false) },
-                onComplete = ::complete,
-                onRestore = { Actions.save(ctx, it.copy(doneAt = null)) },
-                onDelete = { Actions.delete(ctx, it.id) },
-                onClearDone = { todos.filter { it.doneAt != null }.forEach { Actions.delete(ctx, it.id) } },
-            )
-        } else {
+        if (target != null) {
             EditScreen(
                 initial = target.todo,
                 isNew = target.isNew,
@@ -146,6 +174,75 @@ private fun App(openRequest: MutableState<Int?>) {
                     editing = null
                 },
             )
+            return@AnimatedContent
+        }
+
+        Scaffold(
+            containerColor = MaterialTheme.colorScheme.background,
+            snackbarHost = { SnackbarHost(snackbar) },
+            floatingActionButton = {
+                if (tab == Tab.TODO.ordinal) {
+                    ExtendedFloatingActionButton(
+                        onClick = { editing = EditTarget(newTodo(ctx), isNew = true) },
+                        icon = { Icon(Icons.Rounded.Add, null) },
+                        text = { Text("할 일 추가", fontWeight = FontWeight.Bold) },
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary,
+                        shape = RoundedCornerShape(18.dp),
+                    )
+                }
+            },
+            bottomBar = { BottomBar(tab) { tab = it } },
+        ) { padding ->
+            when (Tab.entries[tab]) {
+                Tab.TODO -> TodoScreen(
+                    todos = todos,
+                    now = now,
+                    contentPadding = padding,
+                    onEdit = { editing = EditTarget(it, isNew = false) },
+                    onComplete = ::complete,
+                    onSnooze = { snoozing = it },
+                )
+                Tab.HISTORY -> HistoryScreen(
+                    todos = todos,
+                    contentPadding = padding,
+                    onRestore = { Actions.save(ctx, it.copy(doneAt = null)) },
+                    onDelete = { Actions.delete(ctx, it.id) },
+                    onClearAll = { todos.filter { it.doneAt != null }.forEach { Actions.delete(ctx, it.id) } },
+                )
+                Tab.SETTINGS -> SettingsScreen(contentPadding = padding)
+            }
+        }
+    }
+
+    snoozing?.let { todo ->
+        SnoozeSheet(todo, onDismiss = { snoozing = null }) { option ->
+            Actions.snooze(ctx, todo.id, option)
+            snoozing = null
+        }
+    }
+}
+
+@Composable
+private fun BottomBar(selected: Int, onSelect: (Int) -> Unit) {
+    Column {
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+        NavigationBar(containerColor = MaterialTheme.colorScheme.surface, tonalElevation = 0.dp) {
+            Tab.entries.forEachIndexed { i, t ->
+                NavigationBarItem(
+                    selected = selected == i,
+                    onClick = { onSelect(i) },
+                    icon = { Icon(t.icon, null) },
+                    label = { Text(t.label, fontWeight = if (selected == i) FontWeight.Bold else FontWeight.Medium) },
+                    colors = NavigationBarItemDefaults.colors(
+                        selectedIconColor = MaterialTheme.colorScheme.onSurface,
+                        selectedTextColor = MaterialTheme.colorScheme.onSurface,
+                        unselectedIconColor = MaterialTheme.colorScheme.outline,
+                        unselectedTextColor = MaterialTheme.colorScheme.outline,
+                        indicatorColor = MaterialTheme.colorScheme.surfaceVariant,
+                    ),
+                )
+            }
         }
     }
 }
