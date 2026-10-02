@@ -1,13 +1,13 @@
-package com.ganglike.pintodo.notify
+package com.pintodo.notify
 
 import android.app.AlarmManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
-import com.ganglike.pintodo.data.Status
-import com.ganglike.pintodo.data.TodoStore
-import com.ganglike.pintodo.tile.QuickAddTileService
-import com.ganglike.pintodo.widget.TodoWidget
+import com.pintodo.data.Status
+import com.pintodo.data.TodoStore
+import com.pintodo.tile.QuickAddTileService
+import com.pintodo.widget.TodoWidget
 
 /**
  * 저장된 할 일과 실제 알림/알람 상태를 맞춘다.

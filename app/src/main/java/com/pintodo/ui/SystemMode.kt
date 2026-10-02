@@ -1,4 +1,4 @@
-package com.ganglike.pintodo.ui
+package com.pintodo.ui
 
 import android.app.NotificationManager
 import android.content.BroadcastReceiver
@@ -17,7 +17,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import com.ganglike.pintodo.data.AlertMode
+import com.pintodo.data.AlertMode
 
 /** 휴대폰의 현재 소리 모드 */
 enum class PhoneMode(val label: String) { SOUND("소리"), VIBRATE("진동"), SILENT("무음"), DND("방해 금지") }

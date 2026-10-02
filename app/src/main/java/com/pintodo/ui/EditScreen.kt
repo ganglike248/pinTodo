@@ -1,6 +1,6 @@
 @file:OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 
-package com.ganglike.pintodo.ui
+package com.pintodo.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -55,7 +55,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
-import com.ganglike.pintodo.data.Todo
+import com.pintodo.data.Todo
 import java.time.LocalDate
 import java.time.ZoneId
 

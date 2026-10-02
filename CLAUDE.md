@@ -1,8 +1,8 @@
-# PickTodo (저장소·패키지명은 pinTodo / com.ganglike.pintodo)
+# PinTodo (패키지명 com.pintodo)
 
-완료할 때까지 알림창에 고정되는 개인용 안드로이드 투두 앱. Kotlin + Jetpack Compose(Material 3), 외부 서버 없음.
+완료할 때까지 알림창에 고정되는 안드로이드 투두 앱. **Google Play 출시 예정** (2026-10-02 결정, 아직 Play Console 등록 전). Kotlin + Jetpack Compose(Material 3), 외부 서버 없음.
 
-- **현재 버전**: v0.4.0 (스토어 출시 전이라 0.x, 출시 시 1.0.0) | GitHub: https://github.com/ganglike248/pinTodo (main 브랜치)
+- **현재 버전**: v0.4.1 (스토어 출시 전이라 0.x, 출시 시 1.0.0) | GitHub: https://github.com/ganglike248/pinTodo (main 브랜치)
 - 사용 기기: 갤럭시 S26 울트라 (One UI / Android 16)
 
 ## 버전 관리 규칙 (필수)
@@ -16,15 +16,24 @@
 커밋 메시지 형식: `vX.Y.Z - type: 요약` (type: feat / fix / refactor / docs / release), 본문은 `-` 목록으로 변경 내용 정리.
 커밋할 때는 항상 모든 파일 포함(`git add .`).
 
+## Google Play 출시 준비 (출시 전 반드시 처리)
+- [ ] 업로드 키스토어 생성 + Play App Signing, `signingConfig`를 디버그 키 → 업로드 키로 (키스토어·비밀번호는 저장소에 커밋 금지)
+- [ ] `./gradlew bundleRelease`로 AAB 업로드 (APK 아님)
+- [ ] **`USE_EXACT_ALARM` 정책 위험**: Play는 알람 시계·캘린더 앱에만 허용 → `SCHEDULE_EXACT_ALARM` + 사용자 허용 요청(설정 화면 이동) + 미허용 시 부정확 알람 대체로 변경 필요
+- [ ] **`REQUEST_IGNORE_BATTERY_OPTIMIZATIONS` 정책 위험**: 직접 예외 요청 대화상자는 허용 사유가 제한됨 → 권한 제거하고 `ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS`(목록 화면 열기)로 변경 검토
+- [ ] 개인정보처리방침 URL (수집 데이터 없음을 명시), 데이터 보안 양식(수집·공유 없음), 콘텐츠 등급
+- [ ] 스토어 등록정보: 아이콘 512×512, 그래픽 이미지 1024×500, 휴대폰 스크린샷
+- [ ] 정식 출시 시 버전 1.0.0, 이후 versionCode는 계속 증가
+
 ## 빌드 / 설치
 ```bash
 ./gradlew assembleRelease                      # → app/build/outputs/apk/release/app-release.apk
 adb install -r app/build/outputs/apk/release/app-release.apk
 ```
-- release도 디버그 키(`~/.android/debug.keystore`)로 서명 — 다른 PC에서 빌드하면 서명이 달라 기존 설치본 위에 덮어쓰기 불가(삭제 후 재설치 필요, 데이터 사라짐)
+- 현재 release도 디버그 키(`~/.android/debug.keystore`)로 서명 — 다른 PC에서 빌드하면 서명이 달라 기존 설치본 위에 덮어쓰기 불가. Play 출시 전에 업로드 키로 교체 (위 체크리스트)
 
 ## 핵심 설계 (수정 시 주의)
-- 앱 표시 이름은 **PickTodo**(`app_name`). 패키지명 `com.ganglike.pintodo`는 바꾸면 다른 앱으로 인식돼 기존 설치·데이터가 이어지지 않으므로 변경 금지
+- 앱 표시 이름은 **PinTodo**(`app_name`), 패키지명(applicationId·namespace)은 **`com.pintodo`**. Play에 한 번 올리면 패키지명은 영구 변경 불가
 - **Android 14+는 ongoing 알림도 스와이프로 지워짐** → `deleteIntent`로 감지해 `ActionReceiver`에서 즉시 재게시. 그룹째 지우면 알림마다 호출되므로 전체 Sync가 아니라 해당 알림만 재게시
 - **소리·진동 1회**: 처음 게시는 알림 방식별 HIGH 채널, 재게시는 `quiet` 채널. `Todo.alertedKey`(이미 울린 회차 키)와 `alertKey(now)`(회차 시작 또는 미루기 종료 시각)를 비교해 결정. 알림 채널 설정은 생성 후 변경 불가 → 바꾸려면 새 채널 ID 사용
 - **모든 상태 반영은 `Sync.run()` 하나로**: 할 일 표시/숨김 + 다음 상태 변경 시각(`Todo.nextChange`)에 정확한 알람 예약

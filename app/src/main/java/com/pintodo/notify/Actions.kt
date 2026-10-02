@@ -1,9 +1,9 @@
-package com.ganglike.pintodo.notify
+package com.pintodo.notify
 
 import android.content.Context
-import com.ganglike.pintodo.data.SnoozeOption
-import com.ganglike.pintodo.data.Todo
-import com.ganglike.pintodo.data.TodoStore
+import com.pintodo.data.SnoozeOption
+import com.pintodo.data.Todo
+import com.pintodo.data.TodoStore
 
 /** 화면과 알림 버튼이 함께 쓰는 동작 */
 object Actions {

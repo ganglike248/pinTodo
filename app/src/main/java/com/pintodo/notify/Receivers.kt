@@ -1,18 +1,18 @@
-package com.ganglike.pintodo.notify
+package com.pintodo.notify
 
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import com.ganglike.pintodo.data.SettingsStore
-import com.ganglike.pintodo.data.Status
-import com.ganglike.pintodo.data.TodoStore
+import com.pintodo.data.SettingsStore
+import com.pintodo.data.Status
+import com.pintodo.data.TodoStore
 
 /** 알림의 버튼과 스와이프 삭제 처리 */
 class ActionReceiver : BroadcastReceiver() {
     companion object {
-        const val ACTION_DONE = "com.ganglike.pintodo.DONE"
-        const val ACTION_SNOOZE = "com.ganglike.pintodo.SNOOZE"
-        const val ACTION_DISMISSED = "com.ganglike.pintodo.DISMISSED"
+        const val ACTION_DONE = "com.pintodo.DONE"
+        const val ACTION_SNOOZE = "com.pintodo.SNOOZE"
+        const val ACTION_DISMISSED = "com.pintodo.DISMISSED"
         const val EXTRA_ID = "id"
     }
 

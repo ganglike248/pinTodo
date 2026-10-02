@@ -1,7 +1,7 @@
-package com.ganglike.pintodo.ui
+package com.pintodo.ui
 
-import com.ganglike.pintodo.data.Status
-import com.ganglike.pintodo.data.Todo
+import com.pintodo.data.Status
+import com.pintodo.data.Todo
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId

@@ -1,4 +1,4 @@
-package com.ganglike.pintodo.ui
+package com.pintodo.ui
 
 import android.app.StatusBarManager
 import android.appwidget.AppWidgetManager
@@ -42,13 +42,13 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.ganglike.pintodo.R
-import com.ganglike.pintodo.data.AlertMode
-import com.ganglike.pintodo.data.SettingsStore
-import com.ganglike.pintodo.data.SnoozeOption
-import com.ganglike.pintodo.notify.Sync
-import com.ganglike.pintodo.tile.QuickAddTileService
-import com.ganglike.pintodo.widget.TodoWidgetReceiver
+import com.pintodo.R
+import com.pintodo.data.AlertMode
+import com.pintodo.data.SettingsStore
+import com.pintodo.data.SnoozeOption
+import com.pintodo.notify.Sync
+import com.pintodo.tile.QuickAddTileService
+import com.pintodo.widget.TodoWidgetReceiver
 
 private enum class SettingSheet { QUICK_SNOOZE, ALERT_MODE }
 
@@ -63,7 +63,7 @@ fun SettingsScreen(contentPadding: PaddingValues) {
         batteryOk = ignoringBattery(ctx)
         onPauseOrDispose { }
     }
-    fun update(change: (com.ganglike.pintodo.data.AppSettings) -> com.ganglike.pintodo.data.AppSettings) {
+    fun update(change: (com.pintodo.data.AppSettings) -> com.pintodo.data.AppSettings) {
         SettingsStore.update(ctx, change)
         Sync.run(ctx) // 알림 버튼(미루기 라벨) 반영
     }
@@ -274,6 +274,6 @@ private fun addWidget(ctx: Context) {
     if (awm.isRequestPinAppWidgetSupported) {
         awm.requestPinAppWidget(ComponentName(ctx, TodoWidgetReceiver::class.java), null, null)
     } else {
-        Toast.makeText(ctx, "홈 화면을 길게 누르고 위젯 > PickTodo를 추가하세요", Toast.LENGTH_LONG).show()
+        Toast.makeText(ctx, "홈 화면을 길게 누르고 위젯 > PinTodo를 추가하세요", Toast.LENGTH_LONG).show()
     }
 }

@@ -1,4 +1,4 @@
-package com.ganglike.pintodo.ui
+package com.pintodo.ui
 
 import android.content.Intent
 import android.os.Bundle
@@ -50,10 +50,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.ganglike.pintodo.data.Todo
-import com.ganglike.pintodo.data.TodoStore
-import com.ganglike.pintodo.notify.Actions
-import com.ganglike.pintodo.notify.Sync
+import com.pintodo.data.Todo
+import com.pintodo.data.TodoStore
+import com.pintodo.notify.Actions
+import com.pintodo.notify.Sync
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 

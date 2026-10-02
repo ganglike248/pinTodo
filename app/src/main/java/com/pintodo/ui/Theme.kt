@@ -1,4 +1,4 @@
-package com.ganglike.pintodo.ui
+package com.pintodo.ui
 
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -19,7 +19,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.ganglike.pintodo.data.SettingsStore
+import com.pintodo.data.SettingsStore
 
 /*
  * 디자인 기준: 토스 디자인 시스템(TDS)의 회색 단계 + 파란 포인트 색

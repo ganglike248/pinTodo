@@ -1,10 +1,10 @@
-# 📌 PickTodo
+# 📌 PinTodo
 
 **완료할 때까지 알림창에서 사라지지 않는 안드로이드 할 일 앱**
 
 할 일을 추가하면 알림창에 고정됩니다. 옆으로 밀어도, "모두 지우기"를 눌러도 다시 나타나고, **'완료' 버튼을 눌러야만** 사라져요.
 
-> 현재 버전: **v0.4.0** (정식 출시 전) · Android 8.0(API 26) 이상 · 개인용(Play 스토어 미배포)
+> 현재 버전: **v0.4.1** (정식 출시 전) · Android 8.0(API 26) 이상 · Google Play 출시 준비 중
 
 <br>
 
@@ -80,7 +80,7 @@
 
 ## 설치 방법
 
-Play 스토어에 올리지 않은 개인용 앱이라 **직접 빌드해서 설치**해요.
+아직 Google Play에 출시하기 전이라 지금은 **직접 빌드해서 설치**해요.
 
 ### 1. 준비물
 - JDK 17 이상
@@ -100,7 +100,7 @@ echo "sdk.dir=$HOME/Library/Android/sdk" > local.properties
 
 빌드가 끝나면 `app/build/outputs/apk/release/app-release.apk` 파일이 생겨요.
 
-> 개인용이라 release 빌드도 **디버그 키로 서명**해요. 별도 키스토어를 만들 필요가 없어요.
+> 지금은 release 빌드도 **디버그 키로 서명**해요. Google Play에 올릴 때는 별도 업로드 키로 서명한 AAB가 필요해요.
 
 ### 3. 폰에 설치
 
@@ -116,7 +116,7 @@ echo "sdk.dir=$HOME/Library/Android/sdk" > local.properties
 1. APK 파일을 폰으로 옮겨요(카카오톡 나에게 보내기, 구글 드라이브 등).
 2. **내 파일** 앱에서 APK를 열고 "출처를 알 수 없는 앱 설치"를 허용해요.
 
-설치하면 앱 서랍에 **"PickTodo"**로 나타나요. 삼성 런처는 새 앱을 앱스 화면 맨 마지막 페이지에 넣기 때문에, 안 보이면 검색창에 "Pick"을 입력해 보세요.
+설치하면 앱 서랍에 **"PinTodo"**로 나타나요. 삼성 런처는 새 앱을 앱스 화면 맨 마지막 페이지에 넣기 때문에, 안 보이면 검색창에 "Pick"을 입력해 보세요.
 
 ### 4. 처음 실행 후 설정 (권장)
 
@@ -153,7 +153,7 @@ echo "sdk.dir=$HOME/Library/Android/sdk" > local.properties
 ## 프로젝트 구조
 
 ```
-app/src/main/java/com/ganglike/pintodo/
+app/src/main/java/com/pintodo/
 ├── data/
 │   ├── Todo.kt            # 할 일 모델 + 표시 구간·상태 계산 (한 번/반복, 미루기, 회차)
 │   ├── TodoStore.kt       # 할 일 저장소 (SharedPreferences JSON, StateFlow)
@@ -209,7 +209,8 @@ app/src/main/java/com/ganglike/pintodo/
 
 | 버전 | 내용 |
 |---|---|
-| v0.4.0 | 앱 이름을 PickTodo로 변경, 설정 > 버전에서 업데이트 기록 보기, 설정의 GitHub 항목 제거 |
+| v0.4.1 | 앱 이름을 PinTodo로 정정, 패키지명을 `com.pintodo`로 변경(플레이스토어 출시 준비) |
+| v0.4.0 | 앱 이름을 PinTodo로 변경, 설정 > 버전에서 업데이트 기록 보기, 설정의 GitHub 항목 제거 |
 | v0.3.0 | 알림 없는 할 일, 위젯 즉시 갱신(Glance → RemoteViews)·빈 곳 눌러 앱 열기, 누를 수 있는 설정 줄에 `>` 표시 |
 | v0.2.0 | 하단 메뉴(할 일/기록/설정), 홈 화면 위젯, 빠른 설정 타일, 미루기 선택지, 휠 시간 선택, 휴대폰 모드별 알림 안내, TDS 기반 디자인 개편 |
 | v0.1.0 | 첫 버전 — 알림창 고정, 소리·진동 1회, 한 번/반복 일정, 재부팅·업데이트 후 복원 |

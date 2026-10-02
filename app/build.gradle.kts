@@ -5,15 +5,15 @@ plugins {
 }
 
 android {
-    namespace = "com.ganglike.pintodo"
+    namespace = "com.pintodo"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.ganglike.pintodo"
+        applicationId = "com.pintodo"
         minSdk = 26
         targetSdk = 36
-        versionCode = 6
-        versionName = "0.4.0"
+        versionCode = 7
+        versionName = "0.4.1"
     }
 
     buildTypes {

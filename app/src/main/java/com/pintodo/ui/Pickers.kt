@@ -1,6 +1,6 @@
 @file:OptIn(ExperimentalMaterial3Api::class)
 
-package com.ganglike.pintodo.ui
+package com.pintodo.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.snapping.SnapPosition

@@ -1,6 +1,6 @@
 @file:OptIn(ExperimentalMaterial3Api::class)
 
-package com.ganglike.pintodo.ui
+package com.pintodo.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -57,9 +57,15 @@ private fun fixed(t: String) = Change(ChangeKind.FIXED, t)
 
 val RELEASES = listOf(
     Release(
+        "0.4.1", "2026.10.02",
+        listOf(
+            moved("플레이스토어 출시 준비로 앱 식별자가 바뀌어서, 이전 버전과는 별개의 앱으로 새로 설치돼요. 이전 버전의 할 일은 옮겨지지 않아요"),
+        ),
+    ),
+    Release(
         "0.4.0", "2026.10.02",
         listOf(
-            moved("앱 이름이 'PickTodo'로 바뀌었어요"),
+            moved("앱 이름이 'PinTodo'로 바뀌었어요"),
             new("설정 > 버전을 누르면 지금 보시는 업데이트 기록을 볼 수 있어요"),
             moved("설정에서 GitHub 항목을 뺐어요"),
         ),

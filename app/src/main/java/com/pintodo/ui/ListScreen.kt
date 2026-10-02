@@ -1,6 +1,6 @@
 @file:OptIn(ExperimentalMaterial3Api::class)
 
-package com.ganglike.pintodo.ui
+package com.pintodo.ui
 
 import android.Manifest
 import android.content.Context
@@ -62,10 +62,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleResumeEffect
-import com.ganglike.pintodo.data.Status
-import com.ganglike.pintodo.data.Todo
-import com.ganglike.pintodo.notify.Notifier
-import com.ganglike.pintodo.notify.Sync
+import com.pintodo.data.Status
+import com.pintodo.data.Todo
+import com.pintodo.notify.Notifier
+import com.pintodo.notify.Sync
 import kotlinx.coroutines.launch
 
 @Composable
@@ -95,7 +95,7 @@ fun TodoScreen(
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         item(key = "header") {
-            ScreenHeader("PickTodo", if (active.isEmpty()) "할 일이 없어요" else "알림 중 ${showing}개 · 예정 ${upcoming.size}개")
+            ScreenHeader("PinTodo", if (active.isEmpty()) "할 일이 없어요" else "알림 중 ${showing}개 · 예정 ${upcoming.size}개")
         }
         item(key = "banners") { Banners() }
         if (active.isEmpty()) item(key = "empty") { EmptyState() }

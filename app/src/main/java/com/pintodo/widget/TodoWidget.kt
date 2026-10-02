@@ -1,4 +1,4 @@
-package com.ganglike.pintodo.widget
+package com.pintodo.widget
 
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
@@ -8,14 +8,14 @@ import android.content.Context
 import android.content.Intent
 import android.view.View
 import android.widget.RemoteViews
-import com.ganglike.pintodo.R
-import com.ganglike.pintodo.data.Status
-import com.ganglike.pintodo.data.Todo
-import com.ganglike.pintodo.data.TodoStore
-import com.ganglike.pintodo.notify.ActionReceiver
-import com.ganglike.pintodo.ui.Format
-import com.ganglike.pintodo.ui.MainActivity
-import com.ganglike.pintodo.ui.QuickAddActivity
+import com.pintodo.R
+import com.pintodo.data.Status
+import com.pintodo.data.Todo
+import com.pintodo.data.TodoStore
+import com.pintodo.notify.ActionReceiver
+import com.pintodo.ui.Format
+import com.pintodo.ui.MainActivity
+import com.pintodo.ui.QuickAddActivity
 
 /**
  * 홈 화면 위젯: 진행 중·알림 없는·예정인 할 일 목록.

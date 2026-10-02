@@ -1,4 +1,4 @@
-package com.ganglike.pintodo.data
+package com.pintodo.data
 
 import java.time.Instant
 import java.time.LocalDate

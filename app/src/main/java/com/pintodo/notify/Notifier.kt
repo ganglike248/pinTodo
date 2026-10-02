@@ -1,4 +1,4 @@
-package com.ganglike.pintodo.notify
+package com.pintodo.notify
 
 import android.app.Notification
 import android.app.NotificationChannel
@@ -8,13 +8,13 @@ import android.content.Context
 import android.content.Intent
 import android.media.AudioAttributes
 import android.media.RingtoneManager
-import com.ganglike.pintodo.R
-import com.ganglike.pintodo.data.AlertMode
-import com.ganglike.pintodo.data.SettingsStore
-import com.ganglike.pintodo.data.Todo
-import com.ganglike.pintodo.ui.MainActivity
-import com.ganglike.pintodo.ui.SnoozeActivity
-import com.ganglike.pintodo.ui.Format
+import com.pintodo.R
+import com.pintodo.data.AlertMode
+import com.pintodo.data.SettingsStore
+import com.pintodo.data.Todo
+import com.pintodo.ui.MainActivity
+import com.pintodo.ui.SnoozeActivity
+import com.pintodo.ui.Format
 
 /**
  * 알림 채널 구성

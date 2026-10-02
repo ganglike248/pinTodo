@@ -1,4 +1,4 @@
-package com.ganglike.pintodo.tile
+package com.pintodo.tile
 
 import android.annotation.SuppressLint
 import android.app.PendingIntent
@@ -8,9 +8,9 @@ import android.content.Intent
 import android.os.Build
 import android.service.quicksettings.Tile
 import android.service.quicksettings.TileService
-import com.ganglike.pintodo.data.Status
-import com.ganglike.pintodo.data.TodoStore
-import com.ganglike.pintodo.ui.QuickAddActivity
+import com.pintodo.data.Status
+import com.pintodo.data.TodoStore
+import com.pintodo.ui.QuickAddActivity
 
 /** 알림창 빠른 설정 타일: 누르면 바로 할 일 추가 시트가 열림 */
 class QuickAddTileService : TileService() {
@@ -22,7 +22,7 @@ class QuickAddTileService : TileService() {
         tile.state = Tile.STATE_INACTIVE
         tile.label = "할 일 추가"
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            tile.subtitle = if (showing > 0) "알림 중 ${showing}개" else "PickTodo"
+            tile.subtitle = if (showing > 0) "알림 중 ${showing}개" else "PinTodo"
         }
         tile.updateTile()
     }

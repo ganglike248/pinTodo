@@ -1,4 +1,4 @@
-package com.ganglike.pintodo.ui
+package com.pintodo.ui
 
 import android.content.Intent
 import android.os.Bundle
@@ -45,12 +45,12 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
-import com.ganglike.pintodo.data.SettingsStore
-import com.ganglike.pintodo.data.SnoozeOption
-import com.ganglike.pintodo.data.Todo
-import com.ganglike.pintodo.data.TodoStore
-import com.ganglike.pintodo.notify.ActionReceiver
-import com.ganglike.pintodo.notify.Actions
+import com.pintodo.data.SettingsStore
+import com.pintodo.data.SnoozeOption
+import com.pintodo.data.Todo
+import com.pintodo.data.TodoStore
+import com.pintodo.notify.ActionReceiver
+import com.pintodo.notify.Actions
 import kotlinx.coroutines.delay
 import java.time.LocalDate
 import java.time.ZoneId

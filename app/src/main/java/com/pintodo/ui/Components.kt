@@ -1,4 +1,4 @@
-package com.ganglike.pintodo.ui
+package com.pintodo.ui
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
@@ -42,7 +42,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.ganglike.pintodo.data.AlertMode
+import com.pintodo.data.AlertMode
 
 fun AlertMode.icon(): ImageVector = when (this) {
     AlertMode.SILENT -> Icons.Rounded.NotificationsOff
