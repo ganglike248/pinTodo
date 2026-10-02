@@ -1,4 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="window_bg">#FFF2F4F6</color>
+    <!-- 홈 화면 위젯 -->
+    <color name="widget_bg">#FFFFFFFF</color>
+    <color name="widget_text">#FF191F28</color>
+    <color name="widget_sub">#FF8B95A1</color>
+    <color name="widget_primary">#FF3182F6</color>
+    <color name="widget_orange">#FFF08A00</color>
+    <color name="widget_line">#FFB0B8C1</color>
 </resources>

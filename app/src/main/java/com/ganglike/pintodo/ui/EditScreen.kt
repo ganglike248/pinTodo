@@ -26,6 +26,7 @@ import androidx.compose.material.icons.rounded.Alarm
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.DeleteOutline
 import androidx.compose.material.icons.rounded.Flag
+import androidx.compose.material.icons.rounded.Notifications
 import androidx.compose.material.icons.rounded.PushPin
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -70,6 +71,7 @@ fun EditScreen(
 ) {
     var title by rememberSaveable { mutableStateOf(initial.title) }
     var memo by rememberSaveable { mutableStateOf(initial.memo) }
+    var notify by rememberSaveable { mutableStateOf(initial.notify) }
     var pinned by rememberSaveable { mutableStateOf(initial.pinned) }
     var alertMode by rememberSaveable { mutableStateOf(initial.alertMode) }
     var repeat by rememberSaveable { mutableStateOf(initial.isRepeat) }
@@ -83,6 +85,7 @@ fun EditScreen(
 
     val now = System.currentTimeMillis()
     val error = when {
+        !notify -> null
         repeat && days.isEmpty() -> "요일을 하나 이상 선택해 주세요"
         repeat && dailyEnd == dailyStart -> "시작과 종료 시각이 같아요"
         !repeat && endAt != null && endAt!! <= (startAt ?: now) -> "종료가 시작보다 늦어야 해요"
@@ -91,18 +94,20 @@ fun EditScreen(
     val canSave = title.isNotBlank() && error == null
 
     fun build(): Todo {
+        // 알림을 끄면 일정은 의미가 없으므로 비움 (완료하면 바로 기록으로)
         val base = initial.copy(
             title = title.trim(),
             memo = memo.trim(),
+            notify = notify,
             pinned = pinned,
             alertMode = alertMode,
-            startAt = if (repeat) null else startAt,
-            endAt = if (repeat) null else endAt,
-            repeatDays = if (repeat) days.toSet() else emptySet(),
+            startAt = if (repeat || !notify) null else startAt,
+            endAt = if (repeat || !notify) null else endAt,
+            repeatDays = if (repeat && notify) days.toSet() else emptySet(),
             dailyStart = dailyStart,
             dailyEnd = dailyEnd,
         )
-        val scheduleChanged = base.startAt != initial.startAt || base.endAt != initial.endAt ||
+        val scheduleChanged = base.notify != initial.notify || base.startAt != initial.startAt || base.endAt != initial.endAt ||
             base.repeatDays != initial.repeatDays || base.dailyStart != initial.dailyStart ||
             base.dailyEnd != initial.dailyEnd
         return when {
@@ -171,20 +176,30 @@ fun EditScreen(
 
             Section("알림") {
                 SettingRow(
-                    title = "알림창에 고정",
-                    value = if (pinned) "밀어서 지워도 다시 나타나요" else "밀어서 지우면 이번엔 숨겨요",
-                    icon = Icons.Rounded.PushPin,
-                    onClick = { pinned = !pinned },
-                    trailing = { Switch(checked = pinned, onCheckedChange = { pinned = it }) },
+                    title = "알림 받기",
+                    value = if (notify) "알림창에 표시해요" else "알림 없이 목록과 위젯에만 보여요",
+                    icon = Icons.Rounded.Notifications,
+                    onClick = { notify = !notify },
+                    trailing = { Switch(checked = notify, onCheckedChange = { notify = it }) },
                 )
-                HorizontalDivider(Modifier.padding(horizontal = 20.dp), color = MaterialTheme.colorScheme.outlineVariant)
-                Column(Modifier.padding(16.dp)) {
-                    Text("알림 방식", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium, modifier = Modifier.padding(start = 4.dp, bottom = 12.dp))
-                    AlertModePicker(alertMode) { alertMode = it }
+                if (notify) {
+                    HorizontalDivider(Modifier.padding(horizontal = 20.dp), color = MaterialTheme.colorScheme.outlineVariant)
+                    SettingRow(
+                        title = "알림창에 고정",
+                        value = if (pinned) "밀어서 지워도 다시 나타나요" else "밀어서 지우면 이번엔 숨겨요",
+                        icon = Icons.Rounded.PushPin,
+                        onClick = { pinned = !pinned },
+                        trailing = { Switch(checked = pinned, onCheckedChange = { pinned = it }) },
+                    )
+                    HorizontalDivider(Modifier.padding(horizontal = 20.dp), color = MaterialTheme.colorScheme.outlineVariant)
+                    Column(Modifier.padding(16.dp)) {
+                        Text("알림 방식", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium, modifier = Modifier.padding(start = 4.dp, bottom = 12.dp))
+                        AlertModePicker(alertMode) { alertMode = it }
+                    }
                 }
             }
 
-            Section("일정") {
+            if (notify) Section("일정") {
                 SegmentTabs(listOf("한 번", "반복"), if (repeat) 1 else 0, { repeat = it == 1 }, Modifier.padding(horizontal = 16.dp, vertical = 10.dp))
 
                 if (!repeat) {

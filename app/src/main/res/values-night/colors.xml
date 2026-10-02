@@ -1,4 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="window_bg">#FF17171C</color>
+    <color name="widget_bg">#FF202027</color>
+    <color name="widget_text">#FFE4E4E5</color>
+    <color name="widget_sub">#FF8E8E98</color>
+    <color name="widget_primary">#FF4B96FF</color>
+    <color name="widget_orange">#FFFFA733</color>
+    <color name="widget_line">#FF5A5A66</color>
 </resources>

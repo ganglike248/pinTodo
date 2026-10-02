@@ -13,6 +13,7 @@ enum class AlertMode(val label: String) {
 
 enum class Status {
     SHOWING,    // 지금 알림창에 표시 중
+    NO_ALERT,   // 알림 없이 목록·위젯에만 있는 할 일
     SNOOZED,    // 미뤄둠
     HIDDEN,     // 이번 회차 완료(반복) 또는 닫음(고정 안 함)
     SCHEDULED,  // 시작 전
@@ -27,6 +28,7 @@ data class Todo(
     val id: Int,
     val title: String,
     val memo: String = "",
+    val notify: Boolean = true,     // false면 알림·예약 없이 목록에만
     val pinned: Boolean = true,
     val alertMode: AlertMode = AlertMode.BOTH,
 
@@ -49,7 +51,7 @@ data class Todo(
 
     /** now 시점에 해당하는 표시 구간 (없으면 null) */
     fun windowAt(now: Long): Window? {
-        if (doneAt != null) return null
+        if (doneAt != null || !notify) return null
         if (!isRepeat) {
             val s = startAt ?: createdAt
             if (now < s || (endAt != null && now >= endAt)) return null
@@ -65,7 +67,7 @@ data class Todo(
 
     /** now 이후 다음 표시 시작 시각 */
     fun nextStart(now: Long): Long? {
-        if (doneAt != null) return null
+        if (doneAt != null || !notify) return null
         if (!isRepeat) return (startAt ?: createdAt).takeIf { it > now }
         val today = localDate(now)
         return (0L..7L).asSequence()
@@ -77,6 +79,7 @@ data class Todo(
 
     fun status(now: Long): Status {
         if (doneAt != null) return Status.DONE
+        if (!notify) return Status.NO_ALERT
         val w = windowAt(now) ?: return if (nextStart(now) != null) Status.SCHEDULED else Status.ENDED
         if (hiddenKey == w.start) return Status.HIDDEN
         if (snoozeUntil != null && now < snoozeUntil) return Status.SNOOZED

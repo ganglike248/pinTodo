@@ -82,6 +82,7 @@ fun TodoScreen(
     val upcoming = active.filter { it.status(now) in setOf(Status.SCHEDULED, Status.HIDDEN) }
         .sortedBy { it.nextStart(now) ?: Long.MAX_VALUE }
     val ended = active.filter { it.status(now) == Status.ENDED }
+    val noAlert = active.filter { it.status(now) == Status.NO_ALERT }
     val showing = inProgress.count { it.status(now) == Status.SHOWING }
 
     LazyColumn(
@@ -101,6 +102,7 @@ fun TodoScreen(
 
         section("진행 중", inProgress, now, onEdit, onComplete, onSnooze)
         section("예정", upcoming, now, onEdit, onComplete, onSnooze)
+        section("알림 없는 할 일", noAlert, now, onEdit, onComplete, onSnooze)
         section("기간 종료", ended, now, onEdit, onComplete, onSnooze)
     }
 }
@@ -216,7 +218,8 @@ private fun MetaRow(todo: Todo, status: Status, now: Long) {
         else -> c.onSurfaceVariant
     }
     // 상태와 겹치는 정보(기본값 '완료할 때까지', 종료 없는 예정)는 생략
-    val redundant = !todo.isRepeat && todo.endAt == null && (todo.startAt == null || status == Status.SCHEDULED)
+    val redundant = !todo.notify ||
+        !todo.isRepeat && todo.endAt == null && (todo.startAt == null || status == Status.SCHEDULED)
     Row(verticalAlignment = Alignment.CenterVertically) {
         Text(
             buildAnnotatedString {
@@ -230,10 +233,12 @@ private fun MetaRow(todo: Todo, status: Status, now: Long) {
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.weight(1f, fill = false),
         )
-        Spacer(Modifier.width(8.dp))
-        if (todo.pinned) Icon(Icons.Rounded.PushPin, "고정", Modifier.size(14.dp), tint = c.outline)
-        Spacer(Modifier.width(4.dp))
-        Icon(todo.alertMode.icon(), todo.alertMode.label, Modifier.size(14.dp), tint = c.outline)
+        if (todo.notify) {
+            Spacer(Modifier.width(8.dp))
+            if (todo.pinned) Icon(Icons.Rounded.PushPin, "고정", Modifier.size(14.dp), tint = c.outline)
+            Spacer(Modifier.width(4.dp))
+            Icon(todo.alertMode.icon(), todo.alertMode.label, Modifier.size(14.dp), tint = c.outline)
+        }
     }
 }
 

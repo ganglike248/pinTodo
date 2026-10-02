@@ -39,6 +39,7 @@ enum class SnoozeOption(val label: String, val buttonLabel: String) {
 data class AppSettings(
     val snoozeOptions: Set<SnoozeOption> = setOf(SnoozeOption.MIN_10, SnoozeOption.HOUR_1, SnoozeOption.TOMORROW),
     val quickSnooze: SnoozeOption = SnoozeOption.MIN_10,  // 알림에 바로 보이는 미루기 버튼
+    val defaultNotify: Boolean = true,
     val defaultPinned: Boolean = true,
     val defaultAlertMode: AlertMode = AlertMode.BOTH,
     val dynamicColor: Boolean = false,                    // 배경화면 색상(Material You) 사용
@@ -72,6 +73,7 @@ object SettingsStore {
         prefs(context).edit()
             .putStringSet("snoozeOptions", next.snoozeOptions.map { it.name }.toSet())
             .putString("quickSnooze", next.quickSnooze.name)
+            .putBoolean("defaultNotify", next.defaultNotify)
             .putBoolean("defaultPinned", next.defaultPinned)
             .putString("defaultAlertMode", next.defaultAlertMode.name)
             .putBoolean("dynamicColor", next.dynamicColor)
@@ -90,6 +92,7 @@ object SettingsStore {
                 ?.ifEmpty { null } ?: d.snoozeOptions,
             quickSnooze = p.getString("quickSnooze", null)
                 ?.let { runCatching { SnoozeOption.valueOf(it) }.getOrNull() } ?: d.quickSnooze,
+            defaultNotify = p.getBoolean("defaultNotify", d.defaultNotify),
             defaultPinned = p.getBoolean("defaultPinned", d.defaultPinned),
             defaultAlertMode = p.getString("defaultAlertMode", null)
                 ?.let { runCatching { AlertMode.valueOf(it) }.getOrNull() } ?: d.defaultAlertMode,

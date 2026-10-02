@@ -20,6 +20,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.MusicNote
 import androidx.compose.material.icons.rounded.NotificationsActive
 import androidx.compose.material.icons.rounded.NotificationsOff
@@ -134,7 +135,14 @@ fun SettingRow(
             Text(title, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium)
             if (value != null) Text(value, style = MaterialTheme.typography.bodyMedium, color = valueColor)
         }
-        trailing?.invoke()
+        when {
+            trailing != null -> trailing()
+            // 눌러서 바꾸는 줄임을 알 수 있게
+            onClick != null -> Icon(
+                Icons.Rounded.ChevronRight, null,
+                Modifier.size(22.dp), tint = MaterialTheme.colorScheme.outline,
+            )
+        }
     }
 }
 

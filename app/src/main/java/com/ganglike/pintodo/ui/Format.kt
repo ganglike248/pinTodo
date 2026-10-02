@@ -53,6 +53,7 @@ object Format {
 
     /** 목록 카드에 표시할 일정 요약 */
     fun schedule(t: Todo): String {
+        if (!t.notify) return "알림 없음"
         if (t.isRepeat) {
             val end = t.dailyEnd?.let { "–${time(it)}" } ?: "부터"
             return "${days(t.repeatDays)} ${time(t.dailyStart)}$end"
@@ -75,6 +76,7 @@ object Format {
 
     fun status(t: Todo, now: Long): String = when (t.status(now)) {
         Status.SHOWING -> "알림 중"
+        Status.NO_ALERT -> "알림 없음"
         Status.SNOOZED -> "${dateTime(t.snoozeUntil!!)}까지 미룸"
         Status.HIDDEN -> if (t.isRepeat) "오늘 완료" else "알림 닫음"
         Status.SCHEDULED -> "${dateTime(t.nextStart(now)!!)} 시작"

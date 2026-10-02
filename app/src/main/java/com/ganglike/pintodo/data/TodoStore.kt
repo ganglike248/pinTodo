@@ -79,6 +79,7 @@ object TodoStore {
         put("id", t.id)
         put("title", t.title)
         put("memo", t.memo)
+        put("notify", t.notify)
         put("pinned", t.pinned)
         put("alertMode", t.alertMode.name)
         putOpt("startAt", t.startAt)
@@ -100,6 +101,7 @@ object TodoStore {
             id = o.getInt("id"),
             title = o.optString("title", o.optString("text")),
             memo = o.optString("memo"),
+            notify = o.optBoolean("notify", true),
             pinned = o.optBoolean("pinned", true),
             alertMode = runCatching { AlertMode.valueOf(o.getString("alertMode")) }.getOrDefault(AlertMode.SILENT),
             startAt = o.optLongOrNull("startAt"),

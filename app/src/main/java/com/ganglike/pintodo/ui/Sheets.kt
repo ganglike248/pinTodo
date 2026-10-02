@@ -123,18 +123,20 @@ fun SnoozeSheet(todo: Todo, onDismiss: () -> Unit, onPick: (SnoozeOption) -> Uni
 /** 빠른 추가 시트 (위젯 +, 빠른 설정 타일) */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun QuickAddSheet(onDismiss: () -> Unit, onAdd: (title: String, startAt: Long?) -> Unit, onDetail: (String) -> Unit) {
+fun QuickAddSheet(onDismiss: () -> Unit, onAdd: (title: String, startAt: Long?, notify: Boolean) -> Unit, onDetail: (String) -> Unit) {
     val ctx = LocalContext.current
     val settings = SettingsStore.get(ctx)
     var title by remember { mutableStateOf("") }
-    var start by remember { mutableStateOf(0) }
+    var start by remember { mutableStateOf(if (settings.defaultNotify) 0 else 4) }
     val focus = remember { FocusRequester() }
-    val starts = listOf("지금" to null, "30분 뒤" to 30, "1시간 뒤" to 60, "내일 아침 9시" to -1)
+    // 마지막 '알림 없이'는 알림·예약 없이 목록에만 추가
+    val starts = listOf("지금" to null, "30분 뒤" to 30, "1시간 뒤" to 60, "내일 아침 9시" to -1, "알림 없이" to -2)
+    val notify = starts[start].second != -2
 
     fun startAt(): Long? {
         val now = System.currentTimeMillis()
         return when (val m = starts[start].second) {
-            null -> null
+            null, -2 -> null
             -1 -> {
                 val zone = ZoneId.systemDefault()
                 LocalDate.now(zone).plusDays(1).atStartOfDay(zone).plusHours(9).toInstant().toEpochMilli()
@@ -150,7 +152,7 @@ fun QuickAddSheet(onDismiss: () -> Unit, onAdd: (title: String, startAt: Long?) 
             onValueChange = { title = it },
             placeholder = "무엇을 해야 하나요?",
             imeAction = ImeAction.Done,
-            onDone = { if (title.isNotBlank()) hide { onAdd(title.trim(), startAt()) } },
+            onDone = { if (title.isNotBlank()) hide { onAdd(title.trim(), startAt(), notify) } },
             modifier = Modifier.focusRequester(focus),
         )
         Spacer(Modifier.height(16.dp))
@@ -158,7 +160,7 @@ fun QuickAddSheet(onDismiss: () -> Unit, onAdd: (title: String, startAt: Long?) 
             starts.forEachIndexed { i, (label, _) -> SoftChip(label, start == i) { start = i } }
         }
         Spacer(Modifier.height(14.dp))
-        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(start = 4.dp)) {
+        if (notify) Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(start = 4.dp)) {
             if (settings.defaultPinned) {
                 Icon(Icons.Rounded.PushPin, null, Modifier.size(15.dp), tint = MaterialTheme.colorScheme.outline)
                 Spacer(Modifier.width(4.dp))
@@ -174,7 +176,7 @@ fun QuickAddSheet(onDismiss: () -> Unit, onAdd: (title: String, startAt: Long?) 
         Spacer(Modifier.height(20.dp))
         Row(Modifier.imePadding(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             SecondaryButton("자세히", { hide { onDetail(title.trim()) } }, Modifier.weight(1f))
-            PrimaryButton("추가", { hide { onAdd(title.trim(), startAt()) } }, Modifier.weight(1.6f), enabled = title.isNotBlank())
+            PrimaryButton("추가", { hide { onAdd(title.trim(), startAt(), notify) } }, Modifier.weight(1.6f), enabled = title.isNotBlank())
         }
         // 시트 창이 붙은 뒤에 포커스를 줘야 키보드가 올라옴
         val keyboard = LocalSoftwareKeyboardController.current
@@ -187,9 +189,12 @@ fun QuickAddSheet(onDismiss: () -> Unit, onAdd: (title: String, startAt: Long?) 
 }
 
 /** 새 할 일 기본값 적용 */
-fun newTodo(ctx: android.content.Context, title: String = "", startAt: Long? = null): Todo {
+fun newTodo(ctx: android.content.Context, title: String = "", startAt: Long? = null, notify: Boolean? = null): Todo {
     val s = SettingsStore.get(ctx)
-    return Todo(id = -1, title = title, pinned = s.defaultPinned, alertMode = s.defaultAlertMode, startAt = startAt)
+    return Todo(
+        id = -1, title = title, notify = notify ?: s.defaultNotify,
+        pinned = s.defaultPinned, alertMode = s.defaultAlertMode, startAt = startAt,
+    )
 }
 
 class QuickAddActivity : ComponentActivity() {
@@ -200,8 +205,8 @@ class QuickAddActivity : ComponentActivity() {
             PinTodoTheme {
                 QuickAddSheet(
                     onDismiss = ::finish,
-                    onAdd = { title, startAt ->
-                        val todo = newTodo(this, title, startAt)
+                    onAdd = { title, startAt, notify ->
+                        val todo = newTodo(this, title, startAt, notify)
                         Actions.save(this, todo.copy(id = TodoStore.newId(this), createdAt = System.currentTimeMillis()))
                         finish()
                     },

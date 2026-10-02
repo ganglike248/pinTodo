@@ -119,6 +119,14 @@ fun SettingsScreen(contentPadding: PaddingValues) {
         item {
             Section("새 할 일 기본값") {
                 SettingRow(
+                    title = "알림 받기",
+                    value = if (s.defaultNotify) "알림창에 표시해요" else "알림 없이 목록·위젯에만 추가해요",
+                    icon = Icons.Rounded.Notifications,
+                    onClick = { update { it.copy(defaultNotify = !it.defaultNotify) } },
+                    trailing = { Switch(s.defaultNotify, { v -> update { it.copy(defaultNotify = v) } }) },
+                )
+                Divider()
+                SettingRow(
                     title = "알림창에 고정",
                     value = if (s.defaultPinned) "밀어서 지워도 다시 나타나요" else "밀어서 지우면 이번엔 숨겨요",
                     icon = Icons.Rounded.PushPin,
