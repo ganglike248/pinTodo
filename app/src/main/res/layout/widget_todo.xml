@@ -56,6 +56,19 @@
         android:layout_marginTop="6dp"
         android:orientation="vertical" />
 
+    <!-- Android 12+: 스크롤되는 목록 (RemoteCollectionItems). 그 아래 버전은 위의 rows에 최대 8개 -->
+    <ListView
+        android:id="@+id/rows_list"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_marginTop="6dp"
+        android:layout_weight="1"
+        android:divider="@null"
+        android:dividerHeight="0dp"
+        android:listSelector="@android:color/transparent"
+        android:scrollbars="none"
+        android:visibility="gone" />
+
     <TextView
         android:id="@+id/more"
         android:layout_width="wrap_content"

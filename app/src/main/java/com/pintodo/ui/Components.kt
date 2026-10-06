@@ -1,6 +1,13 @@
 package com.pintodo.ui
 
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.runtime.remember
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -196,22 +203,37 @@ fun SecondaryButton(text: String, onClick: () -> Unit, modifier: Modifier = Modi
 /** 둘 중 하나 고르는 알약 모양 탭 (한 번 / 반복) */
 @Composable
 fun SegmentTabs(options: List<String>, selected: Int, onSelect: (Int) -> Unit, modifier: Modifier = Modifier) {
-    Row(
+    // 흰 표시는 하나만 두고 선택한 칸으로 미끄러지게 (칸마다 배경을 따로 바꾸면 이전 칸과 새 칸이 동시에 깜빡여 둘 다 눌린 것처럼 보임)
+    BoxWithConstraints(
         modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(MaterialTheme.colorScheme.surfaceVariant).padding(4.dp),
     ) {
-        options.forEachIndexed { i, label ->
-            val isSel = i == selected
-            val bg by animateColorAsState(if (isSel) MaterialTheme.colorScheme.surface else Color.Transparent, label = "tab")
-            Box(
-                Modifier.weight(1f).height(40.dp).clip(RoundedCornerShape(11.dp)).background(bg).clickable { onSelect(i) },
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(
-                    label,
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = if (isSel) FontWeight.Bold else FontWeight.Medium,
-                    color = if (isSel) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+        val tabWidth = maxWidth / options.size
+        val offset by animateDpAsState(tabWidth * selected, animationSpec = tween(220), label = "tabIndicator")
+        Box(
+            Modifier.offset(x = offset).width(tabWidth).height(40.dp)
+                .clip(RoundedCornerShape(11.dp)).background(MaterialTheme.colorScheme.surface),
+        )
+        Row(Modifier.fillMaxWidth()) {
+            options.forEachIndexed { i, label ->
+                val isSel = i == selected
+                Box(
+                    Modifier.weight(1f).height(40.dp)
+                        .selectable(
+                            selected = isSel,
+                            onClick = { onSelect(i) },
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null,
+                            role = Role.Tab,
+                        ),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        label,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = if (isSel) FontWeight.Bold else FontWeight.Medium,
+                        color = if (isSel) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
             }
         }
     }

@@ -2,7 +2,7 @@
 
 완료할 때까지 알림창에 고정되는 안드로이드 투두 앱. **Google Play 출시 예정** (2026-10-02 결정, 아직 Play Console 등록 전). Kotlin + Jetpack Compose(Material 3), 외부 서버 없음.
 
-- **현재 버전**: v0.4.5 (스토어 출시 전이라 0.x, 출시 시 1.0.0) | GitHub: https://github.com/ganglike248/pinTodo (main 브랜치)
+- **현재 버전**: v0.4.6 (스토어 출시 전이라 0.x, 출시 시 1.0.0) | GitHub: https://github.com/ganglike248/pinTodo (main 브랜치)
 - 사용 기기: 갤럭시 S26 울트라 (One UI / Android 16)
 
 ## 운영 방향 (2026-10-06 결정)
@@ -68,5 +68,6 @@ adb install -r app/build/outputs/apk/sideload/app-sideload.apk
 - 제목·메모 자동 일정: 사용자가 일정을 직접 만지면(`manualSchedule`) 더 이상 덮어쓰지 않음. 기존 할 일은 처음 글에 있던 날짜로는 덮어쓰지 않음
 - `QuickAddActivity`는 공유(SEND text/plain) 대상이라 exported=true
 - 위젯은 Android 12+에서 크기별 `RemoteViews(Map<SizeF, RemoteViews>)`: 150×130dp 이상 목록형, 그보다 작으면 요약형(`widget_compact`)
+- 목록형은 Android 12+에서 스크롤 `ListView` + `RemoteCollectionItems`(즉시 갱신 유지, RemoteViewsService 안 씀). 목록 항목은 개별 PendingIntent를 못 쓰므로 `setPendingIntentTemplate`(→ 보이지 않는 `widget.WidgetClickActivity`) + 항목별 `setOnClickFillInIntent`로 완료·미루기·열기를 나눔. Android 11 이하는 기존처럼 고정 행 최대 8개
 - 빠른 추가/미루기 시트는 투명 액티비티 위의 ModalBottomSheet. 시트 안 입력창 포커스는 시트 창이 붙은 뒤(delay) 요청해야 키보드가 올라옴
 - 휠 피커(`WheelPicker`)는 같은 값을 여러 번 반복한 LazyColumn + 가운데 스냅. 휴대폰 모드별 실제 울림(진동 모드에서 소리 채널 → 진동)은 에뮬레이터 `notification_alert` 로그로 검증함

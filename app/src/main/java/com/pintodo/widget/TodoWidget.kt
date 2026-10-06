@@ -30,6 +30,7 @@ object TodoWidget {
     private const val MAX_ROWS = 8
     private const val REQ_OPEN_APP = 100_000
     private const val REQ_QUICK_ADD = 100_001
+    private const val REQ_LIST_TEMPLATE = 100_002
 
     fun refresh(context: Context) {
         val manager = AppWidgetManager.getInstance(context)
@@ -83,15 +84,32 @@ object TodoWidget {
         views.setTextViewText(R.id.subtitle, subtitle(items, now))
         views.setViewVisibility(R.id.empty, if (items.isEmpty()) View.VISIBLE else View.GONE)
 
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            // 스크롤 목록: 목록 안 버튼은 개별 PendingIntent를 못 써서 템플릿 + 항목별 fill-in으로 WidgetClickActivity에 전달
+            views.setViewVisibility(R.id.rows, View.GONE)
+            views.setViewVisibility(R.id.more, View.GONE)
+            views.setViewVisibility(R.id.rows_list, if (items.isEmpty()) View.GONE else View.VISIBLE)
+            val list = RemoteViews.RemoteCollectionItems.Builder().setHasStableIds(true).setViewTypeCount(1)
+            items.forEach { list.addItem(it.id.toLong(), row(context, it, now, inList = true)) }
+            views.setRemoteAdapter(R.id.rows_list, list.build())
+            views.setPendingIntentTemplate(
+                R.id.rows_list,
+                PendingIntent.getActivity(
+                    context, REQ_LIST_TEMPLATE, Intent(context, WidgetClickActivity::class.java),
+                    PendingIntent.FLAG_MUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+                ),
+            )
+            return views
+        }
         views.removeAllViews(R.id.rows)
-        items.take(MAX_ROWS).forEach { views.addView(R.id.rows, row(context, it, now)) }
+        items.take(MAX_ROWS).forEach { views.addView(R.id.rows, row(context, it, now, inList = false)) }
         val rest = items.size - MAX_ROWS
         views.setViewVisibility(R.id.more, if (rest > 0) View.VISIBLE else View.GONE)
         if (rest > 0) views.setTextViewText(R.id.more, "외 ${rest}개 더")
         return views
     }
 
-    private fun row(context: Context, todo: Todo, now: Long): RemoteViews {
+    private fun row(context: Context, todo: Todo, now: Long, inList: Boolean): RemoteViews {
         val status = todo.status(now)
         val canComplete = status != Status.SCHEDULED
         val v = RemoteViews(context.packageName, R.layout.widget_row)
@@ -115,20 +133,24 @@ object TodoWidget {
         v.setViewVisibility(R.id.row_color, visibleIf(todo.color != null))
         todo.color?.let { v.setInt(R.id.row_color, "setColorFilter", it.argb.toInt()) }
 
+        // 목록(스크롤) 안에서는 fill-in, 고정 행에서는 개별 PendingIntent
+        fun click(viewId: Int, action: String, pending: () -> PendingIntent) {
+            if (inList) v.setOnClickFillInIntent(viewId, WidgetClickActivity.fillIn(action, todo.id))
+            else v.setOnClickPendingIntent(viewId, pending())
+        }
         if (canComplete) {
-            v.setOnClickPendingIntent(R.id.row_check, broadcast(context, ActionReceiver.ACTION_DONE, todo.id))
+            click(R.id.row_check, WidgetClickActivity.DONE) { broadcast(context, ActionReceiver.ACTION_DONE, todo.id) }
             v.setContentDescription(R.id.row_check, "${if (todo.isRepeat) "오늘 완료" else "완료"}: ${todo.title}")
         }
         // 알림 중인 할 일은 위젯에서 바로 미루기 (설정의 '알림에 바로 보이는 버튼'과 같은 선택지)
         v.setViewVisibility(R.id.row_snooze, visibleIf(status == Status.SHOWING))
         if (status == Status.SHOWING) {
-            v.setOnClickPendingIntent(R.id.row_snooze, broadcast(context, ActionReceiver.ACTION_SNOOZE, todo.id))
+            click(R.id.row_snooze, WidgetClickActivity.SNOOZE) { broadcast(context, ActionReceiver.ACTION_SNOOZE, todo.id) }
             v.setContentDescription(R.id.row_snooze, "${SettingsStore.get(context).quickSnooze.buttonLabel} 미루기: ${todo.title}")
         }
-        v.setOnClickPendingIntent(
-            R.id.row_body,
-            activity(context, todo.id, Intent(context, MainActivity::class.java).putExtra(MainActivity.EXTRA_TODO_ID, todo.id)),
-        )
+        click(R.id.row_body, WidgetClickActivity.OPEN) {
+            activity(context, todo.id, Intent(context, MainActivity::class.java).putExtra(MainActivity.EXTRA_TODO_ID, todo.id))
+        }
         return v
     }
 

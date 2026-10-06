@@ -57,6 +57,13 @@ private fun fixed(t: String) = Change(ChangeKind.FIXED, t)
 
 val RELEASES = listOf(
     Release(
+        "0.4.6", "2026.10.06",
+        listOf(
+            improved("위젯에서 할 일 목록을 스크롤할 수 있어요"),
+            fixed("일정의 한 번·반복·알림 없이를 바꿀 때 두 칸이 같이 깜빡이던 문제를 고쳤어요"),
+        ),
+    ),
+    Release(
         "0.4.5", "2026.10.06",
         listOf(
             new("할 일을 정한 간격마다 다시 알려 줄 수 있어요"),

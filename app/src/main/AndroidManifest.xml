@@ -51,6 +51,15 @@
             android:taskAffinity=""
             android:theme="@style/Theme.PinTodo.Sheet" />
 
+        <!-- 위젯 스크롤 목록의 완료·미루기·열기를 받는 보이지 않는 화면 -->
+        <activity
+            android:name=".widget.WidgetClickActivity"
+            android:excludeFromRecents="true"
+            android:exported="false"
+            android:noHistory="true"
+            android:taskAffinity=""
+            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+
         <!-- 홈 화면 위젯 -->
         <receiver
             android:name=".widget.TodoWidgetReceiver"
