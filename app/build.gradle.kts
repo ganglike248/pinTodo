@@ -12,8 +12,8 @@ android {
         applicationId = "com.pintodo"
         minSdk = 26
         targetSdk = 36
-        versionCode = 7
-        versionName = "0.4.1"
+        versionCode = 8
+        versionName = "0.4.2"
     }
 
     buildTypes {
@@ -21,7 +21,7 @@ android {
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"))
-            // 개인용이라 디버그 키로 서명 (별도 키스토어 불필요)
+            // TODO(Play 출시 전): 업로드 키로 교체. 지금은 디버그 키로 서명
             signingConfig = signingConfigs.getByName("debug")
         }
     }
@@ -49,4 +49,6 @@ dependencies {
     implementation("androidx.compose.material:material-icons-extended")
     implementation("androidx.activity:activity-compose:1.11.0")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.9.4")
+
+    testImplementation("junit:junit:4.13.2")
 }

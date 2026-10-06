@@ -46,6 +46,7 @@ data class Todo(
     val snoozeUntil: Long? = null,
     val hiddenKey: Long? = null,    // 숨긴 회차의 window.start
     val alertedKey: Long? = null,   // 이미 소리/진동을 낸 회차 키
+    val wearDismissedKey: Long? = null, // 밀어서 지운 회차 키 → 이 회차는 워치로 다시 보내지 않음
 ) {
     val isRepeat get() = repeatDays.isNotEmpty()
 

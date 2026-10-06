@@ -28,7 +28,11 @@ object Notifier {
     private const val CH_BOTH = "alert_both"
     private val VIBRATION = longArrayOf(0, 250, 150, 250)
 
+    private var channelsReady = false
+
     fun ensureChannels(context: Context) {
+        if (channelsReady) return
+        channelsReady = true
         val nm = manager(context)
         nm.deleteNotificationChannel("pinned_todos") // v1 채널 정리
 
@@ -71,30 +75,42 @@ object Notifier {
             AlertMode.VIBRATE -> CH_VIBRATE
             AlertMode.BOTH -> CH_BOTH
         }
-        val quick = SettingsStore.get(context).quickSnooze
-        val schedule = Format.notificationSchedule(todo, now)
-        val body = todo.memo.ifBlank { schedule }
+        val settings = SettingsStore.get(context)
+        // 내용이 없어도 언제로 정한 할 일인지 보이도록 일정은 항상 표시
+        val schedule = Format.notificationSchedule(todo)
+        val text = todo.memo.ifBlank { schedule }
+        val bigText = if (todo.memo.isBlank()) schedule else "${todo.memo}\n$schedule"
+
+        // 워치(Wear OS·갤럭시 워치·밴드 앱)는 ongoing 알림을 넘겨받지 않음 →
+        // 워치로 보낼 때는 ongoing 없이 deleteIntent 재게시만으로 고정하고, 지운 회차는 휴대폰에만 남김
+        val toWear = settings.wearable && todo.wearDismissedKey != todo.alertKey(now)
+
+        val done = Notification.Action.Builder(null, if (todo.isRepeat) "오늘 완료" else "완료",
+            action(context, ActionReceiver.ACTION_DONE, todo.id)).build()
+        val quickSnooze = Notification.Action.Builder(null, settings.quickSnooze.buttonLabel,
+            action(context, ActionReceiver.ACTION_SNOOZE, todo.id)).build()
 
         val builder = Notification.Builder(context, channel)
             .setSmallIcon(R.drawable.ic_pin)
             .setColor(0xFF4A66E8.toInt())
             .setContentTitle(todo.title)
-            .setContentText(body)
-            .setStyle(Notification.BigTextStyle().bigText(body))
-            .setOngoing(todo.pinned)
+            .setContentText(text)
+            .setStyle(Notification.BigTextStyle().bigText(bigText))
+            .setOngoing(todo.pinned && !settings.wearable)
+            .setLocalOnly(!toWear)
             .setAutoCancel(false)
             .setOnlyAlertOnce(true)
-            .setShowWhen(false)
+            .setShowWhen(true)
+            .setWhen(todo.alertKey(now) ?: now)   // 이번에 뜬 시각 (회차 시작 또는 미루기 종료)
             .setCategory(Notification.CATEGORY_REMINDER)
             .setContentIntent(openApp(context, todo.id))
             .setDeleteIntent(action(context, ActionReceiver.ACTION_DISMISSED, todo.id))
             // 알림 버튼은 최대 3개: 완료 / 자주 쓰는 미루기 / 미루기 선택
-            .addAction(Notification.Action.Builder(null, if (todo.isRepeat) "오늘 완료" else "완료",
-                action(context, ActionReceiver.ACTION_DONE, todo.id)).build())
-            .addAction(Notification.Action.Builder(null, quick.buttonLabel,
-                action(context, ActionReceiver.ACTION_SNOOZE, todo.id)).build())
+            .addAction(done)
+            .addAction(quickSnooze)
             .addAction(Notification.Action.Builder(null, "미루기…", snoozeChooser(context, todo.id)).build())
-        if (todo.memo.isNotBlank() && schedule.isNotEmpty()) builder.setSubText(schedule)
+            // 워치에서는 휴대폰 화면을 여는 '미루기…' 없이 바로 처리되는 버튼만
+            .extend(Notification.WearableExtender().addAction(done).addAction(quickSnooze))
 
         manager(context).notify(todo.id, builder.build())
     }

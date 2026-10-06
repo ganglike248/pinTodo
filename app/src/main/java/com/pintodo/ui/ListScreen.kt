@@ -28,6 +28,7 @@ import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Alarm
 import androidx.compose.material.icons.rounded.BatteryAlert
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.NotificationsOff
@@ -242,16 +243,19 @@ private fun MetaRow(todo: Todo, status: Status, now: Long) {
     }
 }
 
-/** 알림 권한 / 배터리 최적화 안내 */
+/** 알림 권한 / 정확한 알람 / 배터리 최적화 안내 */
 @Composable
 private fun Banners() {
     val ctx = LocalContext.current
     var notifOk by remember { mutableStateOf(Notifier.enabled(ctx)) }
+    var exactOk by remember { mutableStateOf(Sync.canExact(ctx)) }
+    var exactHidden by remember { mutableStateOf(uiPrefs(ctx).getBoolean("exact_banner_hidden", false)) }
     var batteryOk by remember { mutableStateOf(ignoringBattery(ctx)) }
     var batteryHidden by remember { mutableStateOf(uiPrefs(ctx).getBoolean("battery_banner_hidden", false)) }
 
     LifecycleResumeEffect(Unit) {
         notifOk = Notifier.enabled(ctx)
+        exactOk = Sync.canExact(ctx)
         batteryOk = ignoringBattery(ctx)
         onPauseOrDispose { }
     }
@@ -275,11 +279,23 @@ private fun Banners() {
                 onAction = { ctx.startActivity(notificationSettings(ctx)) },
             )
         }
+        if (!exactOk && !exactHidden) {
+            Banner(
+                icon = Icons.Rounded.Alarm,
+                text = "'알람 및 리마인더' 권한이 꺼져 있어서 정한 시각보다 알림이 몇 분 늦게 뜰 수 있어요",
+                action = "허용하기",
+                onAction = { ctx.startActivity(exactAlarmSettings(ctx)) },
+                onClose = {
+                    exactHidden = true
+                    uiPrefs(ctx).edit().putBoolean("exact_banner_hidden", true).apply()
+                },
+            )
+        }
         if (!batteryOk && !batteryHidden) {
             Banner(
                 icon = Icons.Rounded.BatteryAlert,
-                text = "배터리 절전 때문에 알림 고정이나 예약이 늦어질 수 있어요",
-                action = "절전 예외 등록",
+                text = "배터리 절전 때문에 알림 고정이나 예약이 늦어질 수 있어요. 앱 정보 > 배터리에서 '제한 없음'으로 바꿔 주세요",
+                action = "설정 열기",
                 onAction = { ctx.startActivity(batteryExemption(ctx)) },
                 onClose = {
                     batteryHidden = true
@@ -327,8 +343,13 @@ fun EmptyState(title: String = "할 일이 없어요", body: String = "추가한
 fun ignoringBattery(ctx: Context) =
     ctx.getSystemService(PowerManager::class.java).isIgnoringBatteryOptimizations(ctx.packageName)
 
+/** 앱 정보 화면 (배터리 > 제한 없음). Play 정책상 절전 예외 요청 대화상자 대신 설정 화면으로 안내 */
 fun batteryExemption(ctx: Context) =
-    Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, Uri.parse("package:${ctx.packageName}"))
+    Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:${ctx.packageName}"))
+
+/** '알람 및 리마인더' 허용 화면 (Android 12+에서만 권한이 꺼질 수 있음) */
+fun exactAlarmSettings(ctx: Context) =
+    Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM, Uri.parse("package:${ctx.packageName}"))
 
 fun notificationSettings(ctx: Context) =
     Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, ctx.packageName)

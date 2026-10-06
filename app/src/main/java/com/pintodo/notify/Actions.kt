@@ -12,9 +12,8 @@ object Actions {
         if (todo.isRepeat) todo.copy(hiddenKey = todo.windowAt(now)?.start, snoozeUntil = null)
         else todo.copy(doneAt = now, snoozeUntil = null)
 
-    /** 미루기. 선택지가 이미 지난 시각(예: 저녁 6시 이후의 '오늘 저녁')이면 무시 */
     fun snooze(context: Context, id: Int, option: SnoozeOption) {
-        val until = option.until(System.currentTimeMillis()) ?: return
+        val until = option.until(System.currentTimeMillis())
         TodoStore.modify(context, id) { it.copy(snoozeUntil = until) }
         Sync.run(context)
     }

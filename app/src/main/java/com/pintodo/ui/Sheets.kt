@@ -93,7 +93,7 @@ fun AppTextField(
 fun SnoozeSheet(todo: Todo, onDismiss: () -> Unit, onPick: (SnoozeOption) -> Unit) {
     val ctx = LocalContext.current
     val now = System.currentTimeMillis()
-    val options = SettingsStore.get(ctx).enabledSnoozes.mapNotNull { o -> o.until(now)?.let { o to it } }
+    val options = SettingsStore.get(ctx).enabledSnoozes.map { it to it.until(now) }
     AppSheet(onDismiss) { hide ->
         SheetTitle("언제 다시 알려드릴까요?", todo.title)
         options.forEach { (option, until) ->

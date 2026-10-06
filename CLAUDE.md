@@ -2,7 +2,7 @@
 
 완료할 때까지 알림창에 고정되는 안드로이드 투두 앱. **Google Play 출시 예정** (2026-10-02 결정, 아직 Play Console 등록 전). Kotlin + Jetpack Compose(Material 3), 외부 서버 없음.
 
-- **현재 버전**: v0.4.1 (스토어 출시 전이라 0.x, 출시 시 1.0.0) | GitHub: https://github.com/ganglike248/pinTodo (main 브랜치)
+- **현재 버전**: v0.4.2 (스토어 출시 전이라 0.x, 출시 시 1.0.0) | GitHub: https://github.com/ganglike248/pinTodo (main 브랜치)
 - 사용 기기: 갤럭시 S26 울트라 (One UI / Android 16)
 
 ## 버전 관리 규칙 (필수)
@@ -19,8 +19,8 @@
 ## Google Play 출시 준비 (출시 전 반드시 처리)
 - [ ] 업로드 키스토어 생성 + Play App Signing, `signingConfig`를 디버그 키 → 업로드 키로 (키스토어·비밀번호는 저장소에 커밋 금지)
 - [ ] `./gradlew bundleRelease`로 AAB 업로드 (APK 아님)
-- [ ] **`USE_EXACT_ALARM` 정책 위험**: Play는 알람 시계·캘린더 앱에만 허용 → `SCHEDULE_EXACT_ALARM` + 사용자 허용 요청(설정 화면 이동) + 미허용 시 부정확 알람 대체로 변경 필요
-- [ ] **`REQUEST_IGNORE_BATTERY_OPTIMIZATIONS` 정책 위험**: 직접 예외 요청 대화상자는 허용 사유가 제한됨 → 권한 제거하고 `ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS`(목록 화면 열기)로 변경 검토
+- [x] ~~`USE_EXACT_ALARM`~~ → `SCHEDULE_EXACT_ALARM` + 배너/설정에서 허용 화면 이동 + 미허용 시 `setAndAllowWhileIdle` 대체 + 허용 시 `SystemReceiver`가 Sync (v0.4.2)
+- [x] ~~`REQUEST_IGNORE_BATTERY_OPTIMIZATIONS`~~ 제거 → 앱 정보 화면(배터리 > 제한 없음)으로 안내 (v0.4.2)
 - [ ] 개인정보처리방침 URL (수집 데이터 없음을 명시), 데이터 보안 양식(수집·공유 없음), 콘텐츠 등급
 - [ ] 스토어 등록정보: 아이콘 512×512, 그래픽 이미지 1024×500, 휴대폰 스크린샷
 - [ ] 정식 출시 시 버전 1.0.0, 이후 versionCode는 계속 증가
@@ -44,6 +44,9 @@ adb install -r app/build/outputs/apk/release/app-release.apk
 - 위젯은 RemoteViews + `AppWidgetManager.updateAppWidget`로 즉시 갱신. Glance는 WorkManager를 거쳐 그려서 삼성 기기에서 갱신이 지연·누락됐음 → 다시 Glance로 바꾸지 말 것. 위젯 클래스명 `widget.TodoWidgetReceiver`는 이미 놓인 위젯 유지를 위해 변경 금지
 - `Todo.notify=false`(알림 없는 할 일)는 상태 `NO_ALERT`, 알림·알람 없음. 저장 시 일정 필드는 비움
 - 위젯·타일 갱신은 `Sync.run()` 끝에서 함께 처리 — 할 일을 바꾸는 경로는 반드시 `Sync.run()`을 거칠 것
-- 알림 버튼은 최대 3개: [완료][설정의 quickSnooze][미루기…(SnoozeActivity)]
+- 알림 버튼은 최대 3개: [완료][설정의 quickSnooze][미루기…(SnoozeActivity)]. 워치용 `WearableExtender`에는 [완료][quickSnooze]만
+- **스마트워치**: 워치는 ongoing 알림을 넘겨받지 않음 → `AppSettings.wearable`(기본 켬)이면 `setOngoing(false)` + deleteIntent 재게시로 고정. 밀어서 지운 회차는 `Todo.wearDismissedKey`에 기록해 `setLocalOnly(true)`로 재게시(워치에서 사라지고 휴대폰에만 남음, 워치↔휴대폰 재게시 무한 반복 방지)
+- 알림 본문은 `Format.notificationSchedule`(절대 날짜)로 항상 일정 표시 — 알림은 자정에 다시 그려지지 않으므로 '오늘/내일' 쓰지 말 것
+- 일정 계산(`Todo`)은 `app/src/test`의 JUnit 테스트로 검증: `./gradlew testDebugUnitTest`
 - 빠른 추가/미루기 시트는 투명 액티비티 위의 ModalBottomSheet. 시트 안 입력창 포커스는 시트 창이 붙은 뒤(delay) 요청해야 키보드가 올라옴
 - 휠 피커(`WheelPicker`)는 같은 값을 여러 번 반복한 LazyColumn + 가운데 스냅. 휴대폰 모드별 실제 울림(진동 모드에서 소리 채널 → 진동)은 에뮬레이터 `notification_alert` 로그로 검증함

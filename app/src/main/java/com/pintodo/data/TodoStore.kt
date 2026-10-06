@@ -92,6 +92,7 @@ object TodoStore {
         putOpt("snoozeUntil", t.snoozeUntil)
         putOpt("hiddenKey", t.hiddenKey)
         putOpt("alertedKey", t.alertedKey)
+        putOpt("wearDismissedKey", t.wearDismissedKey)
     }
 
     // v1 데이터({id, text})도 읽을 수 있게 모든 필드를 선택적으로 읽음
@@ -115,6 +116,7 @@ object TodoStore {
             hiddenKey = o.optLongOrNull("hiddenKey"),
             // v1 데이터는 이미 알림이 떠 있었으므로 다시 울리지 않게 alertedKey를 맞춰 둠
             alertedKey = if (o.has("alertMode")) o.optLongOrNull("alertedKey") else 0L,
+            wearDismissedKey = o.optLongOrNull("wearDismissedKey"),
         )
     }
 

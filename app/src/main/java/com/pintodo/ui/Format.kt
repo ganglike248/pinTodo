@@ -68,11 +68,25 @@ object Format {
         }
     }
 
-    /** 알림에 붙는 짧은 일정 문구 */
-    fun notificationSchedule(t: Todo, now: Long): String {
-        val end = t.windowAt(now)?.end ?: return if (t.isRepeat) "${days(t.repeatDays)} 반복" else ""
-        return "${dateTime(end)}까지" + if (t.isRepeat) " · ${days(t.repeatDays)} 반복" else ""
+    /**
+     * 알림에 붙는 일정 문구: 사용자가 정한 시각을 그대로 보여줌.
+     * 알림은 날짜가 바뀌어도 다시 그려지지 않을 수 있어서 '오늘/내일' 대신 날짜로 표시
+     */
+    fun notificationSchedule(t: Todo): String {
+        if (t.isRepeat) return "${schedule(t)} 반복"
+        val start = t.startAt ?: t.createdAt
+        val from = "${fullDateTime(start)} ${if (t.startAt == null) "추가" else "시작"}"
+        val end = t.endAt ?: return "$from · 완료할 때까지"
+        val sameDay = localDate(end) == localDate(start)
+        return "$from · ${if (sameDay) time(minuteOfDay(end)) else fullDateTime(end)}까지"
     }
+
+    /** 10/3(토) 14:30 */
+    private fun fullDateTime(ms: Long) = "${date(localDate(ms))} ${time(minuteOfDay(ms))}"
+
+    private fun localDate(ms: Long) = Instant.ofEpochMilli(ms).atZone(ZoneId.systemDefault()).toLocalDate()
+
+    private fun minuteOfDay(ms: Long) = Instant.ofEpochMilli(ms).atZone(ZoneId.systemDefault()).let { it.hour * 60 + it.minute }
 
     fun status(t: Todo, now: Long): String = when (t.status(now)) {
         Status.SHOWING -> "알림 중"

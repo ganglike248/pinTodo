@@ -27,7 +27,12 @@ class ActionReceiver : BroadcastReceiver() {
             ACTION_DISMISSED -> {
                 if (todo.pinned) {
                     // 고정: 이 알림만 조용히 다시 게시 (그룹째 지우면 알림마다 호출되므로 전체 Sync는 생략)
-                    if (todo.status(now) == Status.SHOWING) Notifier.show(context, todo, alert = false, now = now)
+                    // 한 번 지운 회차는 휴대폰에만 다시 띄워서 워치에서는 사라지게 함
+                    if (todo.status(now) == Status.SHOWING) {
+                        val shown = todo.copy(wearDismissedKey = todo.alertKey(now))
+                        TodoStore.modify(context, id) { it.copy(wearDismissedKey = shown.wearDismissedKey) }
+                        Notifier.show(context, shown, alert = false, now = now)
+                    }
                     return
                 }
                 // 고정 안 함: 이번 회차는 닫은 것으로 처리
@@ -44,7 +49,7 @@ class AlarmReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) = Sync.run(context)
 }
 
-/** 재부팅, 앱 업데이트, 시간/시간대 변경 */
+/** 재부팅, 앱 업데이트, 시간/시간대 변경, 정확한 알람 권한 허용 */
 class SystemReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) = Sync.run(context)
 }

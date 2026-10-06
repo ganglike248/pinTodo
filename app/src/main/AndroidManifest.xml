@@ -4,13 +4,8 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.VIBRATE" />
-    <!-- 시작/종료 시각에 정확히 알림을 띄우고 내리기 위한 알람 -->
-    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
-    <uses-permission
-        android:name="android.permission.SCHEDULE_EXACT_ALARM"
-        android:maxSdkVersion="32" />
-    <!-- 삼성 절전으로 알림 재게시가 막히지 않도록 예외 요청 -->
-    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+    <!-- 시작/종료 시각에 정확히 알림을 띄우고 내리기 위한 알람 ('알람 및 리마인더' 권한, 없으면 부정확 알람으로 대체) -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
 
     <application
         android:allowBackup="true"
@@ -86,7 +81,7 @@
             android:name=".notify.AlarmReceiver"
             android:exported="false" />
 
-        <!-- 재부팅·앱 업데이트·시간 변경 후 알림/알람 복원 -->
+        <!-- 재부팅·앱 업데이트·시간 변경·정확한 알람 허용 후 알림/알람 복원 -->
         <receiver
             android:name=".notify.SystemReceiver"
             android:exported="true">
@@ -95,6 +90,7 @@
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
                 <action android:name="android.intent.action.TIME_SET" />
                 <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+                <action android:name="android.app.action.SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED" />
             </intent-filter>
         </receiver>
     </application>

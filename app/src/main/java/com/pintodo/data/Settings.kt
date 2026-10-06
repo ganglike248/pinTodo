@@ -3,6 +3,7 @@ package com.pintodo.data
 import android.content.Context
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.ZoneId
@@ -14,21 +15,22 @@ enum class SnoozeOption(val label: String, val buttonLabel: String) {
     MIN_30("30분", "30분 뒤"),
     HOUR_1("1시간", "1시간 뒤"),
     HOUR_3("3시간", "3시간 뒤"),
-    EVENING("오늘 저녁 6시", "저녁 6시"),
+    EVENING("저녁 6시", "저녁 6시"),
     TOMORROW("내일 아침 9시", "내일 아침"),
     ;
 
-    /** 미룬 뒤 다시 뜰 시각. 오늘 저녁이 이미 지났으면 null */
-    fun until(now: Long): Long? {
+    /** 미룬 뒤 다시 뜰 시각. 저녁 6시가 이미 지났으면 내일 저녁 6시 */
+    fun until(now: Long): Long {
         val zone = ZoneId.systemDefault()
+        val today = Instant.ofEpochMilli(now).atZone(zone).toLocalDate()
         val minute = 60_000L
         return when (this) {
             MIN_10 -> now + 10 * minute
             MIN_30 -> now + 30 * minute
             HOUR_1 -> now + 60 * minute
             HOUR_3 -> now + 180 * minute
-            EVENING -> at(LocalDate.now(zone), 18, zone).takeIf { it > now }
-            TOMORROW -> at(LocalDate.now(zone).plusDays(1), 9, zone)
+            EVENING -> at(today, 18, zone).takeIf { it > now } ?: at(today.plusDays(1), 18, zone)
+            TOMORROW -> at(today.plusDays(1), 9, zone)
         }
     }
 
@@ -43,6 +45,7 @@ data class AppSettings(
     val defaultPinned: Boolean = true,
     val defaultAlertMode: AlertMode = AlertMode.BOTH,
     val dynamicColor: Boolean = false,                    // 배경화면 색상(Material You) 사용
+    val wearable: Boolean = true,                         // 스마트워치로도 보내기 (끄면 휴대폰 전용 고정 알림)
 ) {
     /** 화면에 보여줄 미루기 선택지 (정의 순서 유지) */
     val enabledSnoozes get() = SnoozeOption.entries.filter { it in snoozeOptions }
@@ -77,6 +80,7 @@ object SettingsStore {
             .putBoolean("defaultPinned", next.defaultPinned)
             .putString("defaultAlertMode", next.defaultAlertMode.name)
             .putBoolean("dynamicColor", next.dynamicColor)
+            .putBoolean("wearable", next.wearable)
             .commit()
         state.value = next
     }
@@ -97,6 +101,7 @@ object SettingsStore {
             defaultAlertMode = p.getString("defaultAlertMode", null)
                 ?.let { runCatching { AlertMode.valueOf(it) }.getOrNull() } ?: d.defaultAlertMode,
             dynamicColor = p.getBoolean("dynamicColor", d.dynamicColor),
+            wearable = p.getBoolean("wearable", d.wearable),
         )
         loaded = true
     }

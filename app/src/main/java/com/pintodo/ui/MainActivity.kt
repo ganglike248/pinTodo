@@ -139,6 +139,8 @@ private fun App(openRequest: MutableState<OpenRequest?>) {
     }
 
     BackHandler(enabled = editing != null) { editing = null }
+    // 기록·설정 탭에서 뒤로가기 → 할 일 탭으로, 할 일 탭에서 한 번 더 누르면 종료
+    BackHandler(enabled = editing == null && tab != Tab.TODO.ordinal) { tab = Tab.TODO.ordinal }
 
     fun complete(todo: Todo) {
         Actions.save(ctx, Actions.complete(todo, System.currentTimeMillis()))

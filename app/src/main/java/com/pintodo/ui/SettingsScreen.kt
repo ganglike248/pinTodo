@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Alarm
 import androidx.compose.material.icons.rounded.BatteryChargingFull
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.Notifications
@@ -24,6 +25,7 @@ import androidx.compose.material.icons.rounded.Palette
 import androidx.compose.material.icons.rounded.PushPin
 import androidx.compose.material.icons.rounded.Snooze
 import androidx.compose.material.icons.rounded.Tune
+import androidx.compose.material.icons.rounded.Watch
 import androidx.compose.material.icons.rounded.Widgets
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.HorizontalDivider
@@ -59,8 +61,10 @@ fun SettingsScreen(contentPadding: PaddingValues) {
     var sheet by remember { mutableStateOf<SettingSheet?>(null) }
     var showChangelog by remember { mutableStateOf(false) }
     var batteryOk by remember { mutableStateOf(ignoringBattery(ctx)) }
+    var exactOk by remember { mutableStateOf(Sync.canExact(ctx)) }
     LifecycleResumeEffect(Unit) {
         batteryOk = ignoringBattery(ctx)
+        exactOk = Sync.canExact(ctx)
         onPauseOrDispose { }
     }
     fun update(change: (com.pintodo.data.AppSettings) -> com.pintodo.data.AppSettings) {
@@ -157,6 +161,21 @@ fun SettingsScreen(contentPadding: PaddingValues) {
                     icon = Icons.Rounded.Widgets,
                     onClick = { addWidget(ctx) },
                 )
+                Divider()
+                SettingRow(
+                    title = "스마트워치에도 알림",
+                    value = if (s.wearable) "갤럭시 워치·밴드 등 연결된 기기로도 보내요" else "휴대폰 알림창에만 표시해요",
+                    icon = Icons.Rounded.Watch,
+                    onClick = { update { it.copy(wearable = !it.wearable) } },
+                    trailing = { Switch(s.wearable, { v -> update { it.copy(wearable = v) } }) },
+                )
+                if (s.wearable) {
+                    InfoBox(
+                        Icons.Rounded.Info,
+                        "워치에는 처음 뜰 때 한 번 전달되고, 밀어서 지우면 워치에서는 사라지고 휴대폰에만 남아요. 워치 앱(Galaxy Wearable, Huawei Health 등)의 알림 설정에서 PinTodo가 켜져 있어야 해요.",
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                    )
+                }
             }
         }
 
@@ -182,10 +201,20 @@ fun SettingsScreen(contentPadding: PaddingValues) {
                     icon = Icons.Rounded.Notifications,
                     onClick = { ctx.startActivity(notificationSettings(ctx)) },
                 )
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    Divider()
+                    SettingRow(
+                        title = "알람 및 리마인더",
+                        value = if (exactOk) "허용됨 · 정한 시각에 바로 알려요" else "허용 안 됨 · 알림이 몇 분 늦을 수 있어요",
+                        valueColor = if (exactOk) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.tertiary,
+                        icon = Icons.Rounded.Alarm,
+                        onClick = { ctx.startActivity(exactAlarmSettings(ctx)) },
+                    )
+                }
                 Divider()
                 SettingRow(
                     title = "배터리 절전 예외",
-                    value = if (batteryOk) "등록됨" else "등록 안 됨 · 눌러서 등록",
+                    value = if (batteryOk) "등록됨" else "등록 안 됨 · 앱 정보 > 배터리 > '제한 없음'",
                     valueColor = if (batteryOk) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.tertiary,
                     icon = Icons.Rounded.BatteryChargingFull,
                     onClick = if (batteryOk) null else ({ ctx.startActivity(batteryExemption(ctx)) }),

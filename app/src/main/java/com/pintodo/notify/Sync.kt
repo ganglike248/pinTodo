@@ -69,4 +69,7 @@ object Sync {
 
     private fun canExact(am: AlarmManager) =
         android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.S || am.canScheduleExactAlarms()
+
+    /** '알람 및 리마인더' 권한. 없으면 알람이 몇 분 늦게 울릴 수 있음 */
+    fun canExact(context: Context) = canExact(context.getSystemService(AlarmManager::class.java))
 }
