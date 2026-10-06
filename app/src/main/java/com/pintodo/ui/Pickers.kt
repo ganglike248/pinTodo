@@ -9,6 +9,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -46,6 +49,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.semantics.CustomAccessibilityAction
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.customActions
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
@@ -63,8 +71,9 @@ private val WheelItemHeight = 48.dp
 private const val WheelVisible = 5
 
 /**
- * 돌려서 고르는 휠. 끝없이 이어지도록 같은 값을 여러 번 반복해 두고 가운데에서 시작한다.
+ * 돌려서 고르는 휠. 끝없이 이어지도록 같은 값을 여러 번 반복해 두고 가운데에서 시작한다. (loop=false면 한 번만)
  * 한 칸 넘어갈 때마다 햅틱으로 '드르륵' 느낌을 준다.
+ * TalkBack에서는 휠 하나가 한 항목으로 읽히고, '다음 값/이전 값' 동작으로 바꿀 수 있다.
  */
 @Composable
 fun WheelPicker(
@@ -74,14 +83,19 @@ fun WheelPicker(
     label: (Int) -> String,
     modifier: Modifier = Modifier,
     itemHeight: Dp = WheelItemHeight,
+    loop: Boolean = true,
+    description: String = "",
 ) {
-    val loops = 400
+    val loops = if (loop) 400 else 1
     val half = WheelVisible / 2
     val start = remember { (loops / 2) * count + value }
     val state = rememberLazyListState(initialFirstVisibleItemIndex = start)
     val fling = rememberSnapFlingBehavior(lazyListState = state, snapPosition = SnapPosition.Center)
     val haptic = LocalHapticFeedback.current
     val onChange by rememberUpdatedState(onValueChange)
+    val scope = rememberCoroutineScope()
+    // 바깥 값에 맞춰 이동하는 중에는 지나가는 값을 알리지 않음 (중간 값으로 되돌아가는 문제 방지)
+    var syncing by remember { mutableStateOf(false) }
 
     // 화면 가운데에 가장 가까운 칸
     val center by remember {
@@ -94,6 +108,7 @@ fun WheelPicker(
 
     LaunchedEffect(Unit) {
         snapshotFlow { center }.drop(1).collect {
+            if (syncing) return@collect
             haptic.performHapticFeedback(HapticFeedbackType.SegmentFrequentTick)
             onChange(it % count)
         }
@@ -101,8 +116,20 @@ fun WheelPicker(
     // 바깥에서 값이 바뀌면(빠른 선택 등) 그 값으로 이동
     LaunchedEffect(value) {
         if (center % count != value && !state.isScrollInProgress) {
-            state.animateScrollToItem(center - center % count + value)
+            syncing = true
+            try {
+                state.animateScrollToItem(center - center % count + value)
+            } finally {
+                syncing = false
+            }
         }
+    }
+
+    fun step(delta: Int): Boolean {
+        val target = center + delta
+        if (target !in 0 until count * loops) return false
+        scope.launch { state.animateScrollToItem(target) }
+        return true
     }
 
     LazyColumn(
@@ -110,7 +137,14 @@ fun WheelPicker(
         flingBehavior = fling,
         contentPadding = PaddingValues(vertical = itemHeight * half),
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = modifier.height(itemHeight * WheelVisible),
+        modifier = modifier.height(itemHeight * WheelVisible).clearAndSetSemantics {
+            contentDescription = description
+            stateDescription = label(center % count)
+            customActions = listOf(
+                CustomAccessibilityAction("다음 값") { step(1) },
+                CustomAccessibilityAction("이전 값") { step(-1) },
+            )
+        },
     ) {
         items(count * loops) { index ->
             val dist = abs(index - center)
@@ -133,25 +167,92 @@ fun WheelPicker(
     }
 }
 
-/** 시 : 분 휠 */
+/** 가운데 선택 띠 위에 휠들을 나란히 */
 @Composable
-fun TimeWheel(minuteOfDay: Int, onChange: (Int) -> Unit) {
-    var hour by remember { mutableIntStateOf(minuteOfDay / 60 % 24) }
-    var minute by remember { mutableIntStateOf(minuteOfDay % 60) }
-    LaunchedEffect(minuteOfDay) {
-        hour = minuteOfDay / 60 % 24
-        minute = minuteOfDay % 60
-    }
+fun WheelRow(content: @Composable RowScope.() -> Unit) {
     Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-        // 가운데 선택 띠
         Box(
             Modifier.fillMaxWidth().height(WheelItemHeight)
                 .clip(RoundedCornerShape(14.dp)).background(MaterialTheme.colorScheme.surfaceVariant),
         )
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            WheelPicker(24, hour, { hour = it; onChange(hour * 60 + minute) }, { "%02d".format(it) }, Modifier.width(88.dp))
-            Text(":", fontSize = 26.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 4.dp))
-            WheelPicker(60, minute, { minute = it; onChange(hour * 60 + minute) }, { "%02d".format(it) }, Modifier.width(88.dp))
+        Row(verticalAlignment = Alignment.CenterVertically, content = content)
+    }
+}
+
+/** 오전/오후 : 시 : 분 휠 (12시간제) */
+@Composable
+fun TimeWheel(minuteOfDay: Int, onChange: (Int) -> Unit) {
+    var pm by remember { mutableIntStateOf(if (minuteOfDay / 60 % 24 >= 12) 1 else 0) }
+    var hour by remember { mutableIntStateOf(minuteOfDay / 60 % 12) }   // 0 → 12시
+    var minute by remember { mutableIntStateOf(minuteOfDay % 60) }
+    LaunchedEffect(minuteOfDay) {
+        pm = if (minuteOfDay / 60 % 24 >= 12) 1 else 0
+        hour = minuteOfDay / 60 % 12
+        minute = minuteOfDay % 60
+    }
+    fun emit() = onChange((pm * 12 + hour) * 60 + minute)
+    WheelRow {
+        WheelPicker(2, pm, { pm = it; emit() }, { if (it == 0) "오전" else "오후" }, Modifier.width(84.dp), loop = false, description = "오전 오후")
+        WheelPicker(12, hour, { hour = it; emit() }, { if (it == 0) "12" else "$it" }, Modifier.width(64.dp), description = "시")
+        Text(":", fontSize = 26.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 2.dp))
+        WheelPicker(60, minute, { minute = it; emit() }, { "%02d".format(it) }, Modifier.width(72.dp), description = "분")
+    }
+}
+
+/**
+ * 날짜 칩 + 시각 휠을 화면에 바로 펼쳐 둔 편집기 (시트를 열지 않음).
+ * value == null이면 emptyLabel 상태이고 휠은 흐리게 fallback 시각을 보여준다. 휠을 돌리면 그 시각으로 정해진다.
+ */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+fun InlineDateTime(
+    value: Long?,
+    fallback: Long,
+    emptyLabel: String,
+    onChange: (Long?) -> Unit,
+    quick: List<Pair<String, Long>> = emptyList(),
+) {
+    val zone = ZoneId.systemDefault()
+    val shown = Instant.ofEpochMilli(value ?: fallback).atZone(zone)
+    val date = shown.toLocalDate()
+    val minute = shown.hour * 60 + shown.minute
+    val today = LocalDate.now(zone)
+    var showCalendar by remember { mutableStateOf(false) }
+    fun of(d: LocalDate, m: Int) = d.atStartOfDay(zone).plusMinutes(m.toLong()).toInstant().toEpochMilli()
+
+    Column {
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            SoftChip(emptyLabel, value == null) { onChange(null) }
+            SoftChip("오늘", value != null && date == today) { onChange(of(today, minute)) }
+            SoftChip("내일", value != null && date == today.plusDays(1)) { onChange(of(today.plusDays(1), minute)) }
+            val other = value != null && date != today && date != today.plusDays(1)
+            SoftChip(if (other) Format.date(date) else "날짜 선택", other) { showCalendar = true }
+            quick.forEach { (label, ms) -> SoftChip(label, value == ms) { onChange(ms) } }
+        }
+        Spacer(Modifier.height(12.dp))
+        Box(Modifier.alpha(if (value == null) 0.4f else 1f)) {
+            TimeWheel(minute) { m -> if (value != null || m != minute) onChange(of(date, m)) }
+        }
+    }
+
+    if (showCalendar) {
+        CalendarDialog(date, onDismiss = { showCalendar = false }) { onChange(of(it, minute)); showCalendar = false }
+    }
+}
+
+/** 시각만 바로 펼친 편집기 (반복 할 일의 하루 시간대). value == null이면 emptyLabel 상태 */
+@Composable
+fun InlineTime(value: Int?, fallback: Int, emptyLabel: String?, onChange: (Int?) -> Unit) {
+    Column {
+        if (emptyLabel != null) {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                SoftChip(emptyLabel, value == null) { onChange(null) }
+                SoftChip("시각 지정", value != null) { onChange(value ?: fallback) }
+            }
+            Spacer(Modifier.height(12.dp))
+        }
+        Box(Modifier.alpha(if (value == null) 0.4f else 1f)) {
+            TimeWheel(value ?: fallback) { m -> if (value != null || m != fallback) onChange(m) }
         }
     }
 }
@@ -188,72 +289,6 @@ fun SheetTitle(text: String, sub: String? = null) {
         Text(sub, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
     Spacer(Modifier.height(20.dp))
-}
-
-/** 시각만 고르는 시트 (반복 할 일의 하루 시간대) */
-@Composable
-fun TimeSheet(
-    title: String,
-    initialMinute: Int,
-    onDismiss: () -> Unit,
-    onConfirm: (Int) -> Unit,
-    clearLabel: String? = null,
-    onClear: (() -> Unit)? = null,
-) {
-    var minute by remember { mutableIntStateOf(initialMinute) }
-    AppSheet(onDismiss) { hide ->
-        SheetTitle(title)
-        TimeWheel(minute) { minute = it }
-        Spacer(Modifier.height(24.dp))
-        SheetButtons(clearLabel, onClear?.let { { hide(it) } }) { hide { onConfirm(minute) } }
-    }
-}
-
-/** 날짜(달력) + 시각(휠)을 고르는 시트 */
-@Composable
-fun DateTimeSheet(
-    title: String,
-    initial: Long,
-    onDismiss: () -> Unit,
-    onConfirm: (Long) -> Unit,
-    clearLabel: String? = null,
-    onClear: (() -> Unit)? = null,
-) {
-    val zone = ZoneId.systemDefault()
-    val init = Instant.ofEpochMilli(initial).atZone(zone)
-    var date by remember { mutableStateOf(init.toLocalDate()) }
-    var minute by remember { mutableIntStateOf(init.hour * 60 + init.minute) }
-    var showCalendar by remember { mutableStateOf(false) }
-    val today = LocalDate.now(zone)
-    val result = date.atStartOfDay(zone).plusMinutes(minute.toLong()).toInstant().toEpochMilli()
-
-    AppSheet(onDismiss) { hide ->
-        SheetTitle(title, Format.dateTime(result))
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            SoftChip("오늘", date == today) { date = today }
-            SoftChip("내일", date == today.plusDays(1)) { date = today.plusDays(1) }
-            val other = date != today && date != today.plusDays(1)
-            SoftChip(if (other) Format.date(date) else "날짜 선택", other) { showCalendar = true }
-        }
-        Spacer(Modifier.height(16.dp))
-        TimeWheel(minute) { minute = it }
-        Spacer(Modifier.height(24.dp))
-        SheetButtons(clearLabel, onClear?.let { { hide(it) } }) { hide { onConfirm(result) } }
-    }
-
-    if (showCalendar) {
-        CalendarDialog(date, onDismiss = { showCalendar = false }) { date = it; showCalendar = false }
-    }
-}
-
-@Composable
-private fun SheetButtons(clearLabel: String?, onClear: (() -> Unit)?, onConfirm: () -> Unit) {
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        if (clearLabel != null && onClear != null) {
-            SecondaryButton(clearLabel, onClear, Modifier.weight(1f))
-        }
-        PrimaryButton("확인", onConfirm, Modifier.weight(if (clearLabel != null) 1.4f else 1f))
-    }
 }
 
 @Composable

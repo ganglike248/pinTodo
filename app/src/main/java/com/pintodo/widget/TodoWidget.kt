@@ -6,9 +6,12 @@ import android.appwidget.AppWidgetProvider
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.os.Build
+import android.util.SizeF
 import android.view.View
 import android.widget.RemoteViews
 import com.pintodo.R
+import com.pintodo.data.SettingsStore
 import com.pintodo.data.Status
 import com.pintodo.data.Todo
 import com.pintodo.data.TodoStore
@@ -32,24 +35,52 @@ object TodoWidget {
         val manager = AppWidgetManager.getInstance(context)
         val ids = manager.getAppWidgetIds(ComponentName(context, TodoWidgetReceiver::class.java))
         if (ids.isEmpty()) return
-        manager.updateAppWidget(ids, build(context))
+        val now = System.currentTimeMillis()
+        val items = items(context, now)
+        val views = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            // 위젯 크기에 맞춰 런처가 고름: 한 줄·작은 크기는 요약형, 그보다 크면 목록형
+            RemoteViews(mapOf(
+                SizeF(40f, 40f) to compact(context, items, now),
+                SizeF(150f, 130f) to full(context, items, now),
+            ))
+        } else {
+            full(context, items, now)
+        }
+        manager.updateAppWidget(ids, views)
     }
 
-    private fun build(context: Context): RemoteViews {
-        val now = System.currentTimeMillis()
+    private fun items(context: Context, now: Long): List<Todo> {
         val order = listOf(Status.SHOWING, Status.SNOOZED, Status.NO_ALERT, Status.SCHEDULED)
-        val items = TodoStore.all(context)
+        return TodoStore.all(context)
             .filter { it.status(now) in order }
             .sortedWith(compareBy<Todo>({ order.indexOf(it.status(now)) }, { it.nextStart(now) ?: 0L }))
-        val showing = items.count { it.status(now) == Status.SHOWING }
+    }
 
+    private fun subtitle(items: List<Todo>, now: Long) =
+        if (items.isEmpty()) "할 일이 없어요" else "알림 중 ${items.count { it.status(now) == Status.SHOWING }}개 · 전체 ${items.size}개"
+
+    /** 요약형: 가장 위의 할 일 하나 + 개수 */
+    private fun compact(context: Context, items: List<Todo>, now: Long): RemoteViews {
+        val views = RemoteViews(context.packageName, R.layout.widget_compact)
+        val top = items.firstOrNull()
+        views.setOnClickPendingIntent(
+            R.id.widget_root,
+            activity(context, top?.id ?: REQ_OPEN_APP, Intent(context, MainActivity::class.java).apply {
+                if (top != null) putExtra(MainActivity.EXTRA_TODO_ID, top.id)
+            }),
+        )
+        views.setOnClickPendingIntent(R.id.add, activity(context, REQ_QUICK_ADD, Intent(context, QuickAddActivity::class.java)))
+        views.setTextViewText(R.id.compact_title, top?.title ?: "할 일이 없어요")
+        views.setTextViewText(R.id.compact_sub, if (top == null) "+ 를 눌러 추가해 보세요" else "${Format.status(top, now)} · ${subtitle(items, now)}")
+        return views
+    }
+
+    /** 목록형 */
+    private fun full(context: Context, items: List<Todo>, now: Long): RemoteViews {
         val views = RemoteViews(context.packageName, R.layout.widget_todo)
         views.setOnClickPendingIntent(R.id.widget_root, activity(context, REQ_OPEN_APP, Intent(context, MainActivity::class.java)))
         views.setOnClickPendingIntent(R.id.add, activity(context, REQ_QUICK_ADD, Intent(context, QuickAddActivity::class.java)))
-        views.setTextViewText(
-            R.id.subtitle,
-            if (items.isEmpty()) "할 일이 없어요" else "알림 중 ${showing}개 · 전체 ${items.size}개",
-        )
+        views.setTextViewText(R.id.subtitle, subtitle(items, now))
         views.setViewVisibility(R.id.empty, if (items.isEmpty()) View.VISIBLE else View.GONE)
 
         views.removeAllViews(R.id.rows)
@@ -83,13 +114,14 @@ object TodoWidget {
         v.setTextViewText(statusView, Format.status(todo, now))
 
         if (canComplete) {
-            val done = Intent(context, ActionReceiver::class.java)
-                .setAction(ActionReceiver.ACTION_DONE)
-                .putExtra(ActionReceiver.EXTRA_ID, todo.id)
-            v.setOnClickPendingIntent(
-                R.id.row_check,
-                PendingIntent.getBroadcast(context, todo.id, done, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT),
-            )
+            v.setOnClickPendingIntent(R.id.row_check, broadcast(context, ActionReceiver.ACTION_DONE, todo.id))
+            v.setContentDescription(R.id.row_check, "${if (todo.isRepeat) "오늘 완료" else "완료"}: ${todo.title}")
+        }
+        // 알림 중인 할 일은 위젯에서 바로 미루기 (설정의 '알림에 바로 보이는 버튼'과 같은 선택지)
+        v.setViewVisibility(R.id.row_snooze, visibleIf(status == Status.SHOWING))
+        if (status == Status.SHOWING) {
+            v.setOnClickPendingIntent(R.id.row_snooze, broadcast(context, ActionReceiver.ACTION_SNOOZE, todo.id))
+            v.setContentDescription(R.id.row_snooze, "${SettingsStore.get(context).quickSnooze.buttonLabel} 미루기: ${todo.title}")
         }
         v.setOnClickPendingIntent(
             R.id.row_body,
@@ -101,6 +133,13 @@ object TodoWidget {
     private fun activity(context: Context, requestCode: Int, intent: Intent) = PendingIntent.getActivity(
         context, requestCode,
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP),
+        PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+    )
+
+    // 알림 버튼과 같은 Intent(같은 requestCode·action)라 PendingIntent를 공유함
+    private fun broadcast(context: Context, action: String, id: Int) = PendingIntent.getBroadcast(
+        context, id,
+        Intent(context, ActionReceiver::class.java).setAction(action).putExtra(ActionReceiver.EXTRA_ID, id),
         PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
     )
 

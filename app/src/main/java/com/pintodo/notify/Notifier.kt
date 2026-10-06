@@ -101,7 +101,6 @@ object Notifier {
             .setAutoCancel(false)
             .setOnlyAlertOnce(true)
             .setShowWhen(true)
-            .setWhen(todo.alertKey(now) ?: now)   // 이번에 뜬 시각 (회차 시작 또는 미루기 종료)
             .setCategory(Notification.CATEGORY_REMINDER)
             .setContentIntent(openApp(context, todo.id))
             .setDeleteIntent(action(context, ActionReceiver.ACTION_DISMISSED, todo.id))
@@ -111,6 +110,15 @@ object Notifier {
             .addAction(Notification.Action.Builder(null, "미루기…", snoozeChooser(context, todo.id)).build())
             // 워치에서는 휴대폰 화면을 여는 '미루기…' 없이 바로 처리되는 버튼만
             .extend(Notification.WearableExtender().addAction(done).addAction(quickSnooze))
+
+        // 하루 안에 끝나는 할 일은 머리글에 종료까지 남은 시간을 실시간으로 (예: 종료까지 · 1:59:30)
+        val end = todo.windowAt(now)?.end
+        val countdown = end != null && end - now < 24 * 60 * 60_000L
+        if (countdown) builder.setWhen(end!!).setUsesChronometer(true).setChronometerCountDown(true)
+        else builder.setWhen(todo.alertKey(now) ?: now)   // 이번에 뜬 시각 (회차 시작 또는 미루기 종료)
+        val snoozedBack = todo.snoozeUntil != null && todo.alertKey(now) == todo.snoozeUntil
+        listOfNotNull("미룬 할 일".takeIf { snoozedBack }, "종료까지".takeIf { countdown })
+            .takeIf { it.isNotEmpty() }?.let { builder.setSubText(it.joinToString(" · ")) }
 
         manager(context).notify(todo.id, builder.build())
     }

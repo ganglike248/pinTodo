@@ -12,8 +12,8 @@ android {
         applicationId = "com.pintodo"
         minSdk = 26
         targetSdk = 36
-        versionCode = 8
-        versionName = "0.4.2"
+        versionCode = 9
+        versionName = "0.4.3"
     }
 
     buildTypes {

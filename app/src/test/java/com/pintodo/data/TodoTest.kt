@@ -107,9 +107,42 @@ class TodoTest {
     // ── 알림 문구 ──
 
     @Test fun `알림 일정 문구는 항상 정한 시각을 보여줌`() {
-        assertEquals("10/5(월) 08:00 추가 · 완료할 때까지", Format.notificationSchedule(todo()))
-        assertEquals("10/5(월) 14:00 시작 · 18:00까지", Format.notificationSchedule(todo(startAt = at(5, 14), endAt = at(5, 18))))
-        assertEquals("10/5(월) 14:00 시작 · 10/6(화) 09:00까지", Format.notificationSchedule(todo(startAt = at(5, 14), endAt = at(6, 9))))
-        assertEquals("평일 09:00–18:00 반복", Format.notificationSchedule(todo(days = (1..5).toSet(), dailyEnd = 18 * 60)))
+        assertEquals("10/5(월) 오전 8:00 추가 · 완료할 때까지", Format.notificationSchedule(todo()))
+        assertEquals("10/5(월) 오후 2:00 시작 · 오후 6:00까지", Format.notificationSchedule(todo(startAt = at(5, 14), endAt = at(5, 18))))
+        assertEquals("10/5(월) 오후 2:00 시작 · 10/6(화) 오전 9:00까지", Format.notificationSchedule(todo(startAt = at(5, 14), endAt = at(6, 9))))
+        assertEquals("평일 오전 9:00–오후 6:00 반복", Format.notificationSchedule(todo(days = (1..5).toSet(), dailyEnd = 18 * 60)))
+    }
+
+    @Test fun `시각은 오전 오후 12시간제`() {
+        assertEquals("오전 12:00", Format.time(0))
+        assertEquals("오전 9:05", Format.time(9 * 60 + 5))
+        assertEquals("오후 12:30", Format.time(12 * 60 + 30))
+        assertEquals("오후 11:59", Format.time(23 * 60 + 59))
+    }
+
+    // ── 반복 주기 확장 ──
+
+    @Test fun `격주는 기준 주부터 한 주 건너 반복`() {
+        // 기준: 10/5(월) 주. 월요일 격주 → 10/5, 10/19 O / 10/12 X
+        val t = todo(days = setOf(1)).copy(repeatInterval = 2, repeatAnchor = java.time.LocalDate.of(2026, 10, 5).toEpochDay())
+        assertEquals(at(19, 9), t.nextStart(at(5, 10)))
+        assertEquals(Status.SHOWING, t.status(at(19, 10)))
+        assertEquals(Status.SCHEDULED, t.status(at(12, 10)))
+    }
+
+    @Test fun `매월 31일은 짧은 달에 말일로`() {
+        val t = todo().copy(repeatType = RepeatType.MONTHLY, monthDay = 31, dailyStart = 9 * 60)
+        assertEquals(at(31, 9), t.nextStart(at(5, 10)))
+        // 11월은 30일까지
+        val nov30 = LocalDateTime.of(2026, 11, 30, 9, 0).atZone(zone).toInstant().toEpochMilli()
+        assertEquals(nov30, t.nextStart(at(31, 10)))
+    }
+
+    @Test fun `n일마다는 기준 날부터`() {
+        val t = todo().copy(repeatType = RepeatType.EVERY_DAYS, repeatInterval = 3,
+            repeatAnchor = java.time.LocalDate.of(2026, 10, 5).toEpochDay())
+        assertEquals(Status.SHOWING, t.status(at(5, 10)))
+        assertEquals(at(8, 9), t.nextStart(at(5, 10)))
+        assertEquals(Status.SCHEDULED, t.status(at(6, 10)))
     }
 }

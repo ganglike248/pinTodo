@@ -33,6 +33,7 @@ import androidx.compose.material.icons.rounded.BatteryAlert
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.NotificationsOff
 import androidx.compose.material.icons.rounded.PushPin
+import androidx.compose.material.icons.rounded.Replay
 import androidx.compose.material.icons.rounded.Snooze
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -55,6 +56,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.CustomAccessibilityAction
+import androidx.compose.ui.semantics.customActions
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -77,6 +81,7 @@ fun TodoScreen(
     onEdit: (Todo) -> Unit,
     onComplete: (Todo) -> Unit,
     onSnooze: (Todo) -> Unit,
+    onRestart: (Todo) -> Unit,
 ) {
     val active = todos.filter { it.doneAt == null }
     val inProgress = active.filter { it.status(now) in setOf(Status.SHOWING, Status.SNOOZED) }
@@ -101,10 +106,10 @@ fun TodoScreen(
         item(key = "banners") { Banners() }
         if (active.isEmpty()) item(key = "empty") { EmptyState() }
 
-        section("진행 중", inProgress, now, onEdit, onComplete, onSnooze)
-        section("예정", upcoming, now, onEdit, onComplete, onSnooze)
-        section("알림 없는 할 일", noAlert, now, onEdit, onComplete, onSnooze)
-        section("기간 종료", ended, now, onEdit, onComplete, onSnooze)
+        section("진행 중", inProgress, now, onEdit, onComplete, onSnooze, onRestart)
+        section("예정", upcoming, now, onEdit, onComplete, onSnooze, onRestart)
+        section("알림 없는 할 일", noAlert, now, onEdit, onComplete, onSnooze, onRestart)
+        section("기간 종료", ended, now, onEdit, onComplete, onSnooze, onRestart)
     }
 }
 
@@ -115,11 +120,12 @@ private fun LazyListScope.section(
     onEdit: (Todo) -> Unit,
     onComplete: (Todo) -> Unit,
     onSnooze: (Todo) -> Unit,
+    onRestart: (Todo) -> Unit,
 ) {
     if (list.isEmpty()) return
     item(key = "h-$title") { SectionLabel("$title ${list.size}", Modifier.animateItem()) }
     items(list, key = { it.id }) { todo ->
-        TodoCard(todo, now, Modifier.animateItem(), onEdit, onComplete, onSnooze)
+        TodoCard(todo, now, Modifier.animateItem(), onEdit, onComplete, onSnooze, onRestart)
     }
 }
 
@@ -131,9 +137,11 @@ private fun TodoCard(
     onEdit: (Todo) -> Unit,
     onComplete: (Todo) -> Unit,
     onSnooze: (Todo) -> Unit,
+    onRestart: (Todo) -> Unit,
 ) {
     val c = MaterialTheme.colorScheme
     val status = todo.status(now)
+    val completeLabel = if (todo.isRepeat) "오늘 완료" else "완료"
     val visible = status == Status.SHOWING || status == Status.SNOOZED
     // 반복 할 일은 진행 중일 때만 '오늘 완료' 가능
     val canComplete = !todo.isRepeat || visible
@@ -185,9 +193,21 @@ private fun TodoCard(
             onClick = { onEdit(todo) },
             shape = RoundedCornerShape(Dimens.CardRadius),
             color = c.surface,
+            // 스와이프를 못 쓰는 TalkBack 사용자도 완료·미루기를 할 수 있게
+            modifier = Modifier.semantics {
+                customActions = buildList {
+                    if (canComplete) add(CustomAccessibilityAction(completeLabel) { onComplete(todo); true })
+                    if (status == Status.SHOWING) add(CustomAccessibilityAction("미루기") { onSnooze(todo); true })
+                    if (status == Status.ENDED) add(CustomAccessibilityAction("다시 하기") { onRestart(todo); true })
+                }
+            },
         ) {
             Row(Modifier.padding(start = 6.dp, end = 18.dp, top = 12.dp, bottom = 14.dp)) {
-                CheckCircle(checked = false, active = status == Status.SHOWING, onClick = if (canComplete) ({ onComplete(todo) }) else null)
+                CheckCircle(
+                    checked = false, active = status == Status.SHOWING,
+                    onClick = if (canComplete) ({ onComplete(todo) }) else null,
+                    description = "$completeLabel: ${todo.title}",
+                )
                 Column(Modifier.weight(1f).padding(top = 9.dp, start = 4.dp)) {
                     Text(todo.title, style = MaterialTheme.typography.titleMedium, maxLines = 2, overflow = TextOverflow.Ellipsis)
                     if (todo.memo.isNotBlank()) {
@@ -202,6 +222,18 @@ private fun TodoCard(
                     }
                     Spacer(Modifier.height(6.dp))
                     MetaRow(todo, status, now)
+                    if (status == Status.ENDED) {
+                        // 기간이 끝난 할 일을 지금부터 다시 띄우기
+                        TextButton(
+                            onClick = { onRestart(todo) },
+                            contentPadding = PaddingValues(horizontal = 0.dp),
+                            modifier = Modifier.height(36.dp),
+                        ) {
+                            Icon(Icons.Rounded.Replay, null, Modifier.size(16.dp))
+                            Spacer(Modifier.width(4.dp))
+                            Text("다시 하기", style = MaterialTheme.typography.labelLarge)
+                        }
+                    }
                 }
             }
         }
@@ -212,8 +244,10 @@ private fun TodoCard(
 @Composable
 private fun MetaRow(todo: Todo, status: Status, now: Long) {
     val c = MaterialTheme.colorScheme
+    // 1시간 안에 끝나는 할 일은 빨간색으로
+    val urgent = status == Status.SHOWING && todo.windowAt(now)?.end?.let { it - now < 60 * 60_000L } == true
     val statusColor = when (status) {
-        Status.SHOWING -> c.primary
+        Status.SHOWING -> if (urgent) c.error else c.primary
         Status.SNOOZED -> c.tertiary
         Status.ENDED -> c.error
         else -> c.onSurfaceVariant
@@ -258,16 +292,6 @@ private fun Banners() {
         exactOk = Sync.canExact(ctx)
         batteryOk = ignoringBattery(ctx)
         onPauseOrDispose { }
-    }
-
-    val permission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
-        notifOk = Notifier.enabled(ctx)
-        Sync.run(ctx)
-    }
-    LaunchedEffect(Unit) {
-        if (!notifOk && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            permission.launch(Manifest.permission.POST_NOTIFICATIONS)
-        }
     }
 
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -354,4 +378,4 @@ fun exactAlarmSettings(ctx: Context) =
 fun notificationSettings(ctx: Context) =
     Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, ctx.packageName)
 
-private fun uiPrefs(ctx: Context) = ctx.getSharedPreferences("ui", Context.MODE_PRIVATE)
+fun uiPrefs(ctx: Context) = ctx.getSharedPreferences("ui", Context.MODE_PRIVATE)

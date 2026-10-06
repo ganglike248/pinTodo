@@ -1,5 +1,6 @@
 package com.pintodo.ui
 
+import com.pintodo.data.RepeatType
 import com.pintodo.data.Status
 import com.pintodo.data.Todo
 import java.time.Instant
@@ -7,9 +8,27 @@ import java.time.LocalDate
 import java.time.ZoneId
 
 object Format {
+    private const val DAY = 24 * 60 * 60_000L
     private val DAY_NAMES = listOf("월", "화", "수", "목", "금", "토", "일")
 
-    fun time(minuteOfDay: Int) = "%02d:%02d".format(minuteOfDay / 60 % 24, minuteOfDay % 60)
+    /** 오전 9:00, 오후 12:30 (12시간제) */
+    fun time(minuteOfDay: Int): String {
+        val h = minuteOfDay / 60 % 24
+        val m = minuteOfDay % 60
+        return "${if (h < 12) "오전" else "오후"} ${if (h % 12 == 0) 12 else h % 12}:%02d".format(m)
+    }
+
+    /** 45분 / 2시간 / 1시간 20분 */
+    fun duration(ms: Long): String {
+        val min = ((ms + 59_999) / 60_000).coerceAtLeast(1)
+        val h = min / 60
+        val m = min % 60
+        return when {
+            h == 0L -> "${m}분"
+            m == 0L || h >= 10 -> "${h}시간"
+            else -> "${h}시간 ${m}분"
+        }
+    }
 
     fun dateTime(ms: Long): String {
         val zone = ZoneId.systemDefault()
@@ -51,13 +70,27 @@ object Format {
 
     fun dayName(day: Int) = DAY_NAMES[day - 1]
 
+    fun monthDay(day: Int) = if (day >= 31) "말일" else "${day}일"
+
+    /** 반복 주기: 평일 / 격주 월·수 / 매월 15일 / 3일마다 */
+    fun repeat(t: Todo): String = when (t.repeatType) {
+        RepeatType.NONE -> ""
+        RepeatType.WEEKLY -> when (t.repeatInterval) {
+            1 -> days(t.repeatDays)
+            2 -> "격주 ${days(t.repeatDays)}"
+            else -> "${t.repeatInterval}주마다 ${days(t.repeatDays)}"
+        }
+        RepeatType.MONTHLY -> "매월 ${monthDay(t.monthDay)}"
+        RepeatType.EVERY_DAYS -> if (t.repeatInterval == 1) "매일" else "${t.repeatInterval}일마다"
+    }
+
+    /** 반복 할 일의 하루 시간대: 오전 9:00–오후 6:00 */
+    fun dailyRange(t: Todo): String = time(t.dailyStart) + (t.dailyEnd?.let { "–${time(it)}" } ?: "부터")
+
     /** 목록 카드에 표시할 일정 요약 */
     fun schedule(t: Todo): String {
         if (!t.notify) return "알림 없음"
-        if (t.isRepeat) {
-            val end = t.dailyEnd?.let { "–${time(it)}" } ?: "부터"
-            return "${days(t.repeatDays)} ${time(t.dailyStart)}$end"
-        }
+        if (t.isRepeat) return "${repeat(t)} ${dailyRange(t)}"
         val start = t.startAt
         val end = t.endAt
         return when {
@@ -89,7 +122,8 @@ object Format {
     private fun minuteOfDay(ms: Long) = Instant.ofEpochMilli(ms).atZone(ZoneId.systemDefault()).let { it.hour * 60 + it.minute }
 
     fun status(t: Todo, now: Long): String = when (t.status(now)) {
-        Status.SHOWING -> "알림 중"
+        Status.SHOWING -> t.windowAt(now)?.end?.takeIf { it - now < DAY }
+            ?.let { "알림 중 · ${duration(it - now)} 남음" } ?: "알림 중"
         Status.NO_ALERT -> "알림 없음"
         Status.SNOOZED -> "${dateTime(t.snoozeUntil!!)}까지 미룸"
         Status.HIDDEN -> if (t.isRepeat) "오늘 완료" else "알림 닫음"

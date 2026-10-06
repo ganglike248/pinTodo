@@ -24,15 +24,21 @@
             </intent-filter>
         </activity>
 
-        <!-- 빠른 추가 시트 (위젯 +, 빠른 설정 타일에서 열림) -->
+        <!-- 빠른 추가 시트 (위젯 +, 빠른 설정 타일, 다른 앱의 공유하기에서 열림) -->
         <activity
             android:name=".ui.QuickAddActivity"
-            android:exported="false"
+            android:exported="true"
             android:excludeFromRecents="true"
             android:noHistory="true"
             android:taskAffinity=""
             android:theme="@style/Theme.PinTodo.Sheet"
-            android:windowSoftInputMode="adjustResize|stateVisible" />
+            android:windowSoftInputMode="adjustResize|stateVisible">
+            <intent-filter android:label="@string/share_label">
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
+        </activity>
 
         <!-- 알림의 '미루기…' 선택 시트 -->
         <activity

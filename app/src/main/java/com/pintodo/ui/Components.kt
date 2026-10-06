@@ -38,6 +38,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -259,14 +262,15 @@ fun SoftChip(label: String, selected: Boolean = false, onClick: () -> Unit) {
 
 /** 원형 체크 (완료 버튼) */
 @Composable
-fun CheckCircle(checked: Boolean, active: Boolean, onClick: (() -> Unit)?, size: Dp = 26.dp) {
+fun CheckCircle(checked: Boolean, active: Boolean, onClick: (() -> Unit)?, size: Dp = 26.dp, description: String? = null) {
     val c = MaterialTheme.colorScheme
     val ring = if (active) c.primary else c.outline.copy(alpha = 0.6f)
     Box(
         Modifier
             .size(44.dp)
             .clip(CircleShape)
-            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier),
+            .then(if (onClick != null) Modifier.clickable(onClickLabel = description, role = Role.Button, onClick = onClick) else Modifier)
+            .then(if (description != null) Modifier.semantics { contentDescription = description } else Modifier),
         contentAlignment = Alignment.Center,
     ) {
         Box(

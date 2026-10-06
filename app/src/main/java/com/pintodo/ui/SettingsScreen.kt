@@ -7,6 +7,8 @@ import android.content.Context
 import android.graphics.drawable.Icon
 import android.os.Build
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -18,6 +20,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Alarm
+import androidx.compose.material.icons.rounded.Backup
+import androidx.compose.material.icons.rounded.Restore
 import androidx.compose.material.icons.rounded.BatteryChargingFull
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.Notifications
@@ -27,12 +31,14 @@ import androidx.compose.material.icons.rounded.Snooze
 import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material.icons.rounded.Watch
 import androidx.compose.material.icons.rounded.Widgets
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -41,16 +47,20 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pintodo.R
 import com.pintodo.data.AlertMode
+import com.pintodo.data.Backup
+import com.pintodo.data.TodoStore
 import com.pintodo.data.SettingsStore
 import com.pintodo.data.SnoozeOption
 import com.pintodo.notify.Sync
 import com.pintodo.tile.QuickAddTileService
 import com.pintodo.widget.TodoWidgetReceiver
+import java.time.LocalDate
 
 private enum class SettingSheet { QUICK_SNOOZE, ALERT_MODE }
 
@@ -66,6 +76,22 @@ fun SettingsScreen(contentPadding: PaddingValues) {
         batteryOk = ignoringBattery(ctx)
         exactOk = Sync.canExact(ctx)
         onPauseOrDispose { }
+    }
+    var restoring by remember { mutableStateOf<Backup.Content?>(null) }
+    val exportLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
+        if (uri == null) return@rememberLauncherForActivityResult
+        val ok = runCatching {
+            ctx.contentResolver.openOutputStream(uri, "wt")!!.use { it.write(Backup.export(ctx).toByteArray()) }
+        }.isSuccess
+        Toast.makeText(ctx, if (ok) "백업 파일을 저장했어요" else "저장하지 못했어요", Toast.LENGTH_SHORT).show()
+    }
+    val importLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri == null) return@rememberLauncherForActivityResult
+        runCatching {
+            val text = ctx.contentResolver.openInputStream(uri)!!.use { it.readBytes().decodeToString() }
+            Backup.read(text)
+        }.onSuccess { restoring = it }
+            .onFailure { Toast.makeText(ctx, it.message ?: "백업 파일을 읽지 못했어요", Toast.LENGTH_LONG).show() }
     }
     fun update(change: (com.pintodo.data.AppSettings) -> com.pintodo.data.AppSettings) {
         SettingsStore.update(ctx, change)
@@ -223,6 +249,25 @@ fun SettingsScreen(contentPadding: PaddingValues) {
         }
 
         item {
+            Section("백업") {
+                SettingRow(
+                    title = "백업 파일 만들기",
+                    value = "할 일과 설정을 파일로 저장해요 (휴대폰을 바꿀 때)",
+                    icon = Icons.Rounded.Backup,
+                    onClick = { exportLauncher.launch("pintodo-backup-${LocalDate.now()}.json") },
+                )
+                Divider()
+                SettingRow(
+                    title = "백업에서 복원",
+                    value = "백업 파일을 골라 할 일과 설정을 되돌려요",
+                    icon = Icons.Rounded.Restore,
+                    // 일부 파일 앱은 .json을 text/plain이나 octet-stream으로 알려줌
+                    onClick = { importLauncher.launch(arrayOf("application/json", "text/plain", "application/octet-stream")) },
+                )
+            }
+        }
+
+        item {
             Section("정보") {
                 SettingRow(
                     title = "버전",
@@ -255,6 +300,29 @@ fun SettingsScreen(contentPadding: PaddingValues) {
     }
 
     if (showChangelog) ChangelogDialog(onClose = { showChangelog = false })
+
+    restoring?.let { content ->
+        val current = TodoStore.all(ctx).size
+        AlertDialog(
+            onDismissRequest = { restoring = null },
+            title = { Text("백업에서 복원할까요?") },
+            text = {
+                Text(
+                    "${if (content.exportedAt > 0) Format.dateTime(content.exportedAt) + "에 만든 " else ""}백업의 할 일 ${content.todos.size}개와 설정으로 바꿔요." +
+                        if (current > 0) "\n지금 있는 할 일 ${current}개는 지워져요." else ""
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    Backup.restore(ctx, content)
+                    Sync.run(ctx)
+                    restoring = null
+                    Toast.makeText(ctx, "할 일 ${content.todos.size}개를 복원했어요", Toast.LENGTH_SHORT).show()
+                }) { Text("복원", fontWeight = FontWeight.Bold) }
+            },
+            dismissButton = { TextButton(onClick = { restoring = null }) { Text("취소") } },
+        )
+    }
 }
 
 /** 알림 방식 4칸 + 현재 휴대폰 모드에서 실제 동작 안내 */

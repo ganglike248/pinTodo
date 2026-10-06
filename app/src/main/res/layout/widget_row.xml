@@ -87,4 +87,16 @@
             android:textSize="12sp"
             android:visibility="gone" />
     </LinearLayout>
+
+    <!-- 알림 중인 할 일만: 설정의 '바로 미루기' -->
+    <ImageView
+        android:id="@+id/row_snooze"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:layout_marginStart="4dp"
+        android:background="?android:attr/selectableItemBackgroundBorderless"
+        android:padding="6dp"
+        android:src="@drawable/ic_snooze"
+        android:tint="@color/widget_orange"
+        android:visibility="gone" />
 </LinearLayout>

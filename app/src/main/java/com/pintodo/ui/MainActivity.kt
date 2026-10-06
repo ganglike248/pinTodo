@@ -60,13 +60,14 @@ import kotlinx.coroutines.launch
 /** 바깥(알림·위젯·빠른 추가)에서 들어온 요청 */
 sealed interface OpenRequest {
     data class Edit(val id: Int) : OpenRequest
-    data class New(val title: String) : OpenRequest
+    data class New(val title: String, val memo: String = "") : OpenRequest
 }
 
 class MainActivity : ComponentActivity() {
     companion object {
         const val EXTRA_TODO_ID = "todo_id"
         const val EXTRA_NEW_TITLE = "new_title"
+        const val EXTRA_NEW_MEMO = "new_memo"
     }
 
     private val openRequest = mutableStateOf<OpenRequest?>(null)
@@ -96,7 +97,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun Intent.toRequest(): OpenRequest? = when {
-        hasExtra(EXTRA_NEW_TITLE) -> OpenRequest.New(getStringExtra(EXTRA_NEW_TITLE).orEmpty())
+        hasExtra(EXTRA_NEW_TITLE) -> OpenRequest.New(getStringExtra(EXTRA_NEW_TITLE).orEmpty(), getStringExtra(EXTRA_NEW_MEMO).orEmpty())
         getIntExtra(EXTRA_TODO_ID, -1) >= 0 -> OpenRequest.Edit(getIntExtra(EXTRA_TODO_ID, -1))
         else -> null
     }
@@ -117,6 +118,9 @@ private fun App(openRequest: MutableState<OpenRequest?>) {
     var tab by rememberSaveable { mutableIntStateOf(0) }
     var editing by remember { mutableStateOf<EditTarget?>(null) }
     var snoozing by remember { mutableStateOf<Todo?>(null) }
+    var editDirty by remember { mutableStateOf(false) }
+    var pending by remember { mutableStateOf<OpenRequest?>(null) }
+    var onboarding by remember { mutableStateOf(needsOnboarding(ctx)) }
     val snackbar = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
@@ -128,19 +132,47 @@ private fun App(openRequest: MutableState<OpenRequest?>) {
         }
     }
 
-    LaunchedEffect(openRequest.value, todos) {
-        when (val req = openRequest.value) {
-            is OpenRequest.Edit -> todos.find { it.id == req.id }?.let { editing = EditTarget(it, isNew = false) }
-            is OpenRequest.New -> editing = EditTarget(newTodo(ctx, req.title), isNew = true)
-            null -> return@LaunchedEffect
-        }
-        tab = Tab.TODO.ordinal
-        openRequest.value = null
+    fun closeEditor() {
+        editing = null
+        editDirty = false
     }
 
-    BackHandler(enabled = editing != null) { editing = null }
-    // 기록·설정 탭에서 뒤로가기 → 할 일 탭으로, 할 일 탭에서 한 번 더 누르면 종료
+    fun open(req: OpenRequest) {
+        when (req) {
+            is OpenRequest.Edit -> todos.find { it.id == req.id }?.let { editing = EditTarget(it, isNew = false) }
+            is OpenRequest.New -> editing = EditTarget(newTodo(ctx, req.title).copy(memo = req.memo), isNew = true)
+        }
+        editDirty = false
+        tab = Tab.TODO.ordinal
+    }
+
+    LaunchedEffect(openRequest.value, todos) {
+        val req = openRequest.value ?: return@LaunchedEffect
+        openRequest.value = null
+        // 수정 중에 알림·위젯으로 다른 할 일을 열면 저장 안 한 내용이 날아가지 않게 먼저 물음
+        val same = req is OpenRequest.Edit && req.id == editing?.todo?.id && editing?.isNew == false
+        if (editing != null && editDirty && !same) pending = req else if (!same) open(req)
+    }
+    // 기록·설정 탭에서 뒤로가기 → 할 일 탭으로, 할 일 탭에서 한 번 더 누르면 종료 (편집 화면은 자체 처리)
     BackHandler(enabled = editing == null && tab != Tab.TODO.ordinal) { tab = Tab.TODO.ordinal }
+
+    /** 기간이 끝난 할 일을 지금부터 완료할 때까지 다시 띄움 */
+    fun restart(todo: Todo) {
+        val now = System.currentTimeMillis()
+        Actions.save(ctx, todo.copy(startAt = now - now % 60_000L, endAt = null, hiddenKey = null, alertedKey = null, snoozeUntil = null))
+        scope.launch {
+            snackbar.currentSnackbarData?.dismiss()
+            val result = snackbar.showSnackbar("'${todo.title}' 다시 알림창에 띄웠어요", actionLabel = "일정 바꾸기", duration = SnackbarDuration.Short)
+            if (result == SnackbarResult.ActionPerformed) {
+                TodoStore.get(ctx, todo.id)?.let { editing = EditTarget(it, isNew = false) }
+            }
+        }
+    }
+
+    if (onboarding) {
+        OnboardingScreen(onDone = { onboarding = false })
+        return
+    }
 
     fun complete(todo: Todo) {
         Actions.save(ctx, Actions.complete(todo, System.currentTimeMillis()))
@@ -166,15 +198,16 @@ private fun App(openRequest: MutableState<OpenRequest?>) {
             EditScreen(
                 initial = target.todo,
                 isNew = target.isNew,
-                onClose = { editing = null },
+                onClose = ::closeEditor,
                 onSave = { todo ->
                     Actions.save(ctx, if (target.isNew) todo.copy(id = TodoStore.newId(ctx)) else todo)
-                    editing = null
+                    closeEditor()
                 },
                 onDelete = {
                     Actions.delete(ctx, target.todo.id)
-                    editing = null
+                    closeEditor()
                 },
+                onDirtyChange = { editDirty = it },
             )
             return@AnimatedContent
         }
@@ -204,6 +237,7 @@ private fun App(openRequest: MutableState<OpenRequest?>) {
                     onEdit = { editing = EditTarget(it, isNew = false) },
                     onComplete = ::complete,
                     onSnooze = { snoozing = it },
+                    onRestart = ::restart,
                 )
                 Tab.HISTORY -> HistoryScreen(
                     todos = todos,
@@ -215,6 +249,10 @@ private fun App(openRequest: MutableState<OpenRequest?>) {
                 Tab.SETTINGS -> SettingsScreen(contentPadding = padding)
             }
         }
+    }
+
+    pending?.let { req ->
+        DiscardDialog(onKeep = { pending = null }, onDiscard = { pending = null; open(req) })
     }
 
     snoozing?.let { todo ->

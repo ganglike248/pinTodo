@@ -3,6 +3,8 @@ package com.pintodo.data
 import android.content.Context
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import org.json.JSONArray
+import org.json.JSONObject
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
@@ -104,6 +106,33 @@ object SettingsStore {
             wearable = p.getBoolean("wearable", d.wearable),
         )
         loaded = true
+    }
+
+    fun toJson(s: AppSettings) = JSONObject().apply {
+        put("snoozeOptions", JSONArray(s.snoozeOptions.map { it.name }))
+        put("quickSnooze", s.quickSnooze.name)
+        put("defaultNotify", s.defaultNotify)
+        put("defaultPinned", s.defaultPinned)
+        put("defaultAlertMode", s.defaultAlertMode.name)
+        put("dynamicColor", s.dynamicColor)
+        put("wearable", s.wearable)
+    }
+
+    /** 모르는 값은 기본값으로 */
+    fun fromJson(o: JSONObject): AppSettings {
+        val d = AppSettings()
+        val options = o.optJSONArray("snoozeOptions")?.let { a ->
+            (0 until a.length()).mapNotNull { runCatching { SnoozeOption.valueOf(a.getString(it)) }.getOrNull() }.toSet()
+        }?.ifEmpty { null } ?: d.snoozeOptions
+        return AppSettings(
+            snoozeOptions = options,
+            quickSnooze = runCatching { SnoozeOption.valueOf(o.getString("quickSnooze")) }.getOrDefault(d.quickSnooze),
+            defaultNotify = o.optBoolean("defaultNotify", d.defaultNotify),
+            defaultPinned = o.optBoolean("defaultPinned", d.defaultPinned),
+            defaultAlertMode = runCatching { AlertMode.valueOf(o.getString("defaultAlertMode")) }.getOrDefault(d.defaultAlertMode),
+            dynamicColor = o.optBoolean("dynamicColor", d.dynamicColor),
+            wearable = o.optBoolean("wearable", d.wearable),
+        )
     }
 
     private fun prefs(context: Context) =

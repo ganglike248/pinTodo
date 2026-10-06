@@ -2,7 +2,7 @@
 
 완료할 때까지 알림창에 고정되는 안드로이드 투두 앱. **Google Play 출시 예정** (2026-10-02 결정, 아직 Play Console 등록 전). Kotlin + Jetpack Compose(Material 3), 외부 서버 없음.
 
-- **현재 버전**: v0.4.2 (스토어 출시 전이라 0.x, 출시 시 1.0.0) | GitHub: https://github.com/ganglike248/pinTodo (main 브랜치)
+- **현재 버전**: v0.4.3 (스토어 출시 전이라 0.x, 출시 시 1.0.0) | GitHub: https://github.com/ganglike248/pinTodo (main 브랜치)
 - 사용 기기: 갤럭시 S26 울트라 (One UI / Android 16)
 
 ## 버전 관리 규칙 (필수)
@@ -47,6 +47,12 @@ adb install -r app/build/outputs/apk/release/app-release.apk
 - 알림 버튼은 최대 3개: [완료][설정의 quickSnooze][미루기…(SnoozeActivity)]. 워치용 `WearableExtender`에는 [완료][quickSnooze]만
 - **스마트워치**: 워치는 ongoing 알림을 넘겨받지 않음 → `AppSettings.wearable`(기본 켬)이면 `setOngoing(false)` + deleteIntent 재게시로 고정. 밀어서 지운 회차는 `Todo.wearDismissedKey`에 기록해 `setLocalOnly(true)`로 재게시(워치에서 사라지고 휴대폰에만 남음, 워치↔휴대폰 재게시 무한 반복 방지)
 - 알림 본문은 `Format.notificationSchedule`(절대 날짜)로 항상 일정 표시 — 알림은 자정에 다시 그려지지 않으므로 '오늘/내일' 쓰지 말 것
-- 일정 계산(`Todo`)은 `app/src/test`의 JUnit 테스트로 검증: `./gradlew testDebugUnitTest`
+- 일정 계산(`Todo`)·날짜 인식(`DateParser`)은 `app/src/test`의 JUnit 테스트로 검증: `./gradlew testDebugUnitTest`
+- 시각 표시는 전부 `Format.time`(오전/오후 12시간제)을 거칠 것. 휠도 `TimeWheel`(오전·오후/시/분) 하나만 사용
+- 반복은 `Todo.repeatType`(NONE/WEEKLY/MONTHLY/EVERY_DAYS) + `repeatInterval`(주·일 간격) + `monthDay`(31=말일) + `repeatAnchor`(격주·n일마다 기준일, epochDay). 회차 판정은 `occursOn()` 하나로. v0.4.3 이전 데이터는 `repeatDays`가 있으면 WEEKLY
+- 편집 화면의 일정 휠은 시트가 아니라 화면에 펼쳐 둠(`InlineDateTime`/`InlineTime`). `WheelPicker`는 바깥 값으로 이동하는 동안(`syncing`) 지나가는 값을 알리지 않음 — 안 그러면 중간 값으로 되돌아감
+- 제목·메모 자동 일정: 사용자가 일정을 직접 만지면(`manualSchedule`) 더 이상 덮어쓰지 않음. 기존 할 일은 처음 글에 있던 날짜로는 덮어쓰지 않음
+- `QuickAddActivity`는 공유(SEND text/plain) 대상이라 exported=true
+- 위젯은 Android 12+에서 크기별 `RemoteViews(Map<SizeF, RemoteViews>)`: 150×130dp 이상 목록형, 그보다 작으면 요약형(`widget_compact`)
 - 빠른 추가/미루기 시트는 투명 액티비티 위의 ModalBottomSheet. 시트 안 입력창 포커스는 시트 창이 붙은 뒤(delay) 요청해야 키보드가 올라옴
 - 휠 피커(`WheelPicker`)는 같은 값을 여러 번 반복한 LazyColumn + 가운데 스냅. 휴대폰 모드별 실제 울림(진동 모드에서 소리 채널 → 진동)은 에뮬레이터 `notification_alert` 로그로 검증함

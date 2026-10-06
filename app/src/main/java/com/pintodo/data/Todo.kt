@@ -1,8 +1,11 @@
 package com.pintodo.data
 
+import java.time.DayOfWeek
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
+import java.time.temporal.ChronoUnit
+import java.time.temporal.TemporalAdjusters
 
 enum class AlertMode(val label: String) {
     SILENT("무음"),
@@ -21,6 +24,13 @@ enum class Status {
     DONE,       // 완료
 }
 
+enum class RepeatType {
+    NONE,       // 한 번
+    WEEKLY,     // 요일 반복 (repeatInterval 주마다: 1=매주, 2=격주)
+    MONTHLY,    // 매월 monthDay일 (그 달에 없는 날이면 말일)
+    EVERY_DAYS, // repeatInterval 일마다
+}
+
 /** 알림이 떠 있어야 하는 구간. end == null 이면 완료할 때까지 */
 data class Window(val start: Long, val end: Long?)
 
@@ -36,8 +46,12 @@ data class Todo(
     val startAt: Long? = null,
     val endAt: Long? = null,
 
-    // 반복: repeatDays 가 비어 있으면 '한 번'. 1=월 ... 7=일 (DayOfWeek.value)
+    // 반복. repeatDays: 1=월 ... 7=일 (DayOfWeek.value)
     val repeatDays: Set<Int> = emptySet(),
+    val repeatType: RepeatType = if (repeatDays.isEmpty()) RepeatType.NONE else RepeatType.WEEKLY,
+    val repeatInterval: Int = 1,
+    val monthDay: Int = 1,
+    val repeatAnchor: Long? = null, // 격주·n일마다의 기준 날짜 (LocalDate.toEpochDay). null이면 만든 날
     val dailyStart: Int = 9 * 60,   // 하루 중 분
     val dailyEnd: Int? = null,      // null 이면 자정까지. dailyStart 이하면 다음 날로 넘어감
 
@@ -48,7 +62,7 @@ data class Todo(
     val alertedKey: Long? = null,   // 이미 소리/진동을 낸 회차 키
     val wearDismissedKey: Long? = null, // 밀어서 지운 회차 키 → 이 회차는 워치로 다시 보내지 않음
 ) {
-    val isRepeat get() = repeatDays.isNotEmpty()
+    val isRepeat get() = repeatType != RepeatType.NONE
 
     /** now 시점에 해당하는 표시 구간 (없으면 null) */
     fun windowAt(now: Long): Window? {
@@ -61,7 +75,7 @@ data class Todo(
         val today = localDate(now)
         // 자정을 넘기는 구간을 위해 어제 회차도 확인
         return listOf(today.minusDays(1), today)
-            .filter { it.dayOfWeek.value in repeatDays }
+            .filter { occursOn(it) }
             .map { repeatWindow(it) }
             .lastOrNull { now >= it.start && now < it.end!! }
     }
@@ -71,9 +85,10 @@ data class Todo(
         if (doneAt != null || !notify) return null
         if (!isRepeat) return (startAt ?: createdAt).takeIf { it > now }
         val today = localDate(now)
-        return (0L..7L).asSequence()
+        // 가장 긴 주기(매월, 4주마다, 30일마다)도 두 달 안에 한 번은 돌아옴
+        return (0L..62L).asSequence()
             .map { today.plusDays(it) }
-            .filter { it.dayOfWeek.value in repeatDays }
+            .filter { occursOn(it) }
             .map { repeatWindow(it).start }
             .firstOrNull { it > now }
     }
@@ -99,6 +114,21 @@ data class Todo(
         snoozeUntil?.takeIf { it > now },
         nextStart(now),
     ).minOrNull()
+
+    /** 이 날짜에 회차가 시작되는지 */
+    fun occursOn(date: LocalDate): Boolean {
+        val anchor = repeatAnchor?.let(LocalDate::ofEpochDay) ?: localDate(createdAt)
+        val n = repeatInterval.coerceAtLeast(1).toLong()
+        return when (repeatType) {
+            RepeatType.NONE -> false
+            RepeatType.WEEKLY -> date.dayOfWeek.value in repeatDays &&
+                ChronoUnit.WEEKS.between(monday(anchor), monday(date)).mod(n) == 0L
+            RepeatType.MONTHLY -> date.dayOfMonth == minOf(monthDay, date.lengthOfMonth())
+            RepeatType.EVERY_DAYS -> !date.isBefore(anchor) && (date.toEpochDay() - anchor.toEpochDay()).mod(n) == 0L
+        }
+    }
+
+    private fun monday(d: LocalDate) = d.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
 
     private fun repeatWindow(date: LocalDate): Window {
         val zone = ZoneId.systemDefault()

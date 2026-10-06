@@ -37,6 +37,17 @@ object TodoStore {
         return id
     }
 
+    /** 다음에 쓸 id (백업용, 증가시키지 않음) */
+    fun peekNextId(context: Context): Int = prefs(context).getInt(KEY_NEXT_ID, 1)
+
+    /** 백업 복원: 목록 전체를 바꾸고 id가 겹치지 않게 다음 id를 맞춤 */
+    @Synchronized
+    fun replaceAll(context: Context, todos: List<Todo>, nextId: Int) {
+        val safeNext = maxOf(nextId, (todos.maxOfOrNull { it.id } ?: 0) + 1, peekNextId(context))
+        prefs(context).edit().putInt(KEY_NEXT_ID, safeNext).commit()
+        update(context) { todos }
+    }
+
     /** id가 같으면 교체, 없으면 추가 */
     fun upsert(context: Context, todo: Todo) = update(context) { list ->
         if (list.any { it.id == todo.id }) list.map { if (it.id == todo.id) todo else it }
@@ -75,7 +86,7 @@ object TodoStore {
         prefs(context).edit().putString(KEY_LIST, arr.toString()).commit()
     }
 
-    private fun toJson(t: Todo) = JSONObject().apply {
+    fun toJson(t: Todo) = JSONObject().apply {
         put("id", t.id)
         put("title", t.title)
         put("memo", t.memo)
@@ -85,6 +96,10 @@ object TodoStore {
         putOpt("startAt", t.startAt)
         putOpt("endAt", t.endAt)
         put("repeatDays", JSONArray(t.repeatDays.sorted()))
+        put("repeatType", t.repeatType.name)
+        put("repeatInterval", t.repeatInterval)
+        put("monthDay", t.monthDay)
+        putOpt("repeatAnchor", t.repeatAnchor)
         put("dailyStart", t.dailyStart)
         putOpt("dailyEnd", t.dailyEnd)
         put("createdAt", t.createdAt)
@@ -96,8 +111,9 @@ object TodoStore {
     }
 
     // v1 데이터({id, text})도 읽을 수 있게 모든 필드를 선택적으로 읽음
-    private fun fromJson(o: JSONObject): Todo {
+    fun fromJson(o: JSONObject): Todo {
         val days = o.optJSONArray("repeatDays")
+        val daySet = days?.let { a -> (0 until a.length()).map { a.getInt(it) }.toSet() } ?: emptySet()
         return Todo(
             id = o.getInt("id"),
             title = o.optString("title", o.optString("text")),
@@ -107,7 +123,13 @@ object TodoStore {
             alertMode = runCatching { AlertMode.valueOf(o.getString("alertMode")) }.getOrDefault(AlertMode.SILENT),
             startAt = o.optLongOrNull("startAt"),
             endAt = o.optLongOrNull("endAt"),
-            repeatDays = days?.let { a -> (0 until a.length()).map { a.getInt(it) }.toSet() } ?: emptySet(),
+            repeatDays = daySet,
+            // v0.4.3 이전 데이터는 요일 반복만 있었음
+            repeatType = runCatching { RepeatType.valueOf(o.getString("repeatType")) }
+                .getOrDefault(if (daySet.isEmpty()) RepeatType.NONE else RepeatType.WEEKLY),
+            repeatInterval = o.optInt("repeatInterval", 1),
+            monthDay = o.optInt("monthDay", 1),
+            repeatAnchor = o.optLongOrNull("repeatAnchor"),
             dailyStart = o.optInt("dailyStart", 9 * 60),
             dailyEnd = o.optLongOrNull("dailyEnd")?.toInt(),
             createdAt = o.optLong("createdAt", 0L),
