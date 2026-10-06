@@ -50,6 +50,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
@@ -64,6 +65,7 @@ import androidx.compose.ui.unit.dp
 import com.pintodo.data.AlertMode
 import com.pintodo.data.CheckItem
 import com.pintodo.data.LabelColor
+import com.pintodo.data.SettingsStore
 import java.time.LocalDate
 
 /** 체크리스트를 화면 회전·프로세스 종료 뒤에도 유지 */
@@ -234,15 +236,25 @@ fun RepeatEndEditor(
     }
 }
 
-/** 고정 여부 + 소리/진동을 한 시트에서 */
+/** 다시 울리기 선택지(분) */
+val REMIND_OPTIONS = listOf(30, 60, 120, 180)
+
+/** 알림 방식 한 줄 요약: '고정 · 소리+진동 · 1시간마다' */
+fun alertSummary(pinned: Boolean, mode: AlertMode, remind: Int?): String =
+    listOfNotNull(if (pinned) "고정" else "밀면 숨김", mode.label, Format.remind(remind)).joinToString(" · ")
+
+/** 고정 여부 + 소리/진동 + 다시 울리기를 한 시트에서 */
 @Composable
 fun AlertSheet(
     pinned: Boolean,
     mode: AlertMode,
+    remind: Int?,
     onPinned: (Boolean) -> Unit,
     onMode: (AlertMode) -> Unit,
+    onRemind: (Int?) -> Unit,
     onDismiss: () -> Unit,
 ) {
+    val quietNight = SettingsStore.get(LocalContext.current).quietNight
     AppSheet(onDismiss) { hide ->
         SheetTitle("알림 방식")
         Row(
@@ -261,7 +273,21 @@ fun AlertSheet(
             Switch(pinned, onPinned)
         }
         Spacer(Modifier.height(16.dp))
-        AlertModePicker(mode, onMode)
+        AlertModePicker(mode, onMode, reminds = remind != null)
+        Spacer(Modifier.height(20.dp))
+        Text("다시 울리기", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(start = 4.dp, bottom = 8.dp))
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            SoftChip("안 함", remind == null) { onRemind(null) }
+            REMIND_OPTIONS.forEach { m -> SoftChip(Format.remind(m)!!, remind == m) { onRemind(m) } }
+        }
+        Hint(
+            when {
+                remind == null -> "처음 뜰 때만 알려요"
+                mode == AlertMode.SILENT -> "무음이라 다시 울리지 않아요. 소리나 진동을 골라 주세요"
+                quietNight -> "완료할 때까지 ${Format.remind(remind)} 한 번씩 다시 알려요. 밤(오후 10시~오전 8시)에는 쉬어요 (설정 > 알림)"
+                else -> "완료할 때까지 ${Format.remind(remind)} 한 번씩 다시 알려요. 밤에도 울려요 — 쉬게 하려면 설정 > 알림"
+            }
+        )
         Spacer(Modifier.height(20.dp))
         PrimaryButton("확인", { hide(onDismiss) })
     }

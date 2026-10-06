@@ -48,6 +48,8 @@ data class AppSettings(
     val defaultAlertMode: AlertMode = AlertMode.BOTH,
     val dynamicColor: Boolean = false,                    // 배경화면 색상(Material You) 사용
     val wearable: Boolean = true,                         // 스마트워치로도 보내기 (끄면 휴대폰 전용 고정 알림)
+    val defaultRemindEvery: Int? = null,                  // 새 할 일의 다시 울리기 간격(분)
+    val quietNight: Boolean = false,                      // 밤(오후 10시~오전 8시)에는 다시 울리지 않기. 켜야만 동작 (모르는 사이 안 울리는 일이 없게)
 ) {
     /** 화면에 보여줄 미루기 선택지 (정의 순서 유지) */
     val enabledSnoozes get() = SnoozeOption.entries.filter { it in snoozeOptions }
@@ -83,6 +85,8 @@ object SettingsStore {
             .putString("defaultAlertMode", next.defaultAlertMode.name)
             .putBoolean("dynamicColor", next.dynamicColor)
             .putBoolean("wearable", next.wearable)
+            .putInt("defaultRemindEvery", next.defaultRemindEvery ?: 0)
+            .putBoolean("quietNight", next.quietNight)
             .commit()
         state.value = next
     }
@@ -104,6 +108,8 @@ object SettingsStore {
                 ?.let { runCatching { AlertMode.valueOf(it) }.getOrNull() } ?: d.defaultAlertMode,
             dynamicColor = p.getBoolean("dynamicColor", d.dynamicColor),
             wearable = p.getBoolean("wearable", d.wearable),
+            defaultRemindEvery = p.getInt("defaultRemindEvery", 0).takeIf { it > 0 },
+            quietNight = p.getBoolean("quietNight", d.quietNight),
         )
         loaded = true
     }
@@ -116,6 +122,8 @@ object SettingsStore {
         put("defaultAlertMode", s.defaultAlertMode.name)
         put("dynamicColor", s.dynamicColor)
         put("wearable", s.wearable)
+        put("defaultRemindEvery", s.defaultRemindEvery ?: 0)
+        put("quietNight", s.quietNight)
     }
 
     /** 모르는 값은 기본값으로 */
@@ -132,7 +140,15 @@ object SettingsStore {
             defaultAlertMode = runCatching { AlertMode.valueOf(o.getString("defaultAlertMode")) }.getOrDefault(d.defaultAlertMode),
             dynamicColor = o.optBoolean("dynamicColor", d.dynamicColor),
             wearable = o.optBoolean("wearable", d.wearable),
+            defaultRemindEvery = o.optInt("defaultRemindEvery", 0).takeIf { it > 0 },
+            quietNight = o.optBoolean("quietNight", d.quietNight),
         )
+    }
+
+    /** 오후 10시 ~ 오전 8시 */
+    fun isNight(now: Long): Boolean {
+        val h = java.time.Instant.ofEpochMilli(now).atZone(ZoneId.systemDefault()).hour
+        return h >= 22 || h < 8
     }
 
     private fun prefs(context: Context) =

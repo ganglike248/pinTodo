@@ -23,6 +23,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Alarm
 import androidx.compose.material.icons.rounded.Backup
+import androidx.compose.material.icons.rounded.Bedtime
+import androidx.compose.material.icons.rounded.Feedback
+import androidx.compose.material.icons.rounded.Share
+import androidx.compose.material.icons.rounded.StarOutline
 import androidx.compose.material.icons.rounded.CloudDone
 import androidx.compose.material.icons.rounded.Shield
 import androidx.compose.material.icons.rounded.Restore
@@ -69,6 +73,23 @@ import java.time.LocalDate
 private enum class SettingSheet { QUICK_SNOOZE, SNOOZE_OPTIONS, ALERT_MODE }
 
 const val PRIVACY_URL = "https://ganglike248.github.io/pinTodo/privacy-policy"
+const val FEEDBACK_URL = "https://github.com/ganglike248/pinTodo/issues"
+private const val STORE_URL = "https://play.google.com/store/apps/details?id=com.pintodo"
+
+private fun openUrl(ctx: Context, url: String) {
+    runCatching { ctx.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) }
+}
+
+/** Play 스토어 앱으로, 없으면 웹으로 */
+private fun openStore(ctx: Context) {
+    runCatching { ctx.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=${ctx.packageName}"))) }
+        .onFailure { openUrl(ctx, STORE_URL) }
+}
+
+private fun shareApp(ctx: Context) {
+    val text = "할 일을 끝낼 때까지 알림창에 고정해 주는 무료 앱 PinTodo\n$STORE_URL"
+    ctx.startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, text), "PinTodo 알려주기"))
+}
 
 @Composable
 fun SettingsScreen(contentPadding: PaddingValues) {
@@ -133,6 +154,14 @@ fun SettingsScreen(contentPadding: PaddingValues) {
                 )
                 Divider()
                 SettingRow(
+                    title = "밤에는 다시 울리지 않기",
+                    value = if (s.quietNight) "오후 10시~오전 8시에는 '다시 울리기'를 쉬어요" else "꺼짐 · 밤에도 정한 간격마다 다시 울려요",
+                    icon = Icons.Rounded.Bedtime,
+                    onClick = { update { it.copy(quietNight = !it.quietNight) } },
+                    trailing = { Switch(s.quietNight, { v -> update { it.copy(quietNight = v) } }) },
+                )
+                Divider()
+                SettingRow(
                     title = "스마트워치에도 알림",
                     value = if (s.wearable) "워치 앱 알림 설정에서 PinTodo를 켜 두세요" else "휴대폰에만 표시해요",
                     icon = Icons.Rounded.Watch,
@@ -154,7 +183,7 @@ fun SettingsScreen(contentPadding: PaddingValues) {
                 Divider()
                 SettingRow(
                     title = "알림 방식",
-                    value = (if (s.defaultPinned) "고정 · " else "밀면 숨김 · ") + s.defaultAlertMode.label,
+                    value = alertSummary(s.defaultPinned, s.defaultAlertMode, s.defaultRemindEvery),
                     icon = s.defaultAlertMode.icon(),
                     valueColor = MaterialTheme.colorScheme.primary,
                     onClick = { sheet = SettingSheet.ALERT_MODE },
@@ -254,10 +283,31 @@ fun SettingsScreen(contentPadding: PaddingValues) {
                 )
                 Divider()
                 SettingRow(
+                    title = "별점 남기기",
+                    value = "PinTodo가 도움이 됐다면 응원해 주세요",
+                    icon = Icons.Rounded.StarOutline,
+                    onClick = { openStore(ctx) },
+                )
+                Divider()
+                SettingRow(
+                    title = "친구에게 알려주기",
+                    value = "할 일을 자주 놓치는 친구에게 공유해요",
+                    icon = Icons.Rounded.Share,
+                    onClick = { shareApp(ctx) },
+                )
+                Divider()
+                SettingRow(
+                    title = "의견 보내기",
+                    value = "불편한 점이나 바라는 기능을 알려 주세요",
+                    icon = Icons.Rounded.Feedback,
+                    onClick = { openUrl(ctx, FEEDBACK_URL) },
+                )
+                Divider()
+                SettingRow(
                     title = "개인정보처리방침",
                     value = "수집하는 정보가 없어요",
                     icon = Icons.Rounded.Shield,
-                    onClick = { runCatching { ctx.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(PRIVACY_URL))) } },
+                    onClick = { openUrl(ctx, PRIVACY_URL) },
                 )
             }
         }
@@ -289,9 +339,10 @@ fun SettingsScreen(contentPadding: PaddingValues) {
             PrimaryButton("확인", { hide { sheet = null } })
         }
         SettingSheet.ALERT_MODE -> AlertSheet(
-            pinned = s.defaultPinned, mode = s.defaultAlertMode,
+            pinned = s.defaultPinned, mode = s.defaultAlertMode, remind = s.defaultRemindEvery,
             onPinned = { v -> update { it.copy(defaultPinned = v) } },
             onMode = { m -> update { it.copy(defaultAlertMode = m) } },
+            onRemind = { r -> update { it.copy(defaultRemindEvery = r) } },
             onDismiss = { sheet = null },
         )
         null -> {}
@@ -325,14 +376,14 @@ fun SettingsScreen(contentPadding: PaddingValues) {
 
 /** 알림 방식 4칸 + 현재 휴대폰 모드에서 실제 동작 안내 */
 @Composable
-fun AlertModePicker(mode: AlertMode, onChange: (AlertMode) -> Unit) {
+fun AlertModePicker(mode: AlertMode, onChange: (AlertMode) -> Unit, reminds: Boolean = false) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
             AlertMode.entries.forEach { m ->
                 ChoiceTile(m.icon(), m.label.replace("소리+진동", "모두"), m == mode, { onChange(m) }, Modifier.weight(1f))
             }
         }
-        AlertModeHint(mode)
+        AlertModeHint(mode, reminds = reminds)
     }
 }
 

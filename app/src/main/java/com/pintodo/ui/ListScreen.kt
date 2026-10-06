@@ -96,6 +96,7 @@ fun TodoScreen(
     onSnooze: (Todo) -> Unit,
     onRestart: (Todo) -> Unit,
     onUpdate: (Todo) -> Unit,
+    onExample: (Todo) -> Unit,
 ) {
     val active = todos.filter { it.doneAt == null }
     val inProgress = active.filter { it.status(now) in setOf(Status.SHOWING, Status.SNOOZED) }
@@ -118,7 +119,12 @@ fun TodoScreen(
             ScreenHeader("PinTodo", if (active.isEmpty()) "할 일이 없어요" else "알림 중 ${showing}개 · 예정 ${upcoming.size}개")
         }
         item(key = "banners") { Banners() }
-        if (active.isEmpty()) item(key = "empty") { EmptyState() }
+        if (active.isEmpty()) item(key = "empty") {
+            Column {
+                EmptyState()
+                ExampleStarter(onExample)
+            }
+        }
 
         section("진행 중", inProgress, now, onEdit, onComplete, onSnooze, onRestart, onUpdate)
         section("예정", upcoming, now, onEdit, onComplete, onSnooze, onRestart, onUpdate)

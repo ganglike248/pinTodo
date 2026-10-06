@@ -60,9 +60,9 @@ fun rememberPhoneMode(): PhoneMode {
  * 선택한 알림 방식이 지금 휴대폰 모드에서 실제로 어떻게 울리는지.
  * 안드로이드는 진동 모드일 때 소리 알림을 진동으로 바꿔 울리고, 무음·방해 금지에서는 둘 다 막는다.
  */
-fun describeAlert(mode: AlertMode, phone: PhoneMode): Pair<String, Boolean> {
+fun describeAlert(mode: AlertMode, phone: PhoneMode, reminds: Boolean = false): Pair<String, Boolean> {
     if (mode == AlertMode.SILENT) return "소리·진동 없이 알림창에만 조용히 표시돼요." to false
-    val once = "처음 뜰 때 한 번만"
+    val once = if (reminds) "처음 뜰 때와 다시 울릴 때" else "처음 뜰 때 한 번만"
     return when (phone) {
         PhoneMode.SOUND -> when (mode) {
             AlertMode.SOUND -> "$once 소리로 알려요. (진동 없음)"
@@ -79,9 +79,9 @@ fun describeAlert(mode: AlertMode, phone: PhoneMode): Pair<String, Boolean> {
 }
 
 @Composable
-fun AlertModeHint(mode: AlertMode, modifier: Modifier = Modifier) {
+fun AlertModeHint(mode: AlertMode, modifier: Modifier = Modifier, reminds: Boolean = false) {
     val phone = rememberPhoneMode()
-    val (text, warn) = describeAlert(mode, phone)
+    val (text, warn) = describeAlert(mode, phone, reminds)
     InfoBox(
         icon = if (warn) Icons.Rounded.WarningAmber else Icons.Rounded.Info,
         text = "휴대폰: ${phone.label} 모드 · $text",

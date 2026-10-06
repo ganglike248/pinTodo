@@ -169,4 +169,21 @@ class TodoTest {
         assertEquals("평일 오전 9:00–오후 6:00 · 10회", Format.schedule(t.copy(repeatCount = 10)))
         assertEquals("평일 오전 9:00–오후 6:00 · 12/31(목)까지", Format.schedule(t.copy(repeatUntil = java.time.LocalDate.of(2026, 12, 31).toEpochDay())))
     }
+
+    // ── 다시 울리기 ──
+
+    @Test fun `다시 울리기는 간격마다 알림 키가 바뀌고 다음 변경 시각에 잡힘`() {
+        val t = todo(startAt = at(5, 14)).copy(remindEvery = 60)
+        assertEquals(at(5, 14), t.alertKey(at(5, 14, 30)))
+        assertEquals(at(5, 15), t.alertKey(at(5, 15, 10)))
+        assertEquals(false, t.isReminder(at(5, 14, 30)))
+        assertEquals(true, t.isReminder(at(5, 15, 10)))
+        assertEquals(at(5, 16), t.nextChange(at(5, 15, 10)))
+    }
+
+    @Test fun `미루기가 끝나면 그 시각부터 다시 셈`() {
+        val t = todo(startAt = at(5, 14)).copy(remindEvery = 60, snoozeUntil = at(5, 14, 40))
+        assertEquals(at(5, 14, 40), t.alertKey(at(5, 15, 0)))
+        assertEquals(at(5, 15, 40), t.alertKey(at(5, 15, 45)))
+    }
 }

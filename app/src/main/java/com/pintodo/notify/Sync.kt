@@ -4,6 +4,7 @@ import android.app.AlarmManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import com.pintodo.data.SettingsStore
 import com.pintodo.data.Status
 import com.pintodo.data.TodoStore
 import com.pintodo.tile.QuickAddTileService
@@ -21,15 +22,18 @@ object Sync {
 
         val todos = TodoStore.all(context)
         val alerted = mutableMapOf<Int, Long>()
+        val quiet = SettingsStore.get(context).let { it.quietNight && SettingsStore.isNight(now) }
 
         for (todo in todos) {
             if (todo.status(now) == Status.SHOWING) {
                 val key = todo.alertKey(now)
-                val alert = key != null && key != todo.alertedKey
+                val fresh = key != null && key != todo.alertedKey
+                // 다시 울리기는 밤에는 조용히 넘김 (회차 시작·미루기 종료 알림은 그대로 울림)
+                val alert = fresh && !(quiet && todo.isReminder(now))
                 // 이미 떠 있는 알림의 갱신은 setOnlyAlertOnce 때문에 울리지 않으므로 새로 게시
                 if (alert) Notifier.cancel(context, todo.id)
                 Notifier.show(context, todo, alert, now)
-                if (alert) alerted[todo.id] = key!!
+                if (fresh) alerted[todo.id] = key!!
             } else {
                 Notifier.cancel(context, todo.id)
             }

@@ -14,8 +14,8 @@ android {
         applicationId = "com.pintodo"
         minSdk = 26
         targetSdk = 36
-        versionCode = 10
-        versionName = "0.4.4"
+        versionCode = 11
+        versionName = "0.4.5"
     }
 
     // Play 업로드 키: 저장소 밖(~/.android/pintodo/keystore.properties)에 두고 커밋하지 않음
@@ -71,6 +71,7 @@ dependencies {
     implementation("androidx.compose.material:material-icons-extended")
     implementation("androidx.activity:activity-compose:1.11.0")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.9.4")
+    implementation("com.google.android.play:review:2.0.2")   // 앱 안 별점 요청
 
     testImplementation("junit:junit:4.13.2")
 }

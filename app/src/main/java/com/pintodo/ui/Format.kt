@@ -91,6 +91,11 @@ object Format {
         else -> ""
     }
 
+    /** 다시 울리기: '30분마다', '2시간마다' */
+    fun remind(minutes: Int?): String? = minutes?.takeIf { it > 0 }?.let {
+        if (it % 60 == 0) "${it / 60}시간마다" else "${it}분마다"
+    }
+
     /** 체크리스트 진행: '2/5' (항목이 없으면 null) */
     fun progress(t: Todo): String? = t.items.takeIf { it.isNotEmpty() }?.let { "${it.count { i -> i.done }}/${it.size}" }
 

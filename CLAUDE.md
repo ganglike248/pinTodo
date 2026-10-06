@@ -2,8 +2,13 @@
 
 완료할 때까지 알림창에 고정되는 안드로이드 투두 앱. **Google Play 출시 예정** (2026-10-02 결정, 아직 Play Console 등록 전). Kotlin + Jetpack Compose(Material 3), 외부 서버 없음.
 
-- **현재 버전**: v0.4.4 (스토어 출시 전이라 0.x, 출시 시 1.0.0) | GitHub: https://github.com/ganglike248/pinTodo (main 브랜치)
+- **현재 버전**: v0.4.5 (스토어 출시 전이라 0.x, 출시 시 1.0.0) | GitHub: https://github.com/ganglike248/pinTodo (main 브랜치)
 - 사용 기기: 갤럭시 S26 울트라 (One UI / Android 16)
+
+## 운영 방향 (2026-10-06 결정)
+- **수익화 안 함**: 사업자가 없어 결제·구독·광고를 넣지 않음. 모든 기능 무료, "광고·계정·서버 없음"을 장점으로 유지
+- 목적은 **포트폴리오**: 사용자 수와 유지율을 늘리는 것이 목표. 지표는 앱 안 분석 도구 없이 Play Console(설치·유지율·평점·Android vitals)로 확인
+- 로그인·서버·DB 없음. 나중에 기기 간 동기화가 필요해지면 그때 선택형 로그인으로 검토
 
 ## 버전 관리 규칙 (필수)
 버전을 올릴 때는 아래를 **동시에** 업데이트
@@ -54,6 +59,8 @@ adb install -r app/build/outputs/apk/sideload/app-sideload.apk
 - 체크리스트 `Todo.items`(`CheckItem`), 색 라벨 `Todo.color`(`LabelColor`): 목록 카드(점·펼치는 체크리스트), 알림(펼치면 ☑/☐ 목록, 알림 색), 위젯(점·진행) 모두 반영
 - 반복 종료 `repeatUntil`(epochDay)·`repeatCount`: `Todo.endDate`(lazy)로 마지막 날 계산 → `occursOn`에서 제외. 횟수는 `repeatAnchor`(규칙·횟수를 바꾸면 오늘)부터 셈
 - 자동 백업: `res/xml/data_extraction_rules.xml`·`backup_rules.xml`에 `todos.xml`·`settings.xml`만 (ui.xml은 제외 → 새 폰에서 첫 실행 안내 다시 표시). 복원 후 알림은 앱을 처음 열 때 `Sync.run()`으로 다시 게시
+- 다시 울리기 `Todo.remindEvery`(분): `alertKey`가 간격마다 바뀌어 Sync가 다시 울림, `nextChange`에 다음 간격 포함. `AppSettings.quietNight`(**기본 꺼짐** — 기본으로 켜 두면 처음 쓰는 사람이 밤에 안 울리는 이유를 모름)를 켜면 밤(오후 10시~오전 8시)에는 다시 울리기만 조용히 넘기고 `alertedKey`는 갱신(회차 시작·미루기 종료 알림은 그대로 울림)
+- 성장 장치(`ui/Growth.kt`): 빈 목록의 예시 할 일, 앱 안 별점 요청(앱에서 5번째 완료 때 1회, Play In-App Review — 권한·데이터 수집 없음). 설정 > 정보에 별점 남기기·공유·의견 보내기(GitHub 이슈)
 - 일정 계산(`Todo`)·날짜 인식(`DateParser`)은 `app/src/test`의 JUnit 테스트로 검증: `./gradlew testDebugUnitTest`
 - 시각 표시는 전부 `Format.time`(오전/오후 12시간제)을 거칠 것. 휠도 `TimeWheel`(오전·오후/시/분) 하나만 사용
 - 반복은 `Todo.repeatType`(NONE/WEEKLY/MONTHLY/EVERY_DAYS) + `repeatInterval`(주·일 간격) + `monthDay`(31=말일) + `repeatAnchor`(격주·n일마다 기준일, epochDay). 회차 판정은 `occursOn()` 하나로. v0.4.3 이전 데이터는 `repeatDays`가 있으면 WEEKLY

@@ -57,6 +57,15 @@ private fun fixed(t: String) = Change(ChangeKind.FIXED, t)
 
 val RELEASES = listOf(
     Release(
+        "0.4.5", "2026.10.06",
+        listOf(
+            new("할 일을 정한 간격마다 다시 알려 줄 수 있어요"),
+            new("설정에서 밤에는 다시 울리지 않게 할 수 있어요"),
+            new("처음 쓸 때 예시 할 일로 바로 시작할 수 있어요"),
+            new("설정에서 별점 남기기, 친구에게 알려주기, 의견 보내기를 할 수 있어요"),
+        ),
+    ),
+    Release(
         "0.4.4", "2026.10.06",
         listOf(
             new("할 일 안에 체크리스트를 만들 수 있어요"),

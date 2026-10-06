@@ -180,6 +180,7 @@ private fun App(openRequest: MutableState<OpenRequest?>) {
 
     fun complete(todo: Todo) {
         Actions.save(ctx, Actions.complete(todo, System.currentTimeMillis()))
+        (ctx as? android.app.Activity)?.let { ReviewPrompt.onCompleted(it) }
         scope.launch {
             snackbar.currentSnackbarData?.dismiss()
             val result = snackbar.showSnackbar(
@@ -243,6 +244,16 @@ private fun App(openRequest: MutableState<OpenRequest?>) {
                     onSnooze = { snoozing = it },
                     onRestart = ::restart,
                     onUpdate = { Actions.save(ctx, it) },
+                    onExample = { example ->
+                        Actions.save(ctx, example.copy(id = TodoStore.newId(ctx), createdAt = System.currentTimeMillis()))
+                        scope.launch {
+                            snackbar.currentSnackbarData?.dismiss()
+                            snackbar.showSnackbar(
+                                if (example.isRepeat) "'${example.title}'을(를) 추가했어요. 정한 시간에 알림창에 떠요"
+                                else "알림창을 내려서 확인해 보세요"
+                            )
+                        }
+                    },
                 )
                 Tab.HISTORY -> HistoryScreen(
                     todos = todos,

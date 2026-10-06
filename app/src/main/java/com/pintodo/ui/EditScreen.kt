@@ -82,6 +82,7 @@ fun EditScreen(
     var notify by rememberSaveable { mutableStateOf(initial.notify) }
     var pinned by rememberSaveable { mutableStateOf(initial.pinned) }
     var alertMode by rememberSaveable { mutableStateOf(initial.alertMode) }
+    var remindEvery by rememberSaveable { mutableStateOf(initial.remindEvery) }
     var repeat by rememberSaveable { mutableStateOf(initial.isRepeat) }
     var startAt by rememberSaveable { mutableStateOf(initial.startAt) }
     var endAt by rememberSaveable { mutableStateOf(initial.endAt) }
@@ -164,6 +165,7 @@ fun EditScreen(
             notify = notify,
             pinned = pinned,
             alertMode = alertMode,
+            remindEvery = if (notify) remindEvery else null,
             startAt = if (repeat || !notify) null else startAt,
             endAt = if (repeat || !notify) null else endAt,
             repeatType = type,
@@ -379,7 +381,7 @@ fun EditScreen(
             if (notify) Section("알림") {
                 SettingRow(
                     title = "알림 방식",
-                    value = (if (pinned) "고정 · " else "밀면 숨김 · ") + alertMode.label,
+                    value = alertSummary(pinned, alertMode, remindEvery),
                     icon = alertMode.icon(),
                     onClick = { alertSheet = true },
                 )
@@ -389,7 +391,11 @@ fun EditScreen(
     }
 
     if (alertSheet) {
-        AlertSheet(pinned, alertMode, onPinned = { pinned = it }, onMode = { alertMode = it }, onDismiss = { alertSheet = false })
+        AlertSheet(
+            pinned, alertMode, remindEvery,
+            onPinned = { pinned = it }, onMode = { alertMode = it }, onRemind = { remindEvery = it },
+            onDismiss = { alertSheet = false },
+        )
     }
     if (confirmDelete) {
         AlertDialog(
@@ -419,7 +425,7 @@ fun DiscardDialog(onKeep: () -> Unit, onDiscard: () -> Unit) {
 
 /** 비교용: 사용자가 바꿀 수 있는 내용만 (화면에 안 보이는 기본값 차이는 무시) */
 private fun content(t: Todo): List<Any?> = listOf(
-    t.title.trim(), t.memo.trim(), t.items, t.color, t.notify, t.pinned, t.alertMode, t.startAt, t.endAt, t.repeatType,
+    t.title.trim(), t.memo.trim(), t.items, t.color, t.notify, t.pinned, t.alertMode, t.remindEvery, t.startAt, t.endAt, t.repeatType,
     t.repeatDays.takeIf { t.repeatType == RepeatType.WEEKLY },
     t.repeatInterval.takeIf { t.isRepeat },
     t.monthDay.takeIf { t.repeatType == RepeatType.MONTHLY },

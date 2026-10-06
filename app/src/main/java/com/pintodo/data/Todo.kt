@@ -56,6 +56,7 @@ data class Todo(
     val notify: Boolean = true,     // false면 알림·예약 없이 목록에만
     val pinned: Boolean = true,
     val alertMode: AlertMode = AlertMode.BOTH,
+    val remindEvery: Int? = null,   // 다시 울리기 간격(분). 표시 중이면 이 간격마다 한 번씩 다시 소리·진동
 
     // 한 번: startAt == null 이면 만든 즉시, endAt == null 이면 완료할 때까지
     val startAt: Long? = null,
@@ -119,17 +120,30 @@ data class Todo(
         return Status.SHOWING
     }
 
-    /** 소리/진동은 이 키가 바뀔 때(새 회차, 미루기 종료)만 1회 */
+    /** 소리/진동은 이 키가 바뀔 때(새 회차, 미루기 종료, 다시 울리기 간격)만 1회 */
     fun alertKey(now: Long): Long? {
+        val base = baseAlertKey(now) ?: return null
+        val every = remindMillis ?: return base
+        return base + (now - base) / every * every
+    }
+
+    /** 다시 울리기로 생긴 알림인지 (밤에는 건너뛸 수 있음) */
+    fun isReminder(now: Long): Boolean = alertKey(now) != baseAlertKey(now)
+
+    private fun baseAlertKey(now: Long): Long? {
         val w = windowAt(now) ?: return null
         return maxOf(w.start, snoozeUntil?.takeIf { it <= now } ?: 0L)
     }
+
+    private val remindMillis get() = remindEvery?.takeIf { it > 0 }?.let { it * 60_000L }
 
     /** 다음으로 상태가 바뀌는 시각 → 이때 알람을 걸어 다시 동기화 */
     fun nextChange(now: Long): Long? = listOfNotNull(
         windowAt(now)?.end,
         snoozeUntil?.takeIf { it > now },
         nextStart(now),
+        // 표시 중이면 다음 다시 울리기 시각
+        remindMillis?.takeIf { status(now) == Status.SHOWING }?.let { every -> alertKey(now)?.plus(every) },
     ).minOrNull()
 
     /** 이 날짜에 회차가 시작되는지 (반복 종료일·횟수 포함) */

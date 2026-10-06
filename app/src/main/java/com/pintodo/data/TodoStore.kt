@@ -97,6 +97,7 @@ object TodoStore {
         put("notify", t.notify)
         put("pinned", t.pinned)
         put("alertMode", t.alertMode.name)
+        putOpt("remindEvery", t.remindEvery)
         putOpt("startAt", t.startAt)
         putOpt("endAt", t.endAt)
         put("repeatDays", JSONArray(t.repeatDays.sorted()))
@@ -131,6 +132,7 @@ object TodoStore {
             notify = o.optBoolean("notify", true),
             pinned = o.optBoolean("pinned", true),
             alertMode = runCatching { AlertMode.valueOf(o.getString("alertMode")) }.getOrDefault(AlertMode.SILENT),
+            remindEvery = o.optLongOrNull("remindEvery")?.toInt(),
             startAt = o.optLongOrNull("startAt"),
             endAt = o.optLongOrNull("endAt"),
             repeatDays = daySet,

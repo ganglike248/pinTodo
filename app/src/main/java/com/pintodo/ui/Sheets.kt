@@ -235,6 +235,7 @@ fun newTodo(ctx: android.content.Context, title: String = "", startAt: Long? = n
     return Todo(
         id = -1, title = title, notify = notify ?: s.defaultNotify,
         pinned = s.defaultPinned, alertMode = s.defaultAlertMode, startAt = startAt,
+        remindEvery = s.defaultRemindEvery,
     )
 }
 
