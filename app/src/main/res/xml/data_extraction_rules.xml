@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android 12+ 자동 백업(Google 클라우드)과 기기 간 이전: 할 일과 설정만 -->
+<data-extraction-rules>
+    <cloud-backup>
+        <include domain="sharedpref" path="todos.xml" />
+        <include domain="sharedpref" path="settings.xml" />
+    </cloud-backup>
+    <device-transfer>
+        <include domain="sharedpref" path="todos.xml" />
+        <include domain="sharedpref" path="settings.xml" />
+    </device-transfer>
+</data-extraction-rules>

@@ -156,8 +156,12 @@ private fun App(openRequest: MutableState<OpenRequest?>) {
     // 기록·설정 탭에서 뒤로가기 → 할 일 탭으로, 할 일 탭에서 한 번 더 누르면 종료 (편집 화면은 자체 처리)
     BackHandler(enabled = editing == null && tab != Tab.TODO.ordinal) { tab = Tab.TODO.ordinal }
 
-    /** 기간이 끝난 할 일을 지금부터 완료할 때까지 다시 띄움 */
+    /** 기간이 끝난 할 일을 지금부터 완료할 때까지 다시 띄움. 반복이 끝난 할 일은 일정을 새로 정하도록 편집 화면으로 */
     fun restart(todo: Todo) {
+        if (todo.isRepeat) {
+            editing = EditTarget(todo, isNew = false)
+            return
+        }
         val now = System.currentTimeMillis()
         Actions.save(ctx, todo.copy(startAt = now - now % 60_000L, endAt = null, hiddenKey = null, alertedKey = null, snoozeUntil = null))
         scope.launch {
@@ -238,6 +242,7 @@ private fun App(openRequest: MutableState<OpenRequest?>) {
                     onComplete = ::complete,
                     onSnooze = { snoozing = it },
                     onRestart = ::restart,
+                    onUpdate = { Actions.save(ctx, it) },
                 )
                 Tab.HISTORY -> HistoryScreen(
                     todos = todos,

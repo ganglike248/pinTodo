@@ -11,6 +11,9 @@ import android.os.PowerManager
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -31,6 +34,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Alarm
 import androidx.compose.material.icons.rounded.BatteryAlert
 import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material.icons.rounded.CheckBox
+import androidx.compose.material.icons.rounded.CheckBoxOutlineBlank
+import androidx.compose.material.icons.rounded.Checklist
+import androidx.compose.material.icons.rounded.ExpandLess
+import androidx.compose.material.icons.rounded.ExpandMore
 import androidx.compose.material.icons.rounded.NotificationsOff
 import androidx.compose.material.icons.rounded.PushPin
 import androidx.compose.material.icons.rounded.Replay
@@ -56,6 +64,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.semantics
@@ -82,6 +95,7 @@ fun TodoScreen(
     onComplete: (Todo) -> Unit,
     onSnooze: (Todo) -> Unit,
     onRestart: (Todo) -> Unit,
+    onUpdate: (Todo) -> Unit,
 ) {
     val active = todos.filter { it.doneAt == null }
     val inProgress = active.filter { it.status(now) in setOf(Status.SHOWING, Status.SNOOZED) }
@@ -106,10 +120,10 @@ fun TodoScreen(
         item(key = "banners") { Banners() }
         if (active.isEmpty()) item(key = "empty") { EmptyState() }
 
-        section("진행 중", inProgress, now, onEdit, onComplete, onSnooze, onRestart)
-        section("예정", upcoming, now, onEdit, onComplete, onSnooze, onRestart)
-        section("알림 없는 할 일", noAlert, now, onEdit, onComplete, onSnooze, onRestart)
-        section("기간 종료", ended, now, onEdit, onComplete, onSnooze, onRestart)
+        section("진행 중", inProgress, now, onEdit, onComplete, onSnooze, onRestart, onUpdate)
+        section("예정", upcoming, now, onEdit, onComplete, onSnooze, onRestart, onUpdate)
+        section("알림 없는 할 일", noAlert, now, onEdit, onComplete, onSnooze, onRestart, onUpdate)
+        section("기간 종료", ended, now, onEdit, onComplete, onSnooze, onRestart, onUpdate)
     }
 }
 
@@ -121,11 +135,12 @@ private fun LazyListScope.section(
     onComplete: (Todo) -> Unit,
     onSnooze: (Todo) -> Unit,
     onRestart: (Todo) -> Unit,
+    onUpdate: (Todo) -> Unit,
 ) {
     if (list.isEmpty()) return
     item(key = "h-$title") { SectionLabel("$title ${list.size}", Modifier.animateItem()) }
     items(list, key = { it.id }) { todo ->
-        TodoCard(todo, now, Modifier.animateItem(), onEdit, onComplete, onSnooze, onRestart)
+        TodoCard(todo, now, Modifier.animateItem(), onEdit, onComplete, onSnooze, onRestart, onUpdate)
     }
 }
 
@@ -138,6 +153,7 @@ private fun TodoCard(
     onComplete: (Todo) -> Unit,
     onSnooze: (Todo) -> Unit,
     onRestart: (Todo) -> Unit,
+    onUpdate: (Todo) -> Unit,
 ) {
     val c = MaterialTheme.colorScheme
     val status = todo.status(now)
@@ -209,7 +225,13 @@ private fun TodoCard(
                     description = "$completeLabel: ${todo.title}",
                 )
                 Column(Modifier.weight(1f).padding(top = 9.dp, start = 4.dp)) {
-                    Text(todo.title, style = MaterialTheme.typography.titleMedium, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        todo.color?.let { label ->
+                            Box(Modifier.size(10.dp).clip(CircleShape).background(Color(label.argb)).semantics { contentDescription = "${label.label} 라벨" })
+                            Spacer(Modifier.width(8.dp))
+                        }
+                        Text(todo.title, style = MaterialTheme.typography.titleMedium, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                    }
                     if (todo.memo.isNotBlank()) {
                         Text(
                             todo.memo,
@@ -220,6 +242,7 @@ private fun TodoCard(
                             modifier = Modifier.padding(top = 2.dp),
                         )
                     }
+                    if (todo.items.isNotEmpty()) ChecklistPreview(todo, onUpdate)
                     Spacer(Modifier.height(6.dp))
                     MetaRow(todo, status, now)
                     if (status == Status.ENDED) {
@@ -240,7 +263,52 @@ private fun TodoCard(
     }
 }
 
-/** '알림 중 · 평일 09:00–18:00   📌 🔔' 한 줄 요약 */
+/** 카드 안 체크리스트: '체크리스트 2/5'를 누르면 펼쳐서 바로 체크 */
+@Composable
+private fun ChecklistPreview(todo: Todo, onUpdate: (Todo) -> Unit) {
+    val c = MaterialTheme.colorScheme
+    var open by rememberSaveable(todo.id) { mutableStateOf(false) }
+    val done = todo.items.count { it.done }
+    Column(Modifier.padding(top = 6.dp)) {
+        Row(
+            Modifier.clip(RoundedCornerShape(8.dp)).clickable { open = !open }.padding(vertical = 4.dp, horizontal = 2.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(Icons.Rounded.Checklist, null, Modifier.size(16.dp), tint = c.onSurfaceVariant)
+            Spacer(Modifier.width(6.dp))
+            Text("체크리스트 $done/${todo.items.size}", style = MaterialTheme.typography.bodySmall, color = c.onSurfaceVariant, fontWeight = FontWeight.SemiBold)
+            Icon(if (open) Icons.Rounded.ExpandLess else Icons.Rounded.ExpandMore, if (open) "접기" else "펼치기", Modifier.size(18.dp), tint = c.outline)
+        }
+        // 진행 막대
+        Box(Modifier.padding(top = 4.dp).fillMaxWidth().height(4.dp).clip(RoundedCornerShape(2.dp)).background(c.surfaceVariant)) {
+            Box(Modifier.fillMaxWidth(done.toFloat() / todo.items.size).height(4.dp).clip(RoundedCornerShape(2.dp)).background(c.primary))
+        }
+        if (open) {
+            todo.items.forEachIndexed { i, item ->
+                Row(
+                    Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp)).clickable {
+                        onUpdate(todo.copy(items = todo.items.mapIndexed { j, it -> if (j == i) it.copy(done = !it.done) else it }))
+                    }.padding(vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Icon(
+                        if (item.done) Icons.Rounded.CheckBox else Icons.Rounded.CheckBoxOutlineBlank,
+                        if (item.done) "완료됨" else "안 함", Modifier.size(20.dp),
+                        tint = if (item.done) c.primary else c.outline,
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        item.text, style = MaterialTheme.typography.bodyMedium,
+                        color = if (item.done) c.outline else c.onSurface,
+                        textDecoration = if (item.done) TextDecoration.LineThrough else null,
+                    )
+                }
+            }
+        }
+    }
+}
+
+/** '알림 중 · 2시간 남음', '내일 오후 7:00 시작 · 월·수·금' 한 줄 요약 */
 @Composable
 private fun MetaRow(todo: Todo, status: Status, now: Long) {
     val c = MaterialTheme.colorScheme
@@ -252,29 +320,22 @@ private fun MetaRow(todo: Todo, status: Status, now: Long) {
         Status.ENDED -> c.error
         else -> c.onSurfaceVariant
     }
-    // 상태와 겹치는 정보(기본값 '완료할 때까지', 종료 없는 예정)는 생략
-    val redundant = !todo.notify ||
-        !todo.isRepeat && todo.endAt == null && (todo.startAt == null || status == Status.SCHEDULED)
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Text(
-            buildAnnotatedString {
-                withStyle(SpanStyle(color = statusColor, fontWeight = FontWeight.SemiBold)) { append(Format.status(todo, now)) }
-                if (!redundant) {
-                    withStyle(SpanStyle(color = c.outline)) { append("  ·  ${Format.schedule(todo)}") }
-                }
-            },
-            style = MaterialTheme.typography.bodySmall,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.weight(1f, fill = false),
-        )
-        if (todo.notify) {
-            Spacer(Modifier.width(8.dp))
-            if (todo.pinned) Icon(Icons.Rounded.PushPin, "고정", Modifier.size(14.dp), tint = c.outline)
-            Spacer(Modifier.width(4.dp))
-            Icon(todo.alertMode.icon(), todo.alertMode.label, Modifier.size(14.dp), tint = c.outline)
-        }
+    // 상태 옆에는 상태만으로 알 수 없는 것 하나만: 반복 주기, 또는 예정된 할 일의 종료 시각
+    val extra = when {
+        !todo.notify -> null
+        todo.isRepeat -> Format.repeat(todo) + Format.repeatEnd(todo).let { if (it.isEmpty()) "" else " · $it" }
+        status == Status.SCHEDULED -> todo.endAt?.let { "${Format.dateTime(it)}까지" }
+        else -> null
     }
+    Text(
+        buildAnnotatedString {
+            withStyle(SpanStyle(color = statusColor, fontWeight = FontWeight.SemiBold)) { append(Format.status(todo, now)) }
+            if (extra != null) withStyle(SpanStyle(color = c.outline)) { append("  ·  $extra") }
+        },
+        style = MaterialTheme.typography.bodySmall,
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
+    )
 }
 
 /** 알림 권한 / 정확한 알람 / 배터리 최적화 안내 */

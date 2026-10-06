@@ -78,8 +78,12 @@ object Notifier {
         val settings = SettingsStore.get(context)
         // 내용이 없어도 언제로 정한 할 일인지 보이도록 일정은 항상 표시
         val schedule = Format.notificationSchedule(todo)
-        val text = todo.memo.ifBlank { schedule }
-        val bigText = if (todo.memo.isBlank()) schedule else "${todo.memo}\n$schedule"
+        // 펼치면: 메모 / 체크리스트(최대 8개) / 일정
+        val progress = Format.progress(todo)?.let { "체크리스트 $it" }
+        val text = todo.memo.ifBlank { progress ?: schedule }
+        val checklist = todo.items.take(8).joinToString("\n") { (if (it.done) "☑ " else "☐ ") + it.text } +
+            if (todo.items.size > 8) "\n외 ${todo.items.size - 8}개" else ""
+        val bigText = listOf(todo.memo, checklist, schedule).filter { it.isNotBlank() }.joinToString("\n")
 
         // 워치(Wear OS·갤럭시 워치·밴드 앱)는 ongoing 알림을 넘겨받지 않음 →
         // 워치로 보낼 때는 ongoing 없이 deleteIntent 재게시만으로 고정하고, 지운 회차는 휴대폰에만 남김
@@ -92,7 +96,7 @@ object Notifier {
 
         val builder = Notification.Builder(context, channel)
             .setSmallIcon(R.drawable.ic_pin)
-            .setColor(0xFF4A66E8.toInt())
+            .setColor((todo.color?.argb ?: 0xFF4A66E8).toInt())
             .setContentTitle(todo.title)
             .setContentText(text)
             .setStyle(Notification.BigTextStyle().bigText(bigText))

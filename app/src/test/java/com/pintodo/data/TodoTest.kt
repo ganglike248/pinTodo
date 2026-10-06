@@ -145,4 +145,28 @@ class TodoTest {
         assertEquals(at(8, 9), t.nextStart(at(5, 10)))
         assertEquals(Status.SCHEDULED, t.status(at(6, 10)))
     }
+
+    // ── 반복 종료 ──
+
+    @Test fun `횟수만큼 반복하고 끝나면 종료`() {
+        // 10/5(월)부터 매일 3회 → 10/5, 6, 7
+        val t = todo(days = (1..7).toSet(), dailyEnd = 10 * 60).copy(repeatCount = 3,
+            repeatAnchor = java.time.LocalDate.of(2026, 10, 5).toEpochDay())
+        assertEquals(at(7, 9), t.nextStart(at(6, 11)))
+        assertEquals(Status.SHOWING, t.status(at(7, 9, 30)))
+        assertEquals(Status.ENDED, t.status(at(7, 11)))
+        assertNull(t.nextStart(at(7, 11)))
+    }
+
+    @Test fun `종료일까지만 반복`() {
+        val t = todo(days = setOf(1, 3), dailyEnd = 10 * 60).copy(repeatUntil = java.time.LocalDate.of(2026, 10, 12).toEpochDay())
+        assertEquals(at(12, 9), t.nextStart(at(8, 11)))       // 10/12(월) 마지막
+        assertEquals(Status.ENDED, t.status(at(12, 11)))       // 10/14(수)는 없음
+    }
+
+    @Test fun `반복 종료 문구`() {
+        val t = todo(days = (1..5).toSet(), dailyEnd = 18 * 60)
+        assertEquals("평일 오전 9:00–오후 6:00 · 10회", Format.schedule(t.copy(repeatCount = 10)))
+        assertEquals("평일 오전 9:00–오후 6:00 · 12/31(목)까지", Format.schedule(t.copy(repeatUntil = java.time.LocalDate.of(2026, 12, 31).toEpochDay())))
+    }
 }

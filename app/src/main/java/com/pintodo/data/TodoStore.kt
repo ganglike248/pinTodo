@@ -90,6 +90,10 @@ object TodoStore {
         put("id", t.id)
         put("title", t.title)
         put("memo", t.memo)
+        if (t.items.isNotEmpty()) put("items", JSONArray().apply {
+            t.items.forEach { put(JSONObject().put("t", it.text).put("d", it.done)) }
+        })
+        putOpt("color", t.color?.name)
         put("notify", t.notify)
         put("pinned", t.pinned)
         put("alertMode", t.alertMode.name)
@@ -100,6 +104,8 @@ object TodoStore {
         put("repeatInterval", t.repeatInterval)
         put("monthDay", t.monthDay)
         putOpt("repeatAnchor", t.repeatAnchor)
+        putOpt("repeatUntil", t.repeatUntil)
+        putOpt("repeatCount", t.repeatCount)
         put("dailyStart", t.dailyStart)
         putOpt("dailyEnd", t.dailyEnd)
         put("createdAt", t.createdAt)
@@ -118,6 +124,10 @@ object TodoStore {
             id = o.getInt("id"),
             title = o.optString("title", o.optString("text")),
             memo = o.optString("memo"),
+            items = o.optJSONArray("items")?.let { a ->
+                (0 until a.length()).map { a.getJSONObject(it) }.map { CheckItem(it.optString("t"), it.optBoolean("d")) }
+            } ?: emptyList(),
+            color = o.optString("color").takeIf { it.isNotEmpty() }?.let { runCatching { LabelColor.valueOf(it) }.getOrNull() },
             notify = o.optBoolean("notify", true),
             pinned = o.optBoolean("pinned", true),
             alertMode = runCatching { AlertMode.valueOf(o.getString("alertMode")) }.getOrDefault(AlertMode.SILENT),
@@ -130,6 +140,8 @@ object TodoStore {
             repeatInterval = o.optInt("repeatInterval", 1),
             monthDay = o.optInt("monthDay", 1),
             repeatAnchor = o.optLongOrNull("repeatAnchor"),
+            repeatUntil = o.optLongOrNull("repeatUntil"),
+            repeatCount = o.optLongOrNull("repeatCount")?.toInt(),
             dailyStart = o.optInt("dailyStart", 9 * 60),
             dailyEnd = o.optLongOrNull("dailyEnd")?.toInt(),
             createdAt = o.optLong("createdAt", 0L),

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android 11 이하 자동 백업: 할 일과 설정만 (첫 실행 안내·배너 상태(ui.xml)는 새 휴대폰에서 다시 보이도록 제외) -->
+<full-backup-content>
+    <include domain="sharedpref" path="todos.xml" />
+    <include domain="sharedpref" path="settings.xml" />
+</full-backup-content>

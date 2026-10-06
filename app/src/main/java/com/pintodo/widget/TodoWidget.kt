@@ -111,7 +111,9 @@ object TodoWidget {
         listOf(R.id.row_status_primary, R.id.row_status_orange, R.id.row_status_grey).forEach {
             v.setViewVisibility(it, visibleIf(it == statusView))
         }
-        v.setTextViewText(statusView, Format.status(todo, now))
+        v.setTextViewText(statusView, Format.status(todo, now) + (Format.progress(todo)?.let { " · ☑ $it" } ?: ""))
+        v.setViewVisibility(R.id.row_color, visibleIf(todo.color != null))
+        todo.color?.let { v.setInt(R.id.row_color, "setColorFilter", it.argb.toInt()) }
 
         if (canComplete) {
             v.setOnClickPendingIntent(R.id.row_check, broadcast(context, ActionReceiver.ACTION_DONE, todo.id))

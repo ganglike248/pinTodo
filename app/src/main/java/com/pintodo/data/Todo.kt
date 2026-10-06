@@ -31,6 +31,19 @@ enum class RepeatType {
     EVERY_DAYS, // repeatInterval 일마다
 }
 
+/** 체크리스트 항목 */
+data class CheckItem(val text: String, val done: Boolean = false)
+
+/** 색 라벨 (목록 점, 알림 색, 위젯 점) */
+enum class LabelColor(val label: String, val argb: Long) {
+    RED("빨강", 0xFFF04452),
+    ORANGE("주황", 0xFFFF8A00),
+    YELLOW("노랑", 0xFFF5B800),
+    GREEN("초록", 0xFF15B86A),
+    BLUE("파랑", 0xFF3182F6),
+    PURPLE("보라", 0xFF8B5CF6),
+}
+
 /** 알림이 떠 있어야 하는 구간. end == null 이면 완료할 때까지 */
 data class Window(val start: Long, val end: Long?)
 
@@ -38,6 +51,8 @@ data class Todo(
     val id: Int,
     val title: String,
     val memo: String = "",
+    val items: List<CheckItem> = emptyList(),
+    val color: LabelColor? = null,
     val notify: Boolean = true,     // false면 알림·예약 없이 목록에만
     val pinned: Boolean = true,
     val alertMode: AlertMode = AlertMode.BOTH,
@@ -51,7 +66,9 @@ data class Todo(
     val repeatType: RepeatType = if (repeatDays.isEmpty()) RepeatType.NONE else RepeatType.WEEKLY,
     val repeatInterval: Int = 1,
     val monthDay: Int = 1,
-    val repeatAnchor: Long? = null, // 격주·n일마다의 기준 날짜 (LocalDate.toEpochDay). null이면 만든 날
+    val repeatAnchor: Long? = null, // 격주·n일마다·횟수의 기준 날짜 (LocalDate.toEpochDay). null이면 만든 날
+    val repeatUntil: Long? = null,  // 반복 마지막 날 (epochDay, 그날 회차까지)
+    val repeatCount: Int? = null,   // 반복 횟수 (기준 날부터 센 회차 수)
     val dailyStart: Int = 9 * 60,   // 하루 중 분
     val dailyEnd: Int? = null,      // null 이면 자정까지. dailyStart 이하면 다음 날로 넘어감
 
@@ -115,9 +132,29 @@ data class Todo(
         nextStart(now),
     ).minOrNull()
 
-    /** 이 날짜에 회차가 시작되는지 */
-    fun occursOn(date: LocalDate): Boolean {
-        val anchor = repeatAnchor?.let(LocalDate::ofEpochDay) ?: localDate(createdAt)
+    /** 이 날짜에 회차가 시작되는지 (반복 종료일·횟수 포함) */
+    fun occursOn(date: LocalDate): Boolean = matches(date) && endDate?.let { !date.isAfter(it) } != false
+
+    /** 반복이 끝나는 날 (그날 회차까지). null이면 계속 */
+    val endDate: LocalDate? by lazy {
+        val until = repeatUntil?.let(LocalDate::ofEpochDay)
+        val count = repeatCount ?: return@lazy until
+        // 기준 날부터 count번째 회차가 있는 날 (최대 10년)
+        var n = 0
+        var d = startDate()
+        val limit = d.plusYears(10)
+        while (d.isBefore(limit)) {
+            if (matches(d) && ++n == count) break
+            d = d.plusDays(1)
+        }
+        if (until != null && until.isBefore(d)) until else d
+    }
+
+    private fun startDate() = repeatAnchor?.let(LocalDate::ofEpochDay) ?: localDate(createdAt)
+
+    /** 반복 규칙만 보고 이 날짜에 회차가 있는지 */
+    private fun matches(date: LocalDate): Boolean {
+        val anchor = startDate()
         val n = repeatInterval.coerceAtLeast(1).toLong()
         return when (repeatType) {
             RepeatType.NONE -> false

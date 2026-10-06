@@ -292,7 +292,7 @@ fun SheetTitle(text: String, sub: String? = null) {
 }
 
 @Composable
-private fun CalendarDialog(initial: LocalDate, onDismiss: () -> Unit, onPick: (LocalDate) -> Unit) {
+fun CalendarDialog(initial: LocalDate, onDismiss: () -> Unit, onPick: (LocalDate) -> Unit) {
     val todayUtc = LocalDate.now().atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
     // DatePicker는 UTC 자정 기준 millis를 사용
     val state = rememberDatePickerState(

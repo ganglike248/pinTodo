@@ -2,7 +2,7 @@
 
 완료할 때까지 알림창에 고정되는 안드로이드 투두 앱. **Google Play 출시 예정** (2026-10-02 결정, 아직 Play Console 등록 전). Kotlin + Jetpack Compose(Material 3), 외부 서버 없음.
 
-- **현재 버전**: v0.4.3 (스토어 출시 전이라 0.x, 출시 시 1.0.0) | GitHub: https://github.com/ganglike248/pinTodo (main 브랜치)
+- **현재 버전**: v0.4.4 (스토어 출시 전이라 0.x, 출시 시 1.0.0) | GitHub: https://github.com/ganglike248/pinTodo (main 브랜치)
 - 사용 기기: 갤럭시 S26 울트라 (One UI / Android 16)
 
 ## 버전 관리 규칙 (필수)
@@ -10,27 +10,30 @@
 - `version.txt`
 - `app/build.gradle.kts`의 `versionName`(= version.txt와 동일), `versionCode`(+1, 절대 낮추면 안 됨 — 폰에 덮어쓰기 설치가 막힘)
 - 이 파일의 "현재 버전"
-- `ui/Changelog.kt`의 `RELEASES` 맨 위에 새 버전 추가 — **사용자가 체감하는 변화만**(새 기능/개선/변경(위치·동작이 바뀐 것)/수정), 내부 리팩터링은 제외. 앱의 설정 > 버전에서 보임
+- `ui/Changelog.kt`의 `RELEASES` 맨 위에 새 버전 추가 — **사용자가 체감하는 변화만**(새 기능/개선/변경(위치·동작이 바뀐 것)/수정), 내부 리팩터링은 제외. **버전당 3~5줄, 한 줄은 짧고 쉬운 말로**(기술 용어·세부 설명 X). 앱의 설정 > 버전에서 보임
 - README의 버전 표
 
 커밋 메시지 형식: `vX.Y.Z - type: 요약` (type: feat / fix / refactor / docs / release), 본문은 `-` 목록으로 변경 내용 정리.
 커밋할 때는 항상 모든 파일 포함(`git add .`).
 
-## Google Play 출시 준비 (출시 전 반드시 처리)
-- [ ] 업로드 키스토어 생성 + Play App Signing, `signingConfig`를 디버그 키 → 업로드 키로 (키스토어·비밀번호는 저장소에 커밋 금지)
-- [ ] `./gradlew bundleRelease`로 AAB 업로드 (APK 아님)
+## Google Play 출시 준비 (절차는 `store/RELEASE.md`, 등록 문구·답변은 `store/listing.md`)
+- [x] 업로드 키스토어: `~/.android/pintodo/`(저장소 밖, 커밋 금지). release = 업로드 키, sideload = 디버그 키 (v0.4.4)
+- [x] `./gradlew bundleRelease`로 AAB (업로드 키 서명)
 - [x] ~~`USE_EXACT_ALARM`~~ → `SCHEDULE_EXACT_ALARM` + 배너/설정에서 허용 화면 이동 + 미허용 시 `setAndAllowWhileIdle` 대체 + 허용 시 `SystemReceiver`가 Sync (v0.4.2)
 - [x] ~~`REQUEST_IGNORE_BATTERY_OPTIMIZATIONS`~~ 제거 → 앱 정보 화면(배터리 > 제한 없음)으로 안내 (v0.4.2)
-- [ ] 개인정보처리방침 URL (수집 데이터 없음을 명시), 데이터 보안 양식(수집·공유 없음), 콘텐츠 등급
-- [ ] 스토어 등록정보: 아이콘 512×512, 그래픽 이미지 1024×500, 휴대폰 스크린샷
+- [x] 개인정보처리방침 `docs/privacy-policy.md` → GitHub Pages(main /docs) 켜면 https://ganglike248.github.io/pinTodo/privacy-policy
+- [x] 스토어 그래픽 `store/`(아이콘 512, 그래픽 1024×500, 스크린샷 1080×2160 — Play는 긴 변이 짧은 변의 2배 이하만 허용이라 화면을 자르지 말고 설명 문구와 함께 틀 안에 축소해 넣음)
+- [ ] Play Console 등록 → 비공개 테스트(개인 계정은 12명·14일) → 프로덕션
 - [ ] 정식 출시 시 버전 1.0.0, 이후 versionCode는 계속 증가
 
 ## 빌드 / 설치
 ```bash
-./gradlew assembleRelease                      # → app/build/outputs/apk/release/app-release.apk
-adb install -r app/build/outputs/apk/release/app-release.apk
+./gradlew assembleSideload                     # 개인 폰용 → app/build/outputs/apk/sideload/app-sideload.apk
+adb install -r app/build/outputs/apk/sideload/app-sideload.apk
+./gradlew bundleRelease                        # Play 업로드용 AAB
 ```
-- 현재 release도 디버그 키(`~/.android/debug.keystore`)로 서명 — 다른 PC에서 빌드하면 서명이 달라 기존 설치본 위에 덮어쓰기 불가. Play 출시 전에 업로드 키로 교체 (위 체크리스트)
+- 폰에 설치된 앱은 디버그 키(`~/.android/debug.keystore`) 서명 → 폰 업데이트는 반드시 `sideload`로. `release`(업로드 키)는 서명이 달라 덮어쓰기 불가
+- 다른 PC에서 빌드하면 디버그 키가 달라 덮어쓰기 불가
 
 ## 핵심 설계 (수정 시 주의)
 - 앱 표시 이름은 **PinTodo**(`app_name`), 패키지명(applicationId·namespace)은 **`com.pintodo`**. Play에 한 번 올리면 패키지명은 영구 변경 불가
@@ -47,6 +50,10 @@ adb install -r app/build/outputs/apk/release/app-release.apk
 - 알림 버튼은 최대 3개: [완료][설정의 quickSnooze][미루기…(SnoozeActivity)]. 워치용 `WearableExtender`에는 [완료][quickSnooze]만
 - **스마트워치**: 워치는 ongoing 알림을 넘겨받지 않음 → `AppSettings.wearable`(기본 켬)이면 `setOngoing(false)` + deleteIntent 재게시로 고정. 밀어서 지운 회차는 `Todo.wearDismissedKey`에 기록해 `setLocalOnly(true)`로 재게시(워치에서 사라지고 휴대폰에만 남음, 워치↔휴대폰 재게시 무한 반복 방지)
 - 알림 본문은 `Format.notificationSchedule`(절대 날짜)로 항상 일정 표시 — 알림은 자정에 다시 그려지지 않으므로 '오늘/내일' 쓰지 말 것
+- 편집 화면은 '자주 쓰는 것만 펼치기': 제목 + (메모·체크리스트는 `+` 칩으로 추가) + 라벨, 일정 탭 [한 번|반복|알림 없이](= notify 끄기), 알림 방식(고정·소리)은 한 줄 요약 → `AlertSheet`. 설정의 미루기 선택지도 시트로. 화면에 선택지를 더 늘릴 때는 시트/접기로
+- 체크리스트 `Todo.items`(`CheckItem`), 색 라벨 `Todo.color`(`LabelColor`): 목록 카드(점·펼치는 체크리스트), 알림(펼치면 ☑/☐ 목록, 알림 색), 위젯(점·진행) 모두 반영
+- 반복 종료 `repeatUntil`(epochDay)·`repeatCount`: `Todo.endDate`(lazy)로 마지막 날 계산 → `occursOn`에서 제외. 횟수는 `repeatAnchor`(규칙·횟수를 바꾸면 오늘)부터 셈
+- 자동 백업: `res/xml/data_extraction_rules.xml`·`backup_rules.xml`에 `todos.xml`·`settings.xml`만 (ui.xml은 제외 → 새 폰에서 첫 실행 안내 다시 표시). 복원 후 알림은 앱을 처음 열 때 `Sync.run()`으로 다시 게시
 - 일정 계산(`Todo`)·날짜 인식(`DateParser`)은 `app/src/test`의 JUnit 테스트로 검증: `./gradlew testDebugUnitTest`
 - 시각 표시는 전부 `Format.time`(오전/오후 12시간제)을 거칠 것. 휠도 `TimeWheel`(오전·오후/시/분) 하나만 사용
 - 반복은 `Todo.repeatType`(NONE/WEEKLY/MONTHLY/EVERY_DAYS) + `repeatInterval`(주·일 간격) + `monthDay`(31=말일) + `repeatAnchor`(격주·n일마다 기준일, epochDay). 회차 판정은 `occursOn()` 하나로. v0.4.3 이전 데이터는 `repeatDays`가 있으면 WEEKLY

@@ -84,13 +84,23 @@ object Format {
         RepeatType.EVERY_DAYS -> if (t.repeatInterval == 1) "매일" else "${t.repeatInterval}일마다"
     }
 
+    /** 반복 종료: '10회' / '12/31(목)까지' / '' */
+    fun repeatEnd(t: Todo): String = when {
+        t.repeatCount != null -> "${t.repeatCount}회"
+        t.repeatUntil != null -> "${date(LocalDate.ofEpochDay(t.repeatUntil))}까지"
+        else -> ""
+    }
+
+    /** 체크리스트 진행: '2/5' (항목이 없으면 null) */
+    fun progress(t: Todo): String? = t.items.takeIf { it.isNotEmpty() }?.let { "${it.count { i -> i.done }}/${it.size}" }
+
     /** 반복 할 일의 하루 시간대: 오전 9:00–오후 6:00 */
     fun dailyRange(t: Todo): String = time(t.dailyStart) + (t.dailyEnd?.let { "–${time(it)}" } ?: "부터")
 
     /** 목록 카드에 표시할 일정 요약 */
     fun schedule(t: Todo): String {
         if (!t.notify) return "알림 없음"
-        if (t.isRepeat) return "${repeat(t)} ${dailyRange(t)}"
+        if (t.isRepeat) return "${repeat(t)} ${dailyRange(t)}" + repeatEnd(t).let { if (it.isEmpty()) "" else " · $it" }
         val start = t.startAt
         val end = t.endAt
         return when {

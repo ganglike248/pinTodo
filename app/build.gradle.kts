@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -12,8 +14,22 @@ android {
         applicationId = "com.pintodo"
         minSdk = 26
         targetSdk = 36
-        versionCode = 9
-        versionName = "0.4.3"
+        versionCode = 10
+        versionName = "0.4.4"
+    }
+
+    // Play 업로드 키: 저장소 밖(~/.android/pintodo/keystore.properties)에 두고 커밋하지 않음
+    val keystoreProps = Properties().apply {
+        val file = File(System.getenv("PINTODO_KEYSTORE_PROPERTIES") ?: "${System.getProperty("user.home")}/.android/pintodo/keystore.properties")
+        if (file.exists()) file.inputStream().use { load(it) }
+    }
+    signingConfigs {
+        if (keystoreProps.isNotEmpty()) create("upload") {
+            storeFile = file(keystoreProps.getProperty("storeFile"))
+            storePassword = keystoreProps.getProperty("storePassword")
+            keyAlias = keystoreProps.getProperty("keyAlias")
+            keyPassword = keystoreProps.getProperty("keyPassword")
+        }
     }
 
     buildTypes {
@@ -21,8 +37,14 @@ android {
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"))
-            // TODO(Play 출시 전): 업로드 키로 교체. 지금은 디버그 키로 서명
+            // Play 업로드용 (bundleRelease). 키 파일이 없는 PC에서는 서명 없이 만들어짐
+            signingConfig = signingConfigs.findByName("upload")
+        }
+        // 개인 폰에 직접 설치하는 용도 (기존 설치본과 같은 디버그 키) → ./gradlew assembleSideload
+        create("sideload") {
+            initWith(getByName("release"))
             signingConfig = signingConfigs.getByName("debug")
+            matchingFallbacks += "release"
         }
     }
 

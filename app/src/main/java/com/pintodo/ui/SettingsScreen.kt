@@ -4,6 +4,8 @@ import android.app.StatusBarManager
 import android.appwidget.AppWidgetManager
 import android.content.ComponentName
 import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import android.graphics.drawable.Icon
 import android.os.Build
 import android.widget.Toast
@@ -21,6 +23,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Alarm
 import androidx.compose.material.icons.rounded.Backup
+import androidx.compose.material.icons.rounded.CloudDone
+import androidx.compose.material.icons.rounded.Shield
 import androidx.compose.material.icons.rounded.Restore
 import androidx.compose.material.icons.rounded.BatteryChargingFull
 import androidx.compose.material.icons.rounded.Info
@@ -62,7 +66,9 @@ import com.pintodo.tile.QuickAddTileService
 import com.pintodo.widget.TodoWidgetReceiver
 import java.time.LocalDate
 
-private enum class SettingSheet { QUICK_SNOOZE, ALERT_MODE }
+private enum class SettingSheet { QUICK_SNOOZE, SNOOZE_OPTIONS, ALERT_MODE }
+
+const val PRIVACY_URL = "https://ganglike248.github.io/pinTodo/privacy-policy"
 
 @Composable
 fun SettingsScreen(contentPadding: PaddingValues) {
@@ -110,36 +116,28 @@ fun SettingsScreen(contentPadding: PaddingValues) {
         item { ScreenHeader("설정") }
 
         item {
-            Section("미루기") {
+            Section("알림") {
                 SettingRow(
-                    title = "알림에 바로 보이는 버튼",
+                    title = "알림에 바로 보이는 미루기",
                     value = s.quickSnooze.buttonLabel,
                     icon = Icons.Rounded.Snooze,
                     valueColor = MaterialTheme.colorScheme.primary,
                     onClick = { sheet = SettingSheet.QUICK_SNOOZE },
                 )
                 Divider()
-                Text(
-                    "'미루기…'를 눌렀을 때 보여줄 선택지",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(start = 20.dp, top = 14.dp, bottom = 2.dp),
+                SettingRow(
+                    title = "미루기 선택지",
+                    value = s.enabledSnoozes.joinToString(" · ") { it.label },
+                    icon = Icons.Rounded.Tune,
+                    onClick = { sheet = SettingSheet.SNOOZE_OPTIONS },
                 )
-                SnoozeOption.entries.forEach { option ->
-                    val checked = option in s.snoozeOptions
-                    SettingRow(
-                        title = option.label,
-                        dense = true,
-                        onClick = { update { it.copy(snoozeOptions = toggle(it.snoozeOptions, option)) } },
-                        trailing = {
-                            Checkbox(checked, onCheckedChange = { update { it.copy(snoozeOptions = toggle(it.snoozeOptions, option)) } })
-                        },
-                    )
-                }
-                InfoBox(
-                    Icons.Rounded.Info,
-                    "알림에는 [완료] [${s.quickSnooze.buttonLabel}] [미루기…] 버튼이 보여요. 목록에서 카드를 왼쪽으로 밀어도 미룰 수 있어요.",
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                Divider()
+                SettingRow(
+                    title = "스마트워치에도 알림",
+                    value = if (s.wearable) "워치 앱 알림 설정에서 PinTodo를 켜 두세요" else "휴대폰에만 표시해요",
+                    icon = Icons.Rounded.Watch,
+                    onClick = { update { it.copy(wearable = !it.wearable) } },
+                    trailing = { Switch(s.wearable, { v -> update { it.copy(wearable = v) } }) },
                 )
             }
         }
@@ -148,23 +146,15 @@ fun SettingsScreen(contentPadding: PaddingValues) {
             Section("새 할 일 기본값") {
                 SettingRow(
                     title = "알림 받기",
-                    value = if (s.defaultNotify) "알림창에 표시해요" else "알림 없이 목록·위젯에만 추가해요",
+                    value = if (s.defaultNotify) "알림창에 표시해요" else "목록·위젯에만 추가해요",
                     icon = Icons.Rounded.Notifications,
                     onClick = { update { it.copy(defaultNotify = !it.defaultNotify) } },
                     trailing = { Switch(s.defaultNotify, { v -> update { it.copy(defaultNotify = v) } }) },
                 )
                 Divider()
                 SettingRow(
-                    title = "알림창에 고정",
-                    value = if (s.defaultPinned) "밀어서 지워도 다시 나타나요" else "밀어서 지우면 이번엔 숨겨요",
-                    icon = Icons.Rounded.PushPin,
-                    onClick = { update { it.copy(defaultPinned = !it.defaultPinned) } },
-                    trailing = { Switch(s.defaultPinned, { v -> update { it.copy(defaultPinned = v) } }) },
-                )
-                Divider()
-                SettingRow(
                     title = "알림 방식",
-                    value = s.defaultAlertMode.label,
+                    value = (if (s.defaultPinned) "고정 · " else "밀면 숨김 · ") + s.defaultAlertMode.label,
                     icon = s.defaultAlertMode.icon(),
                     valueColor = MaterialTheme.colorScheme.primary,
                     onClick = { sheet = SettingSheet.ALERT_MODE },
@@ -173,44 +163,25 @@ fun SettingsScreen(contentPadding: PaddingValues) {
         }
 
         item {
-            Section("알림창 · 홈 화면") {
+            Section("바로가기") {
                 SettingRow(
-                    title = "빠른 설정에 '할 일 추가' 타일 넣기",
+                    title = "빠른 설정 타일 추가",
                     value = "알림창을 내려서 바로 할 일을 추가해요",
                     icon = Icons.Rounded.Tune,
                     onClick = { addTile(ctx) },
                 )
                 Divider()
                 SettingRow(
-                    title = "홈 화면에 위젯 추가",
-                    value = "진행 중·예정인 할 일을 홈 화면에서 봐요",
+                    title = "홈 화면 위젯 추가",
+                    value = "할 일을 홈 화면에서 보고 완료해요",
                     icon = Icons.Rounded.Widgets,
                     onClick = { addWidget(ctx) },
                 )
-                Divider()
-                SettingRow(
-                    title = "스마트워치에도 알림",
-                    value = if (s.wearable) "갤럭시 워치·밴드 등 연결된 기기로도 보내요" else "휴대폰 알림창에만 표시해요",
-                    icon = Icons.Rounded.Watch,
-                    onClick = { update { it.copy(wearable = !it.wearable) } },
-                    trailing = { Switch(s.wearable, { v -> update { it.copy(wearable = v) } }) },
-                )
-                if (s.wearable) {
-                    InfoBox(
-                        Icons.Rounded.Info,
-                        "워치에는 처음 뜰 때 한 번 전달되고, 밀어서 지우면 워치에서는 사라지고 휴대폰에만 남아요. 워치 앱(Galaxy Wearable, Huawei Health 등)의 알림 설정에서 PinTodo가 켜져 있어야 해요.",
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                    )
-                }
-            }
-        }
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            item {
-                Section("화면") {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    Divider()
                     SettingRow(
                         title = "배경화면 색상 사용",
-                        value = "Material You — 배경화면에 맞춰 앱 색이 바뀌어요",
+                        value = "배경화면에 맞춰 앱 색이 바뀌어요",
                         icon = Icons.Rounded.Palette,
                         onClick = { update { it.copy(dynamicColor = !it.dynamicColor) } },
                         trailing = { Switch(s.dynamicColor, { v -> update { it.copy(dynamicColor = v) } }) },
@@ -220,10 +191,10 @@ fun SettingsScreen(contentPadding: PaddingValues) {
         }
 
         item {
-            Section("시스템") {
+            Section("권한") {
                 SettingRow(
                     title = "알림 설정",
-                    value = "채널별 소리·진동, 잠금화면 표시 등",
+                    value = "채널별 소리·진동, 잠금화면 표시",
                     icon = Icons.Rounded.Notifications,
                     onClick = { ctx.startActivity(notificationSettings(ctx)) },
                 )
@@ -231,7 +202,7 @@ fun SettingsScreen(contentPadding: PaddingValues) {
                     Divider()
                     SettingRow(
                         title = "알람 및 리마인더",
-                        value = if (exactOk) "허용됨 · 정한 시각에 바로 알려요" else "허용 안 됨 · 알림이 몇 분 늦을 수 있어요",
+                        value = if (exactOk) "허용됨" else "허용 안 됨 · 알림이 늦을 수 있어요",
                         valueColor = if (exactOk) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.tertiary,
                         icon = Icons.Rounded.Alarm,
                         onClick = { ctx.startActivity(exactAlarmSettings(ctx)) },
@@ -239,8 +210,8 @@ fun SettingsScreen(contentPadding: PaddingValues) {
                 }
                 Divider()
                 SettingRow(
-                    title = "배터리 절전 예외",
-                    value = if (batteryOk) "등록됨" else "등록 안 됨 · 앱 정보 > 배터리 > '제한 없음'",
+                    title = "배터리 제한 없음",
+                    value = if (batteryOk) "설정됨" else "설정 안 됨 · 앱 정보 > 배터리",
                     valueColor = if (batteryOk) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.tertiary,
                     icon = Icons.Rounded.BatteryChargingFull,
                     onClick = if (batteryOk) null else ({ ctx.startActivity(batteryExemption(ctx)) }),
@@ -251,15 +222,21 @@ fun SettingsScreen(contentPadding: PaddingValues) {
         item {
             Section("백업") {
                 SettingRow(
+                    title = "자동 백업",
+                    value = "휴대폰의 Google 백업이 켜져 있으면 새 휴대폰으로 자동으로 옮겨져요",
+                    icon = Icons.Rounded.CloudDone,
+                )
+                Divider()
+                SettingRow(
                     title = "백업 파일 만들기",
-                    value = "할 일과 설정을 파일로 저장해요 (휴대폰을 바꿀 때)",
+                    value = "할 일과 설정을 파일로 저장해요",
                     icon = Icons.Rounded.Backup,
                     onClick = { exportLauncher.launch("pintodo-backup-${LocalDate.now()}.json") },
                 )
                 Divider()
                 SettingRow(
-                    title = "백업에서 복원",
-                    value = "백업 파일을 골라 할 일과 설정을 되돌려요",
+                    title = "파일에서 복원",
+                    value = "백업 파일로 할 일과 설정을 되돌려요",
                     icon = Icons.Rounded.Restore,
                     // 일부 파일 앱은 .json을 text/plain이나 octet-stream으로 알려줌
                     onClick = { importLauncher.launch(arrayOf("application/json", "text/plain", "application/octet-stream")) },
@@ -275,13 +252,20 @@ fun SettingsScreen(contentPadding: PaddingValues) {
                     icon = Icons.Rounded.Info,
                     onClick = { showChangelog = true },
                 )
+                Divider()
+                SettingRow(
+                    title = "개인정보처리방침",
+                    value = "수집하는 정보가 없어요",
+                    icon = Icons.Rounded.Shield,
+                    onClick = { runCatching { ctx.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(PRIVACY_URL))) } },
+                )
             }
         }
     }
 
     when (sheet) {
         SettingSheet.QUICK_SNOOZE -> AppSheet({ sheet = null }) { hide ->
-            SheetTitle("알림에 바로 보이는 버튼", "켜 둔 미루기 선택지 중에서 골라요")
+            SheetTitle("알림에 바로 보이는 미루기", "켜 둔 미루기 선택지 중에서 골라요")
             s.enabledSnoozes.forEach { option ->
                 SettingRow(
                     title = option.buttonLabel,
@@ -290,12 +274,26 @@ fun SettingsScreen(contentPadding: PaddingValues) {
                 )
             }
         }
-        SettingSheet.ALERT_MODE -> AppSheet({ sheet = null }) { hide ->
-            SheetTitle("새 할 일 알림 방식")
-            AlertModePicker(s.defaultAlertMode) { mode -> update { it.copy(defaultAlertMode = mode) } }
-            Spacer(Modifier.height(20.dp))
+        SettingSheet.SNOOZE_OPTIONS -> AppSheet({ sheet = null }) { hide ->
+            SheetTitle("미루기 선택지", "알림의 '미루기…'와 목록에서 밀었을 때 보여요")
+            SnoozeOption.entries.forEach { option ->
+                val checked = option in s.snoozeOptions
+                SettingRow(
+                    title = option.label,
+                    dense = true,
+                    onClick = { update { it.copy(snoozeOptions = toggle(it.snoozeOptions, option)) } },
+                    trailing = { Checkbox(checked, onCheckedChange = { update { it.copy(snoozeOptions = toggle(it.snoozeOptions, option)) } }) },
+                )
+            }
+            Spacer(Modifier.height(16.dp))
             PrimaryButton("확인", { hide { sheet = null } })
         }
+        SettingSheet.ALERT_MODE -> AlertSheet(
+            pinned = s.defaultPinned, mode = s.defaultAlertMode,
+            onPinned = { v -> update { it.copy(defaultPinned = v) } },
+            onMode = { m -> update { it.copy(defaultAlertMode = m) } },
+            onDismiss = { sheet = null },
+        )
         null -> {}
     }
 
