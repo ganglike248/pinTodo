@@ -31,6 +31,16 @@
             android:tint="@color/widget_line"
             android:visibility="gone" />
 
+        <!-- 반복 할 일을 오늘 완료함 (누르면 취소) -->
+        <ImageView
+            android:id="@+id/row_check_done"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_gravity="center"
+            android:src="@drawable/ic_check_circle"
+            android:tint="@color/widget_primary"
+            android:visibility="gone" />
+
         <ImageView
             android:id="@+id/row_sched"
             android:layout_width="22dp"

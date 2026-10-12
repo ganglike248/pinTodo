@@ -20,6 +20,9 @@ import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.semantics.selected
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -263,19 +266,25 @@ fun ChoiceTile(icon: ImageVector, label: String, selected: Boolean, onClick: () 
 /** 작은 칩 (빠른 선택) */
 @Composable
 fun SoftChip(label: String, selected: Boolean = false, onClick: () -> Unit) {
+    // 흰 카드 위 회색 칩은 잘 안 보여서: 안 고른 칩은 테두리, 고른 칩은 파란 채움
     val c = MaterialTheme.colorScheme
+    val shape = RoundedCornerShape(percent = 50)
     Box(
         Modifier
-            .clip(CircleShape)
-            .background(if (selected) c.primaryContainer else c.surfaceVariant)
+            .heightIn(min = 40.dp)
+            .clip(shape)
+            .background(if (selected) c.primary else c.surface)
+            .border(1.dp, if (selected) c.primary else c.outline.copy(alpha = 0.5f), shape)
             .clickable(onClick = onClick)
-            .padding(horizontal = 14.dp, vertical = 8.dp),
+            .semantics { this.selected = selected }
+            .padding(horizontal = 12.dp, vertical = 9.dp),
+        contentAlignment = Alignment.Center,
     ) {
         Text(
             label,
-            style = MaterialTheme.typography.bodyMedium,
-            fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
-            color = if (selected) c.primary else c.onSurface,
+            style = MaterialTheme.typography.bodyMedium.copy(fontSize = 15.sp),
+            fontWeight = if (selected) FontWeight.Bold else FontWeight.SemiBold,
+            color = if (selected) c.onPrimary else c.onSurface,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )

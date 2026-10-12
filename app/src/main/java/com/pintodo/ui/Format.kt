@@ -141,7 +141,9 @@ object Format {
             ?.let { "알림 중 · ${duration(it - now)} 남음" } ?: "알림 중"
         Status.NO_ALERT -> "알림 없음"
         Status.SNOOZED -> "${dateTime(t.snoozeUntil!!)}까지 미룸"
-        Status.HIDDEN -> if (t.isRepeat) "오늘 완료" else "알림 닫음"
+        // 반복은 다음에 언제 다시 뜨는지 함께 (오늘 완료해도 내일 제대로 뜨는지 안심되게)
+        Status.HIDDEN -> if (!t.isRepeat) "알림 닫음"
+        else t.nextStart(now)?.let { "오늘 완료 · ${dateTime(it)} 다시" } ?: "오늘 완료 · 마지막 회차"
         Status.SCHEDULED -> "${dateTime(t.nextStart(now)!!)} 시작"
         Status.ENDED -> "기간 종료"
         Status.DONE -> "${dateTime(t.doneAt!!)} 완료"

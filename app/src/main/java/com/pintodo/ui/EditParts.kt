@@ -220,8 +220,8 @@ fun RepeatEndEditor(
     onCount: (Int) -> Unit,
 ) {
     var calendar by remember { mutableStateOf(false) }
-    Column(Modifier.padding(start = 16.dp, end = 16.dp, bottom = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text("반복 종료", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(start = 4.dp))
+    GroupLabel("반복 종료")
+    Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             RepeatEnd.entries.forEach { m -> SoftChip(m.label, mode == m) { onMode(m) } }
         }
@@ -342,11 +342,33 @@ fun Hint(text: String) {
     Text(text, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.outline, modifier = Modifier.padding(top = 8.dp, start = 4.dp))
 }
 
-/** 요일 7칸 + 매일/평일/주말 */
+/** 반복 탭 안의 영역 이름 (주기 / 요일 / 반복 종료 / 시간). trailing은 오른쪽 끝 */
+@Composable
+fun GroupLabel(text: String, trailing: @Composable () -> Unit = {}) {
+    Row(
+        Modifier.fillMaxWidth().padding(start = 20.dp, end = 12.dp, top = 18.dp, bottom = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(text, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f))
+        trailing()
+    }
+}
+
+/** 요일 7칸(동그라미) + 오른쪽 위의 '매일 · 평일 · 주말' 작은 글자 버튼 */
 @Composable
 fun DayPicker(days: List<Int>, onChange: (List<Int>) -> Unit) {
+    val set = days.toSet()
+    GroupLabel("요일") {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            QuickText("매일", set == (1..7).toSet()) { onChange((1..7).toList()) }
+            Dot()
+            QuickText("평일", set == (1..5).toSet()) { onChange((1..5).toList()) }
+            Dot()
+            QuickText("주말", set == setOf(6, 7)) { onChange(listOf(6, 7)) }
+        }
+    }
     Row(
-        Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp),
+        Modifier.fillMaxWidth().padding(horizontal = 16.dp),
         horizontalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         (1..7).forEach { d ->
@@ -355,15 +377,25 @@ fun DayPicker(days: List<Int>, onChange: (List<Int>) -> Unit) {
             }
         }
     }
-    FlowRow(
-        Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        SoftChip("매일", days.toSet() == (1..7).toSet()) { onChange((1..7).toList()) }
-        SoftChip("평일", days.toSet() == (1..5).toSet()) { onChange((1..5).toList()) }
-        SoftChip("주말", days.toSet() == setOf(6, 7)) { onChange(listOf(6, 7)) }
-    }
 }
+
+@Composable
+private fun QuickText(label: String, selected: Boolean, onClick: () -> Unit) {
+    val c = MaterialTheme.colorScheme
+    Text(
+        label,
+        style = MaterialTheme.typography.bodyMedium,
+        fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+        color = if (selected) c.primary else c.onSurfaceVariant,
+        textDecoration = if (selected) TextDecoration.Underline else null,
+        modifier = Modifier.clip(RoundedCornerShape(8.dp)).clickable(onClick = onClick)
+            .semantics { this.selected = selected; role = Role.Button }
+            .padding(horizontal = 8.dp, vertical = 6.dp),
+    )
+}
+
+@Composable
+private fun Dot() = Text("·", color = MaterialTheme.colorScheme.outline, style = MaterialTheme.typography.bodyMedium)
 
 @Composable
 private fun DayToggle(label: String, selected: Boolean, modifier: Modifier, onClick: () -> Unit) {

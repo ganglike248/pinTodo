@@ -3,6 +3,17 @@
 package com.pintodo.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.ui.unit.Velocity
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.material3.Icon
+import androidx.compose.material.icons.rounded.ChevronRight
+import androidx.compose.material.icons.rounded.CalendarMonth
+import androidx.compose.material.icons.Icons
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.snapping.SnapPosition
 import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.layout.Arrangement
@@ -137,7 +148,8 @@ fun WheelPicker(
         flingBehavior = fling,
         contentPadding = PaddingValues(vertical = itemHeight * half),
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = modifier.height(itemHeight * WheelVisible).clearAndSetSemantics {
+        // 휠 끝(예: 오전·오후)에 닿고 남은 드래그·플링이 화면 스크롤로 넘어가지 않게 여기서 소비
+        modifier = modifier.height(itemHeight * WheelVisible).nestedScroll(KeepScrollInside).clearAndSetSemantics {
             contentDescription = description
             stateDescription = label(center % count)
             customActions = listOf(
@@ -165,6 +177,11 @@ fun WheelPicker(
             }
         }
     }
+}
+
+private object KeepScrollInside : NestedScrollConnection {
+    override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource) = available
+    override suspend fun onPostFling(consumed: Velocity, available: Velocity) = available
 }
 
 /** 가운데 선택 띠 위에 휠들을 나란히 */
@@ -211,32 +228,61 @@ fun InlineDateTime(
     emptyLabel: String,
     onChange: (Long?) -> Unit,
     quick: List<Pair<String, Long>> = emptyList(),
+    minDate: LocalDate? = null,
 ) {
     val zone = ZoneId.systemDefault()
     val shown = Instant.ofEpochMilli(value ?: fallback).atZone(zone)
     val date = shown.toLocalDate()
     val minute = shown.hour * 60 + shown.minute
-    val today = LocalDate.now(zone)
     var showCalendar by remember { mutableStateOf(false) }
     fun of(d: LocalDate, m: Int) = d.atStartOfDay(zone).plusMinutes(m.toLong()).toInstant().toEpochMilli()
 
     Column {
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             SoftChip(emptyLabel, value == null) { onChange(null) }
-            SoftChip("오늘", value != null && date == today) { onChange(of(today, minute)) }
-            SoftChip("내일", value != null && date == today.plusDays(1)) { onChange(of(today.plusDays(1), minute)) }
-            val other = value != null && date != today && date != today.plusDays(1)
-            SoftChip(if (other) Format.date(date) else "날짜 선택", other) { showCalendar = true }
             quick.forEach { (label, ms) -> SoftChip(label, value == ms) { onChange(ms) } }
         }
         Spacer(Modifier.height(12.dp))
+        // 날짜는 칩이 아니라 눈에 띄는 한 줄로 (누르면 달력)
+        Box(Modifier.alpha(if (value == null) 0.4f else 1f)) {
+            DateRow(date) { showCalendar = true }
+        }
+        Spacer(Modifier.height(8.dp))
         Box(Modifier.alpha(if (value == null) 0.4f else 1f)) {
             TimeWheel(minute) { m -> if (value != null || m != minute) onChange(of(date, m)) }
         }
     }
 
     if (showCalendar) {
-        CalendarDialog(date, onDismiss = { showCalendar = false }) { onChange(of(it, minute)); showCalendar = false }
+        CalendarDialog(date, minDate, onDismiss = { showCalendar = false }) { onChange(of(it, minute)); showCalendar = false }
+    }
+}
+
+/** 📅 날짜   10/12(월) · 오늘  › */
+@Composable
+private fun DateRow(date: LocalDate, onClick: () -> Unit) {
+    val c = MaterialTheme.colorScheme
+    val today = LocalDate.now()
+    val relative = when (date) {
+        today -> " · 오늘"
+        today.plusDays(1) -> " · 내일"
+        else -> ""
+    }
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp))
+            .background(c.surfaceVariant)
+            .clickable(onClickLabel = "날짜 바꾸기", onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(Icons.Rounded.CalendarMonth, null, Modifier.size(22.dp), tint = c.primary)
+        Spacer(Modifier.width(10.dp))
+        Text("날짜", style = MaterialTheme.typography.bodyLarge, color = c.onSurfaceVariant)
+        Spacer(Modifier.weight(1f))
+        Text(Format.date(date) + relative, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold, color = c.primary)
+        Icon(Icons.Rounded.ChevronRight, null, Modifier.size(22.dp), tint = c.outline)
     }
 }
 
@@ -292,8 +338,10 @@ fun SheetTitle(text: String, sub: String? = null) {
 }
 
 @Composable
-fun CalendarDialog(initial: LocalDate, onDismiss: () -> Unit, onPick: (LocalDate) -> Unit) {
-    val todayUtc = LocalDate.now().atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
+fun CalendarDialog(initial: LocalDate, minDate: LocalDate? = null, onDismiss: () -> Unit, onPick: (LocalDate) -> Unit) {
+    // 오늘 이전은 못 고름. 종료 날짜는 시작 날짜 이전도 못 고름
+    val first = listOfNotNull(LocalDate.now(), minDate).max()
+    val todayUtc = first.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
     // DatePicker는 UTC 자정 기준 millis를 사용
     val state = rememberDatePickerState(
         initialSelectedDateMillis = initial.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli(),

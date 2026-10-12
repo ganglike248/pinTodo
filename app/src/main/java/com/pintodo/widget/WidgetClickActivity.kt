@@ -19,6 +19,7 @@ class WidgetClickActivity : Activity() {
         const val DONE = "done"
         const val SNOOZE = "snooze"
         const val OPEN = "open"
+        const val UNDO_HIDE = "undo_hide"
         private const val EXTRA_ACTION = "widget_action"
 
         fun fillIn(action: String, id: Int): Intent =
@@ -34,6 +35,10 @@ class WidgetClickActivity : Activity() {
                 Sync.run(this)
             }
             SNOOZE -> Actions.snooze(this, id, SettingsStore.get(this).quickSnooze)
+            UNDO_HIDE -> {
+                TodoStore.modify(this, id) { it.copy(hiddenKey = null) }
+                Sync.run(this)
+            }
             OPEN -> startActivity(
                 Intent(this, MainActivity::class.java)
                     .putExtra(MainActivity.EXTRA_TODO_ID, id)

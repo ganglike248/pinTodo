@@ -225,10 +225,15 @@ private fun TodoCard(
             },
         ) {
             Row(Modifier.padding(start = 6.dp, end = 18.dp, top = 12.dp, bottom = 14.dp)) {
+                val doneToday = status == Status.HIDDEN && todo.isRepeat
                 CheckCircle(
-                    checked = false, active = status == Status.SHOWING,
-                    onClick = if (canComplete) ({ onComplete(todo) }) else null,
-                    description = "$completeLabel: ${todo.title}",
+                    checked = doneToday, active = status == Status.SHOWING || doneToday,
+                    onClick = when {
+                        doneToday -> ({ onUpdate(todo.copy(hiddenKey = null)) })   // 오늘 완료 취소
+                        canComplete -> ({ onComplete(todo) })
+                        else -> null
+                    },
+                    description = if (doneToday) "오늘 완료 취소: ${todo.title}" else "$completeLabel: ${todo.title}",
                 )
                 Column(Modifier.weight(1f).padding(top = 9.dp, start = 4.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {

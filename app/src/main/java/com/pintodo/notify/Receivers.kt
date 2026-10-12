@@ -13,6 +13,7 @@ class ActionReceiver : BroadcastReceiver() {
         const val ACTION_DONE = "com.pintodo.DONE"
         const val ACTION_SNOOZE = "com.pintodo.SNOOZE"
         const val ACTION_DISMISSED = "com.pintodo.DISMISSED"
+        const val ACTION_UNDO_HIDE = "com.pintodo.UNDO_HIDE"   // 위젯: 반복의 '오늘 완료' 취소
         const val EXTRA_ID = "id"
     }
 
@@ -24,6 +25,7 @@ class ActionReceiver : BroadcastReceiver() {
         when (intent.action) {
             ACTION_DONE -> TodoStore.modify(context, id) { Actions.complete(it, now) }
             ACTION_SNOOZE -> Actions.snooze(context, id, SettingsStore.get(context).quickSnooze)
+            ACTION_UNDO_HIDE -> TodoStore.modify(context, id) { it.copy(hiddenKey = null) }
             ACTION_DISMISSED -> {
                 if (todo.pinned) {
                     // 고정: 이 알림만 조용히 다시 게시 (그룹째 지우면 알림마다 호출되므로 전체 Sync는 생략)

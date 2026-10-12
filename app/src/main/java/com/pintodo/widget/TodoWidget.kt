@@ -51,14 +51,19 @@ object TodoWidget {
     }
 
     private fun items(context: Context, now: Long): List<Todo> {
-        val order = listOf(Status.SHOWING, Status.SNOOZED, Status.NO_ALERT, Status.SCHEDULED)
+        // 맨 아래: 오늘 완료한 반복 할 일 (다음에 언제 다시 뜨는지 보이게)
+        val order = listOf(Status.SHOWING, Status.SNOOZED, Status.NO_ALERT, Status.SCHEDULED, Status.HIDDEN)
         return TodoStore.all(context)
-            .filter { it.status(now) in order }
+            .filter { it.status(now) in order && (it.status(now) != Status.HIDDEN || it.isRepeat) }
             .sortedWith(compareBy<Todo>({ order.indexOf(it.status(now)) }, { it.nextStart(now) ?: 0L }))
     }
 
-    private fun subtitle(items: List<Todo>, now: Long) =
-        if (items.isEmpty()) "할 일이 없어요" else "알림 중 ${items.count { it.status(now) == Status.SHOWING }}개 · 전체 ${items.size}개"
+    private fun subtitle(items: List<Todo>, now: Long): String {
+        if (items.isEmpty()) return "할 일이 없어요"
+        val showing = items.count { it.status(now) == Status.SHOWING }
+        val doneToday = items.count { it.status(now) == Status.HIDDEN }
+        return "알림 중 ${showing}개 · " + if (doneToday > 0) "오늘 완료 ${doneToday}개" else "전체 ${items.size}개"
+    }
 
     /** 요약형: 가장 위의 할 일 하나 + 개수 */
     private fun compact(context: Context, items: List<Todo>, now: Long): RemoteViews {
@@ -111,7 +116,7 @@ object TodoWidget {
 
     private fun row(context: Context, todo: Todo, now: Long, inList: Boolean): RemoteViews {
         val status = todo.status(now)
-        val canComplete = status != Status.SCHEDULED
+        val canComplete = status != Status.SCHEDULED && status != Status.HIDDEN
         val v = RemoteViews(context.packageName, R.layout.widget_row)
         v.setTextViewText(R.id.row_title, todo.title)
 
@@ -119,6 +124,7 @@ object TodoWidget {
         v.setViewVisibility(R.id.row_check_on, visibleIf(status == Status.SHOWING))
         v.setViewVisibility(R.id.row_check_off, visibleIf(status == Status.SNOOZED || status == Status.NO_ALERT))
         v.setViewVisibility(R.id.row_sched, visibleIf(status == Status.SCHEDULED))
+        v.setViewVisibility(R.id.row_check_done, visibleIf(status == Status.HIDDEN))
 
         // 상태 문구: 색별로 준비된 TextView 중 하나만 보이게 (야간 모드 색은 리소스가 처리)
         val statusView = when (status) {
@@ -141,6 +147,10 @@ object TodoWidget {
         if (canComplete) {
             click(R.id.row_check, WidgetClickActivity.DONE) { broadcast(context, ActionReceiver.ACTION_DONE, todo.id) }
             v.setContentDescription(R.id.row_check, "${if (todo.isRepeat) "오늘 완료" else "완료"}: ${todo.title}")
+        }
+        if (status == Status.HIDDEN) {
+            click(R.id.row_check, WidgetClickActivity.UNDO_HIDE) { broadcast(context, ActionReceiver.ACTION_UNDO_HIDE, todo.id) }
+            v.setContentDescription(R.id.row_check, "오늘 완료 취소: ${todo.title}")
         }
         // 알림 중인 할 일은 위젯에서 바로 미루기 (설정의 '알림에 바로 보이는 버튼'과 같은 선택지)
         v.setViewVisibility(R.id.row_snooze, visibleIf(status == Status.SHOWING))

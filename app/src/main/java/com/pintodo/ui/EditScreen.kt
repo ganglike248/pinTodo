@@ -50,6 +50,7 @@ import androidx.compose.ui.unit.dp
 import com.pintodo.data.DateParser
 import com.pintodo.data.RepeatType
 import com.pintodo.data.Todo
+import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 
@@ -309,11 +310,11 @@ fun EditScreen(
                                         value = startAt,
                                         fallback = roundMinute(openedAt + 60 * 60_000L),
                                         emptyLabel = "지금 바로",
-                                        onChange = { manual { startAt = it } },
+                                        onChange = { manual { startAt = it; endAt = keepEndAfter(endAt, it ?: System.currentTimeMillis()) } },
                                         quick = listOf(
                                             "30분 뒤" to roundMinute(openedAt + 30 * 60_000L),
                                             "1시간 뒤" to roundMinute(openedAt + 60 * 60_000L),
-                                            "내일 아침" to tomorrowAt(9 * 60),
+                                            "2시간 뒤" to roundMinute(openedAt + 120 * 60_000L),
                                         ),
                                     )
                                     Field.END -> InlineDateTime(
@@ -321,37 +322,64 @@ fun EditScreen(
                                         fallback = roundMinute((startAt ?: openedAt) + 60 * 60_000L),
                                         emptyLabel = "완료할 때까지",
                                         onChange = { manual { endAt = it } },
+                                        minDate = startAt?.let { Instant.ofEpochMilli(it).atZone(ZoneId.systemDefault()).toLocalDate() },
                                     )
                                 }
                             }
                         }
                     }
                     Mode.REPEAT -> {
-                        FlowRow(
-                            Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp),
-                        ) {
-                            SoftChip("매주", kind == RepeatType.WEEKLY && weeks == 1) { manual { kind = RepeatType.WEEKLY; weeks = 1 } }
-                            SoftChip("격주", kind == RepeatType.WEEKLY && weeks == 2) { manual { kind = RepeatType.WEEKLY; weeks = 2 } }
-                            SoftChip("매월", kind == RepeatType.MONTHLY) { manual { kind = RepeatType.MONTHLY } }
-                            SoftChip("며칠마다", kind == RepeatType.EVERY_DAYS) { manual { kind = RepeatType.EVERY_DAYS } }
+                        // 규칙(주기 → 요일·날짜 → 반복 종료)을 먼저, 하루 중 시간은 마지막에.
+                        // 영역마다 이름을 붙이고 모양을 다르게: 주기=세그먼트, 요일=동그라미, 빠른 선택=작은 글자, 종료=칩
+                        GroupLabel("주기")
+                        val kindIndex = when {
+                            kind == RepeatType.MONTHLY -> 2
+                            kind == RepeatType.EVERY_DAYS -> 3
+                            weeks == 2 -> 1
+                            else -> 0
                         }
-                        when (kind) {
-                            RepeatType.MONTHLY -> Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
-                                WheelRow {
-                                    WheelPicker(31, monthDay - 1, { manual { monthDay = it + 1 } }, { "매월 " + Format.monthDay(it + 1) },
-                                        Modifier.width(200.dp), description = "매월 며칠")
+                        SegmentTabs(
+                            listOf("매주", "격주", "매월", "며칠마다"), kindIndex,
+                            { i ->
+                                manual {
+                                    when (i) {
+                                        0 -> { kind = RepeatType.WEEKLY; weeks = 1 }
+                                        1 -> { kind = RepeatType.WEEKLY; weeks = 2 }
+                                        2 -> kind = RepeatType.MONTHLY
+                                        else -> kind = RepeatType.EVERY_DAYS
+                                    }
                                 }
-                                Hint("말일을 고르면 30일·28일까지인 달에도 마지막 날에 알려요")
+                            },
+                            Modifier.padding(horizontal = 16.dp),
+                        )
+                        when (kind) {
+                            RepeatType.MONTHLY -> {
+                                GroupLabel("날짜")
+                                Column(Modifier.padding(horizontal = 16.dp)) {
+                                    WheelRow {
+                                        WheelPicker(31, monthDay - 1, { manual { monthDay = it + 1 } }, { "매월 " + Format.monthDay(it + 1) },
+                                            Modifier.width(200.dp), description = "매월 며칠")
+                                    }
+                                    Hint("말일을 고르면 30일·28일까지인 달에도 마지막 날에 알려요")
+                                }
                             }
-                            RepeatType.EVERY_DAYS -> Box(Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
-                                Stepper("${everyDays}일마다", onMinus = { manual { everyDays = (everyDays - 1).coerceAtLeast(2) } },
-                                    onPlus = { manual { everyDays = (everyDays + 1).coerceAtMost(30) } })
+                            RepeatType.EVERY_DAYS -> {
+                                GroupLabel("간격")
+                                Box(Modifier.padding(horizontal = 16.dp)) {
+                                    Stepper("${everyDays}일마다", onMinus = { manual { everyDays = (everyDays - 1).coerceAtLeast(2) } },
+                                        onPlus = { manual { everyDays = (everyDays + 1).coerceAtMost(30) } })
+                                }
                             }
                             else -> DayPicker(days) { d -> manual { days = d } }
                         }
-                        Row(Modifier.padding(horizontal = 16.dp, vertical = 6.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        RepeatEndEditor(
+                            mode = repeatEnd, untilDay = untilDay, count = count,
+                            onMode = { manual { repeatEnd = it } },
+                            onUntil = { manual { untilDay = it } },
+                            onCount = { manual { count = it } },
+                        )
+                        GroupLabel("시간")
+                        Row(Modifier.padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             FieldCell("시작 시각", Format.time(dailyStart), field == Field.START, Modifier.weight(1f)) { field = Field.START }
                             FieldCell(
                                 "종료 시각",
@@ -367,12 +395,6 @@ fun EditScreen(
                                 }
                             }
                         }
-                        RepeatEndEditor(
-                            mode = repeatEnd, untilDay = untilDay, count = count,
-                            onMode = { manual { repeatEnd = it } },
-                            onUntil = { manual { untilDay = it } },
-                            onCount = { manual { count = it } },
-                        )
                     }
                 }
             }
@@ -448,7 +470,14 @@ private fun summary(t: Todo): String {
 
 private fun roundMinute(ms: Long) = ms - ms % 60_000L
 
-private fun tomorrowAt(minute: Int): Long {
+/**
+ * 시작을 바꾸면 종료가 시작보다 앞서지 않게: 같은 시각을 시작 날짜로 옮기고, 그래도 이르면 시작 1시간 뒤.
+ * 종료가 '완료할 때까지'(null)면 그대로
+ */
+private fun keepEndAfter(end: Long?, start: Long): Long? {
+    if (end == null || end > start) return end
     val zone = ZoneId.systemDefault()
-    return LocalDate.now(zone).plusDays(1).atStartOfDay(zone).plusMinutes(minute.toLong()).toInstant().toEpochMilli()
+    val endTime = Instant.ofEpochMilli(end).atZone(zone).toLocalTime()
+    val moved = Instant.ofEpochMilli(start).atZone(zone).toLocalDate().atTime(endTime).atZone(zone).toInstant().toEpochMilli()
+    return if (moved > start) moved else roundMinute(start + 60 * 60_000L)
 }

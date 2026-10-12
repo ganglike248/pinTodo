@@ -57,6 +57,24 @@ private fun fixed(t: String) = Change(ChangeKind.FIXED, t)
 
 val RELEASES = listOf(
     Release(
+        "0.4.8", "2026.10.12",
+        listOf(
+            improved("오늘 완료한 반복 할 일이 위젯에서도 보이고, 다음에 언제 뜨는지 알려 줘요"),
+            new("위젯과 목록에서 체크를 다시 누르면 '오늘 완료'를 취소할 수 있어요"),
+            improved("반복 설정을 주기·요일·반복 종료·시간으로 나눠 보기 쉽게 정리했어요"),
+        ),
+    ),
+    Release(
+        "0.4.7", "2026.10.12",
+        listOf(
+            improved("날짜를 고르는 칸이 눈에 잘 띄게 바뀌었어요"),
+            improved("빠른 선택 버튼이 더 잘 보여요"),
+            moved("빠른 선택이 30분·1시간·2시간 뒤로 바뀌었어요"),
+            improved("시작 날짜를 바꾸면 종료 날짜도 맞춰져요"),
+            fixed("시간 휠을 끝까지 돌리면 화면이 같이 움직이던 문제를 고쳤어요"),
+        ),
+    ),
+    Release(
         "0.4.6", "2026.10.06",
         listOf(
             improved("위젯에서 할 일 목록을 스크롤할 수 있어요"),

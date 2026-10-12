@@ -2,7 +2,7 @@
 
 완료할 때까지 알림창에 고정되는 안드로이드 투두 앱. **Google Play 출시 예정** (2026-10-02 결정, 아직 Play Console 등록 전). Kotlin + Jetpack Compose(Material 3), 외부 서버 없음.
 
-- **현재 버전**: v0.4.6 (스토어 출시 전이라 0.x, 출시 시 1.0.0) | GitHub: https://github.com/ganglike248/pinTodo (main 브랜치)
+- **현재 버전**: v0.4.8 (스토어 출시 전이라 0.x, 출시 시 1.0.0) | GitHub: https://github.com/ganglike248/pinTodo (main 브랜치)
 - 사용 기기: 갤럭시 S26 울트라 (One UI / Android 16)
 
 ## 운영 방향 (2026-10-06 결정)
@@ -65,6 +65,11 @@ adb install -r app/build/outputs/apk/sideload/app-sideload.apk
 - 시각 표시는 전부 `Format.time`(오전/오후 12시간제)을 거칠 것. 휠도 `TimeWheel`(오전·오후/시/분) 하나만 사용
 - 반복은 `Todo.repeatType`(NONE/WEEKLY/MONTHLY/EVERY_DAYS) + `repeatInterval`(주·일 간격) + `monthDay`(31=말일) + `repeatAnchor`(격주·n일마다 기준일, epochDay). 회차 판정은 `occursOn()` 하나로. v0.4.3 이전 데이터는 `repeatDays`가 있으면 WEEKLY
 - 편집 화면의 일정 휠은 시트가 아니라 화면에 펼쳐 둠(`InlineDateTime`/`InlineTime`). `WheelPicker`는 바깥 값으로 이동하는 동안(`syncing`) 지나가는 값을 알리지 않음 — 안 그러면 중간 값으로 되돌아감
+- `WheelPicker`는 `nestedScroll(KeepScrollInside)`로 남은 드래그·플링을 소비 — 휠 끝(오전·오후)에서 화면이 같이 스크롤되던 문제
+- 날짜는 칩이 아니라 `DateRow`(달력 아이콘 + 날짜 + ›)로, 빠른 선택은 30분·1시간·2시간 뒤만. 시작을 바꾸면 `keepEndAfter`로 종료를 시작 이후로 보정, 종료 달력은 시작일 이전 선택 불가(`CalendarDialog(minDate)`)
+- 반복 탭은 `GroupLabel`로 영역을 나누고 모양을 다르게: 주기=`SegmentTabs`, 요일=동그라미(`DayToggle`) + 오른쪽 위 매일·평일·주말 글자 버튼, 반복 종료=칩(시간 위), 시간=칸+휠(맨 아래)
+- 오늘 완료한 반복 할 일(`Status.HIDDEN` + isRepeat)은 위젯 맨 아래에 체크 아이콘과 "오늘 완료 · {다음 시작} 다시"로 표시(`Format.status`). 위젯·목록에서 체크를 다시 누르면 `hiddenKey = null`로 취소(위젯: `WidgetClickActivity.UNDO_HIDE` / Android 11 이하 `ActionReceiver.ACTION_UNDO_HIDE`)
+- `SoftChip`: 흰 카드 위에서 안 보이던 회색 칩 → 안 고른 칩은 흰 바탕+테두리, 고른 칩은 primary 채움(15sp, 높이 40dp 이상)
 - 제목·메모 자동 일정: 사용자가 일정을 직접 만지면(`manualSchedule`) 더 이상 덮어쓰지 않음. 기존 할 일은 처음 글에 있던 날짜로는 덮어쓰지 않음
 - `QuickAddActivity`는 공유(SEND text/plain) 대상이라 exported=true
 - 위젯은 Android 12+에서 크기별 `RemoteViews(Map<SizeF, RemoteViews>)`: 150×130dp 이상 목록형, 그보다 작으면 요약형(`widget_compact`)
