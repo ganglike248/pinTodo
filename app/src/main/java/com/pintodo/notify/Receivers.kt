@@ -53,5 +53,18 @@ class AlarmReceiver : BroadcastReceiver() {
 
 /** 재부팅, 앱 업데이트, 시간/시간대 변경, 정확한 알람 권한 허용 */
 class SystemReceiver : BroadcastReceiver() {
-    override fun onReceive(context: Context, intent: Intent) = Sync.run(context)
+    override fun onReceive(context: Context, intent: Intent) {
+        // 매니페스트에 등록한 시스템 방송만 처리 (다른 앱이 보낸 임의 인텐트는 무시)
+        if (intent.action in HANDLED) Sync.run(context)
+    }
+
+    private companion object {
+        val HANDLED = setOf(
+            Intent.ACTION_BOOT_COMPLETED,
+            Intent.ACTION_MY_PACKAGE_REPLACED,
+            Intent.ACTION_TIME_CHANGED,          // = "android.intent.action.TIME_SET"
+            Intent.ACTION_TIMEZONE_CHANGED,
+            "android.app.action.SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED",   // API 31+
+        )
+    }
 }

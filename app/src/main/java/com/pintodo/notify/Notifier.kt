@@ -119,7 +119,9 @@ object Notifier {
         val end = todo.windowAt(now)?.end
         val countdown = end != null && end - now < 24 * 60 * 60_000L
         if (countdown) builder.setWhen(end!!).setUsesChronometer(true).setChronometerCountDown(true)
-        else builder.setWhen(todo.alertKey(now) ?: now)   // 이번에 뜬 시각 (회차 시작 또는 미루기 종료)
+        // 이번에 뜬 시각 (회차 시작 또는 미루기 종료). 너무 오래된 시각이면 넣지 않음 —
+        // Android 16은 앱이 지정한 when이 2주보다 오래된 알림의 게시를 무시해서, 오래 고정한 할 일이 재게시 때 사라졌음
+        else todo.shownSince(now)?.let { builder.setWhen(it) } ?: builder.setShowWhen(false)
         val snoozedBack = todo.snoozeUntil != null && todo.alertKey(now) == todo.snoozeUntil
         listOfNotNull("미룬 할 일".takeIf { snoozedBack }, "종료까지".takeIf { countdown })
             .takeIf { it.isNotEmpty() }?.let { builder.setSubText(it.joinToString(" · ")) }

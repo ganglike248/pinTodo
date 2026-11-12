@@ -2,7 +2,7 @@
 
 완료할 때까지 알림창에 고정되는 안드로이드 투두 앱. **Google Play 출시 예정** (2026-10-02 결정, 아직 Play Console 등록 전). Kotlin + Jetpack Compose(Material 3), 외부 서버 없음.
 
-- **현재 버전**: v0.4.8 (스토어 출시 전이라 0.x, 출시 시 1.0.0) | GitHub: https://github.com/ganglike248/pinTodo (main 브랜치)
+- **현재 버전**: v0.4.9 (스토어 출시 전이라 0.x, 출시 시 1.0.0) | GitHub: https://github.com/ganglike248/pinTodo (main 브랜치)
 - 사용 기기: 갤럭시 S26 울트라 (One UI / Android 16)
 
 ## 운영 방향 (2026-10-06 결정)
@@ -54,6 +54,7 @@ adb install -r app/build/outputs/apk/sideload/app-sideload.apk
 - 위젯·타일 갱신은 `Sync.run()` 끝에서 함께 처리 — 할 일을 바꾸는 경로는 반드시 `Sync.run()`을 거칠 것
 - 알림 버튼은 최대 3개: [완료][설정의 quickSnooze][미루기…(SnoozeActivity)]. 워치용 `WearableExtender`에는 [완료][quickSnooze]만
 - **스마트워치**: 워치는 ongoing 알림을 넘겨받지 않음 → `AppSettings.wearable`(기본 켬)이면 `setOngoing(false)` + deleteIntent 재게시로 고정. 밀어서 지운 회차는 `Todo.wearDismissedKey`에 기록해 `setLocalOnly(true)`로 재게시(워치에서 사라지고 휴대폰에만 남음, 워치↔휴대폰 재게시 무한 반복 방지)
+- 알림 머리글 시각(`setWhen`)은 `Todo.shownSince`로 13일 이내일 때만 — **Android 16은 앱이 지정한 when이 14일보다 오래된 알림 게시를 무시**(로그 `Ignored enqueue for old`)해서 오래 고정한 할 일이 재게시 때 사라졌음
 - 알림 본문은 `Format.notificationSchedule`(절대 날짜)로 항상 일정 표시 — 알림은 자정에 다시 그려지지 않으므로 '오늘/내일' 쓰지 말 것
 - 편집 화면은 '자주 쓰는 것만 펼치기': 제목 + (메모·체크리스트는 `+` 칩으로 추가) + 라벨, 일정 탭 [한 번|반복|알림 없이](= notify 끄기), 알림 방식(고정·소리)은 한 줄 요약 → `AlertSheet`. 설정의 미루기 선택지도 시트로. 화면에 선택지를 더 늘릴 때는 시트/접기로
 - 체크리스트 `Todo.items`(`CheckItem`), 색 라벨 `Todo.color`(`LabelColor`): 목록 카드(점·펼치는 체크리스트), 알림(펼치면 ☑/☐ 목록, 알림 색), 위젯(점·진행) 모두 반영

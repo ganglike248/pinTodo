@@ -445,7 +445,9 @@ fun batteryExemption(ctx: Context) =
 
 /** '알람 및 리마인더' 허용 화면 (Android 12+에서만 권한이 꺼질 수 있음) */
 fun exactAlarmSettings(ctx: Context) =
-    Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM, Uri.parse("package:${ctx.packageName}"))
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
+        Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM, Uri.parse("package:${ctx.packageName}"))
+    else batteryExemption(ctx)   // Android 11 이하엔 이 화면이 없음 → 앱 정보
 
 fun notificationSettings(ctx: Context) =
     Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, ctx.packageName)

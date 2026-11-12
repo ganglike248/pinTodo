@@ -57,6 +57,14 @@ private fun fixed(t: String) = Change(ChangeKind.FIXED, t)
 
 val RELEASES = listOf(
     Release(
+        "0.4.9", "2026.11.12",
+        listOf(
+            fixed("2주 넘게 고정해 둔 할 일이 휴대폰을 다시 켜거나 알림을 밀면 사라지던 문제를 고쳤어요"),
+            improved("화면 낭독(TalkBack)으로 위젯 버튼을 더 정확하게 읽어 줘요"),
+            improved("앱이 더 안정적으로 동작해요"),
+        ),
+    ),
+    Release(
         "0.4.8", "2026.10.12",
         listOf(
             improved("오늘 완료한 반복 할 일이 위젯에서도 보이고, 다음에 언제 뜨는지 알려 줘요"),

@@ -44,6 +44,9 @@ enum class LabelColor(val label: String, val argb: Long) {
     PURPLE("보라", 0xFF8B5CF6),
 }
 
+/** 알림 머리글 시각(when)으로 쓸 수 있는 최대 경과 시간 (Android 16 제한 14일보다 여유 있게) */
+private const val MAX_WHEN_AGE = 13 * 24 * 60 * 60_000L
+
 /** 알림이 떠 있어야 하는 구간. end == null 이면 완료할 때까지 */
 data class Window(val start: Long, val end: Long?)
 
@@ -134,6 +137,9 @@ data class Todo(
         val w = windowAt(now) ?: return null
         return maxOf(w.start, snoozeUntil?.takeIf { it <= now } ?: 0L)
     }
+
+    /** 알림 머리글에 보일 '뜬 시각'. 13일보다 오래됐으면 null (Android 16은 2주 넘은 when의 알림을 무시함) */
+    fun shownSince(now: Long): Long? = (alertKey(now) ?: now).takeIf { now - it < MAX_WHEN_AGE }
 
     private val remindMillis get() = remindEvery?.takeIf { it > 0 }?.let { it * 60_000L }
 
