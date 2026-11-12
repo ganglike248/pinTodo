@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>PinTodo Promo</title>
+<!-- 홍보 영상 한 프레임을 그리는 페이지. render.py가 render(t)를 30fps로 호출해 캡처한다. #v면 세로(1080×1920) -->
+<style>
+@font-face { font-family: P; src: url("work/font/Pretendard.woff2") format("woff2"); font-weight: 100 900; }
+:root { --W: 1920px; --H: 1080px; }
+html, body { margin: 0; width: var(--W); height: var(--H); overflow: hidden; background: #12141a; }
+body { font-family: P, "Apple SD Gothic Neo", sans-serif; color: #fff; -webkit-font-smoothing: antialiased; }
+#stage { position: absolute; inset: 0; overflow: hidden; }
+.bg { position: absolute; inset: 0; }
+#bgDark { background: radial-gradient(120% 90% at 20% 10%, #2a2f3d 0%, #161921 55%, #0f1116 100%); }
+#bgBlue { background: radial-gradient(120% 100% at 15% 0%, #4d95ff 0%, #2f74f0 40%, #1b4fd0 100%); opacity: 0; }
+.blob { position: absolute; border-radius: 50%; filter: blur(90px); opacity: .35; }
+#blobA { width: 900px; height: 900px; background: #7fb2ff; }
+#blobB { width: 700px; height: 700px; background: #2a4fd8; }
+
+#phone { position: absolute; left: 0; top: 0; transform-origin: 50% 50%; will-change: transform; }
+#bezel { position: absolute; inset: 0; background: #0d0f14; border-radius: 64px;
+  box-shadow: 0 0 0 2px rgba(255,255,255,.10) inset, 0 40px 120px rgba(5,10,30,.45), 0 12px 30px rgba(5,10,30,.25); }
+#screen { position: absolute; overflow: hidden; border-radius: 50px; background: #000; }
+#screen img { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+#imgB { opacity: 0; }
+#touch { position: absolute; width: 0; height: 0; pointer-events: none; }
+#dot { position: absolute; width: 78px; height: 78px; margin: -39px 0 0 -39px; border-radius: 50%;
+  background: rgba(255,255,255,.55); border: 4px solid rgba(60,70,95,.55); box-sizing: border-box;
+  box-shadow: 0 4px 18px rgba(0,0,0,.18); opacity: 0; }
+#ring { position: absolute; width: 78px; height: 78px; margin: -39px 0 0 -39px; border-radius: 50%;
+  border: 4px solid rgba(255,255,255,.9); box-sizing: border-box; opacity: 0; }
+
+.copy { position: absolute; }
+.line { display: block; will-change: transform, opacity, filter; }
+.kicker { font-size: 34px; font-weight: 700; letter-spacing: -0.5px; opacity: .78; margin-bottom: 22px; }
+.h { font-size: 92px; font-weight: 800; letter-spacing: -3px; line-height: 1.18; }
+.sub { font-size: 36px; font-weight: 600; letter-spacing: -0.6px; margin-top: 30px; opacity: .86; }
+.intro .h { font-size: 88px; }
+#brand { position: absolute; display: flex; align-items: center; gap: 14px; font-weight: 800; font-size: 32px; letter-spacing: -0.5px; opacity: 0; }
+#brand img { width: 46px; height: 46px; border-radius: 12px; }
+
+#outro { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+#outro img { width: 190px; height: 190px; border-radius: 44px; box-shadow: 0 30px 80px rgba(0,20,80,.35); }
+#outro .name { font-size: 128px; font-weight: 800; letter-spacing: -4px; margin-top: 40px; }
+#outro .tag { font-size: 46px; font-weight: 700; letter-spacing: -1px; margin-top: 10px; }
+#outro .fine { font-size: 30px; font-weight: 600; opacity: .8; margin-top: 26px; letter-spacing: -0.4px; }
+#outro .line { opacity: 0; }
+
+body.v .h { font-size: 96px; }
+body.v .kicker { font-size: 44px; margin-bottom: 18px; }
+body.v .sub { font-size: 44px; margin-top: 22px; }
+body.v .intro .h { font-size: 96px; }
+body.v #outro .name { font-size: 140px; }
+body.v #outro .tag { font-size: 54px; }
+body.v #outro .fine { font-size: 36px; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div class="bg" id="bgDark"></div>
+  <div class="bg" id="bgBlue"></div>
+  <div class="blob" id="blobA"></div>
+  <div class="blob" id="blobB"></div>
+  <div id="brand"><img src="../icon-512.png" alt=""><span>PinTodo</span></div>
+  <div id="copies"></div>
+  <div id="phone">
+    <div id="bezel"></div>
+    <div id="screen">
+      <img id="imgA" alt=""><img id="imgB" alt="">
+      <div id="touch"><div id="ring"></div><div id="dot"></div></div>
+    </div>
+  </div>
+  <div id="outro">
+    <img class="line" src="../icon-512.png" alt="">
+    <div class="line name">PinTodo</div>
+    <div class="line tag">끝낼 때까지, 알림창에 고정</div>
+    <div class="line fine">광고·계정 없이 · 모든 기능 무료</div>
+  </div>
+</div>
+<script>
+const V = location.hash === "#v";
+const W = V ? 1080 : 1920, H = V ? 1920 : 1080;
+document.documentElement.style.setProperty("--W", W + "px");
+document.documentElement.style.setProperty("--H", H + "px");
+if (V) document.body.classList.add("v");
+
+// ---- 레이아웃 ----
+const SH = V ? 1240 : 920, SW = Math.round(SH * 720 / 1600), BZ = 14;   // 화면 크기, 베젤 두께
+const PW = SW + BZ * 2, PH = SH + BZ * 2;
+const PX = V ? W / 2 : 1385;                    // 폰 중심 x
+const CAM = V ? {
+  hide: { y: H + PH / 2 + 80, s: 1 },
+  full: { y: 1880 - PH / 2, s: 1 },
+  top: { y: 640 + PH * 1.3 / 2, s: 1.3 },
+  bottom: { y: 1880 - PH / 2, s: 1 },
+} : {
+  hide: { y: H + PH / 2 + 80, s: 1 },
+  full: { y: H / 2, s: 1 },
+  top: { y: 60 + PH * 1.5 / 2, s: 1.5 },        // 알림창·위젯: 위쪽을 크게
+  bottom: { y: H - 52 - PH * 1.22 / 2, s: 1.22 }, // 아래 시트
+};
+const phone = document.getElementById("phone"), screenEl = document.getElementById("screen");
+Object.assign(phone.style, { width: PW + "px", height: PH + "px" });
+Object.assign(screenEl.style, { left: BZ + "px", top: BZ + "px", width: SW + "px", height: SH + "px" });
+const brand = document.getElementById("brand");
+Object.assign(brand.style, V ? { left: "50%", top: "70px", transform: "translateX(-50%)" } : { left: "140px", top: "72px" });
+
+// ---- 장면 ---- in·touch 시각은 원본 녹화(work/rec/rN.mp4) 기준. touch: [시각, x0, y0, x1, y1, 이동 길이] (기기 좌표 1080×2400)
+const S = [
+  { id: "intro", dur: 2.8, bg: 0, cam: "hide", intro: true, h: ["할 일 알림,", "무심코 밀어서", "지운 적 있나요?"] },
+  { id: "r1", in: 1.7, dur: 3.2, bg: 0, cam: "top", k: "보통 알림은", h: ["밀면 그대로", "사라져요"], sub: "할 일도 함께 잊혀지죠",
+    touch: [[2.6, 300, 673, 1060, 673, 0.45]] },
+  { id: "r2", in: 1.5, dur: 3.6, bg: 1, cam: "top", k: "PinTodo는", h: ["밀어서 지워도", "다시 나타나요"], sub: "끝낼 때까지 알림창에 고정",
+    touch: [[2.33, 300, 673, 1060, 673, 0.45]] },
+  { id: "r3", in: 1.4, dur: 2.8, bg: 1, cam: "top", k: "'모두 지우기'를 눌러도", h: ["PinTodo는", "그대로"], sub: "다른 알림만 정리돼요",
+    touch: [[2.3, 540, 1111, 540, 1111, 0]] },
+  { id: "r4", in: 2.1, dur: 3.0, bg: 1, cam: "top", k: "끝낸 일만", h: ["[완료]를 눌러", "내려요"], sub: "소리·진동은 처음 한 번만",
+    touch: [[3.12, 265, 902, 265, 902, 0]] },
+  { id: "r5", in: 1.4, dur: 3.8, bg: 1, cam: "full", k: "추가는 간단하게", h: ["'내일 오후 3시'라고", "쓰면 끝"], sub: "날짜·시간을 알아서 맞춰요",
+    zoom: [[2.9, "top"]] },
+  { id: "r6", in: 1.5, dur: 8.0, bg: 1, cam: "full", k: "반복도 몇 번 탭으로", h: ["매주 월·수·금", "저녁 7시"], sub: "격주·매월·며칠마다도 돼요",
+    touch: [[2.0, 540, 948, 540, 948, 0], [3.25, 274, 1501, 274, 1501, 0], [4.05, 538, 1501, 538, 1501, 0],
+            [4.95, 540, 1800, 540, 900, 0.5], [6.75, 350, 1281, 350, 1155, 0.6], [8.2, 540, 1281, 540, 1533, 0.7]] },
+  { id: "r6", in: 10.4, dur: 4.8, bg: 1, cam: "bottom", k: "놓치지 않게", h: ["끝낼 때까지", "다시 울려요"], sub: "30분·1시간·2시간마다 알려요",
+    touch: [[10.9, 310, 1890, 310, 1890, 0], [12.68, 570, 1860, 570, 1860, 0], [14.2, 540, 2229, 540, 2229, 0]] },
+  { id: "r7", in: 1.9, dur: 5.5, bg: 1, cam: "full", k: "필요한 건 다", h: ["체크리스트와", "색 라벨"], sub: "앱에서 완료하면 알림도 사라져요",
+    touch: [[2.4, 355, 888, 355, 888, 0], [3.72, 292, 1156, 292, 1156, 0], [4.6, 292, 1241, 292, 1241, 0], [6.25, 114, 504, 114, 504, 0]] },
+  { id: "r8", in: 1.9, dur: 3.5, bg: 1, cam: "top", k: "홈 화면에서도", h: ["위젯으로", "한눈에"], sub: "위젯에서 바로 완료해요",
+    touch: [[2.9, 135, 597, 135, 597, 0]] },
+  { id: "outro", dur: 4.2, bg: 1, cam: "hide", outro: true },
+];
+let acc = 0; for (const s of S) { s.t0 = acc; acc += s.dur; s.t1 = acc; }
+window.TOTAL = acc;
+
+// ---- 문구 ----
+const copies = document.getElementById("copies");
+for (const s of S) {
+  if (s.outro) continue;
+  const d = document.createElement("div");
+  d.className = "copy" + (s.intro ? " intro" : "");
+  if (s.intro || V) Object.assign(d.style, { left: "0", width: W + "px", textAlign: "center" });
+  else Object.assign(d.style, { left: "140px", width: "980px" });
+  const lines = [];
+  if (s.k) lines.push(`<span class="line kicker">${s.k}</span>`);
+  for (const h of s.h) lines.push(`<span class="line h">${h}</span>`);
+  if (s.sub) lines.push(`<span class="line sub">${s.sub}</span>`);
+  d.innerHTML = lines.join("");
+  copies.appendChild(d);
+  s.el = d; s.lines = [...d.querySelectorAll(".line")];
+}
+function layoutCopies() {
+  for (const s of S) if (s.el) {
+    const h = s.el.offsetHeight;
+    s.el.style.top = (s.intro ? (H - h) / 2 : V ? 170 + (430 - h) / 2 : (H - h) / 2) + "px";
+  }
+}
+
+// ---- 유틸 ----
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const easeOut = x => 1 - Math.pow(1 - clamp(x), 3);
+const easeInOut = x => { x = clamp(x); return x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2; };
+const backOut = x => { x = clamp(x); const c1 = 1.5, c3 = c1 + 1; return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2); };
+const lerp = (a, b, k) => a + (b - a) * k;
+const frameSrc = (id, ct) => {   // window.FRAMES(장면별 프레임 수)는 render.py가 넣어 줌
+  const n = clamp(Math.round(ct * 30) + 1, 1, window.FRAMES[id]);
+  return `work/clips/${id}/${String(n).padStart(4, "0")}.jpg`;
+};
+
+// 카메라 키프레임: 장면 경계 앞뒤 0.4초씩(0.8초) 이동, 장면 안에서는 고정(zoom이 있으면 그 시각부터 확대)
+const KEYS = [];
+for (const s of S) {
+  const c = CAM[s.cam];
+  KEYS.push([s.t0 + 0.4, c]);
+  if (s.zoom) {
+    const [ct, name] = s.zoom[0], gt = s.t0 + (ct - s.in);
+    KEYS.push([gt, c], [gt + 0.9, CAM[name]], [s.t1 - 0.4, CAM[name]]);
+  } else KEYS.push([s.t1 - 0.4, c]);
+}
+KEYS.sort((a, b) => a[0] - b[0]);
+function camAt(t) {
+  if (t <= KEYS[0][0]) return KEYS[0][1];
+  for (let i = 0; i < KEYS.length - 1; i++) {
+    const [ta, ca] = KEYS[i], [tb, cb] = KEYS[i + 1];
+    if (t <= tb) { const k = easeInOut((t - ta) / Math.max(1e-6, tb - ta)); return { y: lerp(ca.y, cb.y, k), s: lerp(ca.s, cb.s, k) }; }
+  }
+  return KEYS[KEYS.length - 1][1];
+}
+
+// ---- 렌더 ----
+const imgA = document.getElementById("imgA"), imgB = document.getElementById("imgB");
+const dot = document.getElementById("dot"), ring = document.getElementById("ring"), touchEl = document.getElementById("touch");
+const bgBlue = document.getElementById("bgBlue"), blobA = document.getElementById("blobA"), blobB = document.getElementById("blobB");
+const outro = document.getElementById("outro"), outroLines = [...outro.querySelectorAll(".line")];
+const XF = 0.45; // 화면 크로스페이드 길이
+const setSrc = (img, src) => { if (img.getAttribute("src") !== src) img.setAttribute("src", src); };
+
+window.render = async function (t) {
+  const i = S.findIndex(s => t < s.t1), si = i < 0 ? S.length - 1 : i, s = S[si], prev = S[si - 1], next = S[si + 1];
+
+  // 배경: 어두움 → 파랑 (경계에서 0.8초)
+  let blue = s.bg;
+  if (prev && prev.bg !== s.bg) blue = lerp(prev.bg, s.bg, easeInOut((t - s.t0 + 0.2) / 0.8));
+  bgBlue.style.opacity = blue;
+  blobA.style.transform = `translate(${(V ? -300 : -200) + Math.sin(t * .35) * 120}px, ${-300 + Math.cos(t * .27) * 80}px)`;
+  blobB.style.transform = `translate(${(V ? 500 : 1300) + Math.cos(t * .31) * 140}px, ${(V ? 1300 : 500) + Math.sin(t * .23) * 90}px)`;
+  blobA.style.opacity = .18 + .2 * blue; blobB.style.opacity = .25 * blue;
+
+  // 왼쪽 위 브랜드 (가로만, r2 ~ 아웃트로 전)
+  const b0 = S.find(x => x.id === "r2").t0, b1 = S[S.length - 1].t0;
+  brand.style.opacity = V ? 0 : clamp((t - b0 - .3) / .6) * (1 - clamp((t - b1 + .3) / .5)) * .9;
+
+  // 문구: 줄마다 차례로 올라오며 선명해지고, 끝에서 위로 흐려지며 사라짐
+  for (const c of S) if (c.lines) {
+    const inT = t - c.t0 - (c.intro ? 0.25 : 0.15), outT = t - (c.t1 - 0.4);
+    c.lines.forEach((ln, j) => {
+      const kin = easeOut((inT - j * (c.intro ? 0.32 : 0.075)) / 0.6);
+      const kout = easeInOut((outT - j * 0.03) / 0.35);
+      ln.style.opacity = kin * (1 - kout);
+      ln.style.transform = `translateY(${(1 - kin) * 46 - kout * 30}px)`;
+      ln.style.filter = `blur(${(1 - kin) * 10 + kout * 6}px)`;
+    });
+    c.el.style.visibility = (t > c.t0 - .1 && t < c.t1 + .1) ? "visible" : "hidden";
+  }
+
+  // 폰 위치·확대 (+ 살짝 떠 있는 움직임)
+  const cam = camAt(t);
+  phone.style.transform = `translate(${PX - PW / 2}px, ${cam.y - PH / 2 + Math.sin(t * 0.9) * 5}px) scale(${cam.s})`;
+
+  // 화면: 장면 끝 0.45초 동안 다음 장면으로 크로스페이드
+  const clipOf = (sc, tt) => sc && sc.in !== undefined ? frameSrc(sc.id, sc.in + Math.max(0, tt - sc.t0)) : null;
+  let srcA = clipOf(s, t), srcB = null, mix = 0;
+  if (!srcA && next) srcA = clipOf(next, t);
+  if (!srcA && prev) srcA = clipOf(prev, Math.min(t, prev.t1));
+  if (next && next.in !== undefined && s.in !== undefined && t > s.t1 - XF) {
+    srcB = clipOf(next, t); mix = easeInOut((t - (s.t1 - XF)) / XF);
+  }
+  setSrc(imgA, srcA);
+  if (srcB) setSrc(imgB, srcB);
+  imgB.style.opacity = srcB ? mix : 0;
+
+  // 터치 표시: 손가락 원 + 탭 물결
+  let tv = 0, tx = 0, ty = 0, rk = -1;
+  for (const c of [s, next]) if (c && c.touch) for (const [ct, x0, y0, x1, y1, d] of c.touch) {
+    const a = t - (c.t0 + (ct - c.in));
+    if (a > -0.25 && a < d + 0.35) {
+      tv = Math.max(tv, easeOut((a + 0.25) / 0.2) * (1 - clamp((a - d - 0.08) / 0.25)));
+      const k = d > 0 ? easeInOut(a / d) : 0;
+      tx = lerp(x0, x1, k); ty = lerp(y0, y1, k);
+      if (d === 0 && a >= 0 && a < 0.5) rk = a / 0.5;
+      if (d > 0 && a >= d && a < d + .5) rk = (a - d) / .5;
+    }
+  }
+  touchEl.style.left = (tx * SW / 1080) + "px"; touchEl.style.top = (ty * SH / 2400) + "px";
+  dot.style.opacity = tv; dot.style.transform = `scale(${lerp(1.25, 1, clamp(tv))})`;
+  if (rk >= 0) { ring.style.opacity = (1 - rk) * .9; ring.style.transform = `scale(${1 + rk * 1.3})`; } else ring.style.opacity = 0;
+
+  // 아웃트로: 아이콘이 튀어나오고 글자가 차례로
+  const oa = t - S[S.length - 1].t0;
+  outro.style.visibility = oa > -0.1 ? "visible" : "hidden";
+  outroLines.forEach((ln, j) => {
+    const k = j === 0 ? backOut((oa - 0.25) / 0.7) : easeOut((oa - 0.45 - j * 0.12) / 0.6);
+    ln.style.opacity = clamp(j === 0 ? (oa - 0.25) / 0.3 : k);
+    ln.style.transform = j === 0 ? `scale(${lerp(0.6, 1, k)})` : `translateY(${(1 - k) * 40}px)`;
+    ln.style.filter = j === 0 ? "none" : `blur(${(1 - k) * 8}px)`;
+  });
+
+  await Promise.all([imgA, imgB].map(im => im.getAttribute("src") ? im.decode().catch(() => {}) : null));
+};
+
+document.fonts.ready.then(() => { layoutCopies(); window.READY = true; });
+</script>
+</body>
+</html>

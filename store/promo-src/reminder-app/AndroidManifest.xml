@@ -1,0 +1,7 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.demo.remind">
+  <uses-sdk android:minSdkVersion="26" android:targetSdkVersion="34"/>
+  <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+  <application android:label="@string/app" android:icon="@drawable/ic">
+    <activity android:name=".Post" android:exported="true" android:theme="@android:style/Theme.Translucent.NoTitleBar"/>
+  </application>
+</manifest>
