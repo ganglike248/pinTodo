@@ -57,6 +57,14 @@ private fun fixed(t: String) = Change(ChangeKind.FIXED, t)
 
 val RELEASES = listOf(
     Release(
+        "0.4.10", "2026.11.12",
+        listOf(
+            moved("시작과 종료가 나란히 보이고, 날짜나 시간을 누르면 아래에 달력·휠이 열려요"),
+            moved("'지금 바로'·'완료할 때까지'는 켜고 끄는 배지로 바뀌었어요"),
+            improved("달력이 창으로 뜨지 않고 바로 아래에 펼쳐져요"),
+        ),
+    ),
+    Release(
         "0.4.9", "2026.11.12",
         listOf(
             fixed("2주 넘게 고정해 둔 할 일이 휴대폰을 다시 켜거나 알림을 밀면 사라지던 문제를 고쳤어요"),

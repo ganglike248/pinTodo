@@ -36,7 +36,6 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -105,7 +104,11 @@ fun EditScreen(
     }
     var untilDay by rememberSaveable { mutableStateOf(initial.repeatUntil ?: today.plusMonths(1).toEpochDay()) }
     var count by rememberSaveable { mutableIntStateOf(initial.repeatCount ?: 10) }
-    var field by rememberSaveable { mutableStateOf(Field.START) }
+    // 펼친 일정 칸 (null이면 모두 접힘). 갤럭시 캘린더처럼 날짜·시각을 눌러야 달력·휠이 펼쳐짐
+    var openField by rememberSaveable { mutableStateOf<Field?>(null) }
+    var openPart by rememberSaveable { mutableStateOf(Part.TIME) }
+    fun openOf(f: Field) = if (openField == f) openPart else null
+    fun setOpen(f: Field, p: Part?) { if (p == null) { if (openField == f) openField = null } else { openField = f; openPart = p } }
     var alertSheet by remember { mutableStateOf(false) }
     var confirmDelete by remember { mutableStateOf(false) }
     var confirmDiscard by remember { mutableStateOf(false) }
@@ -130,7 +133,7 @@ fun EditScreen(
         repeat = false
         startAt = p.startAt
         endAt = p.endAt
-        field = if (p.startAt == null) Field.END else Field.START
+        openField = null
         autoMatched = p.matched
     }
 
@@ -279,6 +282,7 @@ fun EditScreen(
                 SegmentTabs(
                     Mode.entries.map { it.label }, mode.ordinal,
                     { i ->
+                        openField = null
                         manual {
                             when (Mode.entries[i]) {
                                 Mode.ONCE -> { notify = true; repeat = false }
@@ -298,34 +302,41 @@ fun EditScreen(
                         modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 4.dp, bottom = 16.dp),
                     )
                     Mode.ONCE -> {
-                        // 시작/종료 칸을 고르면 아래에 날짜·시각 휠이 바로 펼쳐져 있음
-                        Row(Modifier.padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            FieldCell("시작", startAt?.let { Format.dateTime(it) } ?: "지금 바로", field == Field.START, Modifier.weight(1f)) { field = Field.START }
-                            FieldCell("종료", endAt?.let { Format.dateTime(it) } ?: "완료할 때까지", field == Field.END, Modifier.weight(1f)) { field = Field.END }
-                        }
-                        Box(Modifier.padding(16.dp)) {
-                            key(field) {
-                                when (field) {
-                                    Field.START -> InlineDateTime(
-                                        value = startAt,
-                                        fallback = roundMinute(openedAt + 60 * 60_000L),
-                                        emptyLabel = "지금 바로",
-                                        onChange = { manual { startAt = it; endAt = keepEndAfter(endAt, it ?: System.currentTimeMillis()) } },
-                                        quick = listOf(
-                                            "30분 뒤" to roundMinute(openedAt + 30 * 60_000L),
-                                            "1시간 뒤" to roundMinute(openedAt + 60 * 60_000L),
-                                            "2시간 뒤" to roundMinute(openedAt + 120 * 60_000L),
-                                        ),
+                        // 갤럭시 캘린더처럼 [시작 › 종료] 두 칸. 날짜·시각을 누르면 두 칸 아래에 달력·휠이 펼쳐짐.
+                        // 날짜·시각은 늘 보이고, '지금 바로'·'완료할 때까지' 배지가 켜져 있으면 흐리게
+                        val startFallback = roundMinute(openedAt + 60 * 60_000L)
+                        val startShown = startAt ?: startFallback
+                        val endShown = endAt ?: roundMinute(startShown + 60 * 60_000L)
+                        fun setStart(v: Long?) = manual { startAt = v; endAt = keepEndAfter(endAt, v ?: System.currentTimeMillis()) }
+                        Column(Modifier.padding(start = 20.dp, end = 16.dp, top = 10.dp, bottom = 20.dp)) {
+                            RangeColumns(
+                                start = {
+                                    DateTimeEnd(
+                                        "시작", startAt, startShown, "지금 바로", openOf(Field.START), { setOpen(Field.START, it) },
+                                        onBadge = { on -> setStart(if (on) null else startShown) },
                                     )
-                                    Field.END -> InlineDateTime(
-                                        value = endAt,
-                                        fallback = roundMinute((startAt ?: openedAt) + 60 * 60_000L),
-                                        emptyLabel = "완료할 때까지",
-                                        onChange = { manual { endAt = it } },
-                                        minDate = startAt?.let { Instant.ofEpochMilli(it).atZone(ZoneId.systemDefault()).toLocalDate() },
+                                },
+                                end = {
+                                    DateTimeEnd(
+                                        "종료", endAt, endShown, "완료할 때까지", openOf(Field.END), { setOpen(Field.END, it) },
+                                        onBadge = { on -> manual { endAt = if (on) null else endShown } },
                                     )
-                                }
-                            }
+                                },
+                            )
+                            DateTimePanel(
+                                open = openOf(Field.START), value = startAt, shown = startShown,
+                                onChange = { setStart(it) }, onClose = { openField = null }, onShowTime = { setOpen(Field.START, Part.TIME) },
+                                quick = listOf(
+                                    "30분 뒤" to roundMinute(openedAt + 30 * 60_000L),
+                                    "1시간 뒤" to roundMinute(openedAt + 60 * 60_000L),
+                                    "2시간 뒤" to roundMinute(openedAt + 120 * 60_000L),
+                                ),
+                            )
+                            DateTimePanel(
+                                open = openOf(Field.END), value = endAt, shown = endShown,
+                                onChange = { manual { endAt = it } }, onClose = { openField = null }, onShowTime = { setOpen(Field.END, Part.TIME) },
+                                minDate = Instant.ofEpochMilli(startShown).atZone(ZoneId.systemDefault()).toLocalDate(),
+                            )
                         }
                     }
                     Mode.REPEAT -> {
@@ -379,21 +390,24 @@ fun EditScreen(
                             onCount = { manual { count = it } },
                         )
                         GroupLabel("시간")
-                        Row(Modifier.padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            FieldCell("시작 시각", Format.time(dailyStart), field == Field.START, Modifier.weight(1f)) { field = Field.START }
-                            FieldCell(
-                                "종료 시각",
-                                dailyEnd?.let { Format.time(it) + if (it <= dailyStart) " (다음 날)" else "" } ?: "자정까지",
-                                field == Field.END, Modifier.weight(1f),
-                            ) { field = Field.END }
-                        }
-                        Box(Modifier.padding(16.dp)) {
-                            key(field) {
-                                when (field) {
-                                    Field.START -> InlineTime(dailyStart, dailyStart, null) { manual { dailyStart = it ?: dailyStart } }
-                                    Field.END -> InlineTime(dailyEnd, (dailyStart + 60) % (24 * 60), "자정까지") { manual { dailyEnd = it } }
-                                }
-                            }
+                        val endShownMin = dailyEnd ?: (dailyStart + 60) % (24 * 60)
+                        Column(Modifier.padding(start = 20.dp, end = 16.dp, bottom = 16.dp)) {
+                            RangeColumns(
+                                start = {
+                                    TimeEnd("시작 시각", dailyStart, dailyStart, null, openField == Field.START,
+                                        { setOpen(Field.START, if (it) Part.TIME else null) })
+                                },
+                                end = {
+                                    TimeEnd(
+                                        "종료 시각", dailyEnd, endShownMin, "자정까지", openField == Field.END,
+                                        { setOpen(Field.END, if (it) Part.TIME else null) },
+                                        onBadge = { on -> manual { dailyEnd = if (on) null else endShownMin } },
+                                        sub = if (dailyEnd != null && dailyEnd!! <= dailyStart) "다음 날" else null,
+                                    )
+                                },
+                            )
+                            TimePanel(openField == Field.START, dailyStart, dailyStart) { manual { dailyStart = it } }
+                            TimePanel(openField == Field.END, dailyEnd, endShownMin) { manual { dailyEnd = it } }
                         }
                     }
                 }

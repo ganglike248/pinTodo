@@ -307,7 +307,7 @@ fun AutoScheduleHint(matched: String, onUndo: () -> Unit) {
     }
 }
 
-/** 시작/종료처럼 고르는 칸. 고른 칸의 휠이 아래에 펼쳐짐 */
+/** 라벨 + 값 칸 (반복 종료의 마지막 날 등) */
 @Composable
 fun FieldCell(label: String, value: String, selected: Boolean, modifier: Modifier, onClick: () -> Unit) {
     val c = MaterialTheme.colorScheme
