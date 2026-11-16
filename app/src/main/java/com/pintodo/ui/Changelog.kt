@@ -57,6 +57,14 @@ private fun fixed(t: String) = Change(ChangeKind.FIXED, t)
 
 val RELEASES = listOf(
     Release(
+        "0.4.11", "2026.11.16",
+        listOf(
+            fixed("다크 모드가 바뀌거나 화면을 돌리면 편집하던 내용이 사라지던 문제를 고쳤어요"),
+            improved("반복이 끝나는 날짜도 바로 아래 달력에서 골라요"),
+            improved("밤을 넘기는 반복은 요약에 '다음 날'로 보여 줘요"),
+        ),
+    ),
+    Release(
         "0.4.10", "2026.11.12",
         listOf(
             moved("시작과 종료가 나란히 보이고, 날짜나 시간을 누르면 아래에 달력·휠이 열려요"),

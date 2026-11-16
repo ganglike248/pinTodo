@@ -57,15 +57,10 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.DatePicker
-import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -98,7 +93,6 @@ import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
-import java.time.ZoneOffset
 import kotlin.math.abs
 
 private val WheelItemHeight = 48.dp
@@ -437,7 +431,7 @@ private fun dateText(date: LocalDate): String {
 }
 
 @Composable
-private fun Expand(visible: Boolean, content: @Composable () -> Unit) {
+fun Expand(visible: Boolean, content: @Composable () -> Unit) {
     AnimatedVisibility(visible, enter = expandVertically() + fadeIn(), exit = shrinkVertically() + fadeOut()) { content() }
 }
 
@@ -447,7 +441,7 @@ private fun Expand(visible: Boolean, content: @Composable () -> Unit) {
  * 오늘(또는 minDate) 이전은 못 고름. 좌우 화살표나 옆으로 밀어서 달 이동
  */
 @Composable
-private fun InlineCalendar(initial: LocalDate, minDate: LocalDate?, onPick: (LocalDate) -> Unit) {
+fun InlineCalendar(initial: LocalDate, minDate: LocalDate?, onPick: (LocalDate) -> Unit) {
     val c = MaterialTheme.colorScheme
     val today = LocalDate.now()
     val first = listOfNotNull(today, minDate).max()
@@ -578,29 +572,4 @@ fun SheetTitle(text: String, sub: String? = null) {
         Text(sub, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
     Spacer(Modifier.height(20.dp))
-}
-
-@Composable
-fun CalendarDialog(initial: LocalDate, minDate: LocalDate? = null, onDismiss: () -> Unit, onPick: (LocalDate) -> Unit) {
-    // 오늘 이전은 못 고름. 종료 날짜는 시작 날짜 이전도 못 고름
-    val first = listOfNotNull(LocalDate.now(), minDate).max()
-    val todayUtc = first.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
-    // DatePicker는 UTC 자정 기준 millis를 사용
-    val state = rememberDatePickerState(
-        initialSelectedDateMillis = initial.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli(),
-        selectableDates = object : SelectableDates {
-            override fun isSelectableDate(utcTimeMillis: Long) = utcTimeMillis >= todayUtc
-        },
-    )
-    DatePickerDialog(
-        onDismissRequest = onDismiss,
-        confirmButton = {
-            TextButton(onClick = {
-                onPick(Instant.ofEpochMilli(state.selectedDateMillis ?: todayUtc).atZone(ZoneOffset.UTC).toLocalDate())
-            }) { Text("선택") }
-        },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("취소") } },
-    ) {
-        DatePicker(state = state, showModeToggle = false)
-    }
 }

@@ -226,13 +226,16 @@ fun RepeatEndEditor(
             RepeatEnd.entries.forEach { m -> SoftChip(m.label, mode == m) { onMode(m) } }
         }
         when (mode) {
-            RepeatEnd.DATE -> FieldCell("마지막 날", "${Format.date(LocalDate.ofEpochDay(untilDay))}까지", true, Modifier.fillMaxWidth()) { calendar = true }
+            RepeatEnd.DATE -> {
+                // 일정 칸과 같은 화면 안 달력 (창으로 띄우지 않음)
+                FieldCell("마지막 날", "${Format.date(LocalDate.ofEpochDay(untilDay))}까지", calendar, Modifier.fillMaxWidth()) { calendar = !calendar }
+                Expand(calendar) {
+                    InlineCalendar(LocalDate.ofEpochDay(untilDay), null) { onUntil(it.toEpochDay()); calendar = false }
+                }
+            }
             RepeatEnd.COUNT -> Stepper("${count}회 하고 끝내기", onMinus = { onCount((count - 1).coerceAtLeast(1)) }, onPlus = { onCount((count + 1).coerceAtMost(99)) })
             RepeatEnd.NEVER -> {}
         }
-    }
-    if (calendar) {
-        CalendarDialog(LocalDate.ofEpochDay(untilDay), onDismiss = { calendar = false }) { onUntil(it.toEpochDay()); calendar = false }
     }
 }
 

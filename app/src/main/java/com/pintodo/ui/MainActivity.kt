@@ -42,6 +42,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -105,6 +106,12 @@ class MainActivity : ComponentActivity() {
 
 private data class EditTarget(val todo: Todo, val isNew: Boolean)
 
+/** 다크 모드 전환·화면 회전·글자 크기 변경 등으로 화면이 다시 만들어져도 편집 화면이 닫히지 않게 (전엔 입력하던 내용이 사라졌음) */
+private val EditTargetSaver = Saver<EditTarget?, String>(
+    save = { t -> t?.let { org.json.JSONObject().put("todo", TodoStore.toJson(it.todo)).put("new", it.isNew).toString() } },
+    restore = { s -> org.json.JSONObject(s).let { EditTarget(TodoStore.fromJson(it.getJSONObject("todo")), it.getBoolean("new")) } },
+)
+
 private enum class Tab(val label: String, val icon: ImageVector) {
     TODO("할 일", Icons.Rounded.CheckCircle),
     HISTORY("기록", Icons.Rounded.History),
@@ -116,7 +123,7 @@ private fun App(openRequest: MutableState<OpenRequest?>) {
     val ctx = LocalContext.current
     val todos by TodoStore.flow(ctx).collectAsStateWithLifecycle()
     var tab by rememberSaveable { mutableIntStateOf(0) }
-    var editing by remember { mutableStateOf<EditTarget?>(null) }
+    var editing by rememberSaveable(stateSaver = EditTargetSaver) { mutableStateOf<EditTarget?>(null) }
     var snoozing by remember { mutableStateOf<Todo?>(null) }
     var editDirty by remember { mutableStateOf(false) }
     var pending by remember { mutableStateOf<OpenRequest?>(null) }

@@ -473,7 +473,7 @@ private fun content(t: Todo): List<Any?> = listOf(
 private fun summary(t: Todo): String {
     if (!t.notify) return "알림 없이 목록과 위젯에만 보여요"
     if (t.isRepeat) {
-        val end = t.dailyEnd?.let { "${Format.time(it)}까지" } ?: "자정까지"
+        val end = t.dailyEnd?.let { (if (it <= t.dailyStart) "다음 날 " else "") + "${Format.time(it)}까지" } ?: "자정까지"
         val until = Format.repeatEnd(t).let { if (it.isEmpty()) "" else " · $it" }
         return "${Format.repeat(t)} ${Format.time(t.dailyStart)}부터 $end$until"
     }
