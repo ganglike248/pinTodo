@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 앱 아이콘을 길게 누르면 보이는 바로가기 -->
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:enabled="true"
+        android:icon="@drawable/ic_shortcut_add"
+        android:shortcutId="add_todo"
+        android:shortcutLongLabel="@string/shortcut_add_long"
+        android:shortcutShortLabel="@string/tile_label">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetClass="com.pintodo.ui.QuickAddActivity"
+            android:targetPackage="com.pintodo" />
+    </shortcut>
+</shortcuts>

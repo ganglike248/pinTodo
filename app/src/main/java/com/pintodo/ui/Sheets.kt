@@ -56,6 +56,18 @@ import com.pintodo.notify.ActionReceiver
 import com.pintodo.notify.Actions
 import kotlinx.coroutines.delay
 import java.time.LocalDate
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.ColumnScope
+import java.time.Instant
+import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.material3.IconButton
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.ExpandMore
+import androidx.compose.material.icons.rounded.ExpandLess
+import androidx.compose.material.icons.rounded.CalendarMonth
+import androidx.compose.material.icons.rounded.ChevronRight
+import androidx.compose.material.icons.rounded.Schedule
 import java.time.ZoneId
 
 /** 회색 채움 입력창 (밑줄·테두리 없음) */
@@ -91,20 +103,25 @@ fun AppTextField(
     )
 }
 
-/** 미루기 선택 시트 (알림의 '미루기…', 목록에서 왼쪽으로 밀기) */
+/** 미루기 선택 시트 (알림의 '미루기…', 목록에서 왼쪽으로 밀기). 고른 선택지 또는 직접 고른 시각까지 미룸 */
 @Composable
-fun SnoozeSheet(todo: Todo, onDismiss: () -> Unit, onPick: (SnoozeOption) -> Unit) {
+fun SnoozeSheet(todo: Todo, onDismiss: () -> Unit, onPick: (until: Long) -> Unit) {
     val ctx = LocalContext.current
-    val now = System.currentTimeMillis()
+    val now = remember { System.currentTimeMillis() }
     val options = SettingsStore.get(ctx).enabledSnoozes.map { it to it.until(now) }
+    var custom by remember { mutableStateOf(false) }
     AppSheet(onDismiss) { hide ->
+        if (custom) {
+            CustomSnooze(todo.title, now, onBack = { custom = false }) { until -> hide { onPick(until) } }
+            return@AppSheet
+        }
         SheetTitle("언제 다시 알려드릴까요?", todo.title)
         options.forEach { (option, until) ->
             Row(
                 Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(14.dp))
-                    .clickable { hide { onPick(option) } }
+                    .clickable { hide { onPick(until) } }
                     .padding(horizontal = 8.dp, vertical = 14.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -114,6 +131,20 @@ fun SnoozeSheet(todo: Todo, onDismiss: () -> Unit, onPick: (SnoozeOption) -> Uni
                 Text(Format.dateTime(until), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
+        // 정해진 선택지에 없는 시각 (예: 2시간 반 뒤, 모레 오후 4시)
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(14.dp))
+                .clickable { custom = true }
+                .padding(horizontal = 8.dp, vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            IconBadge(Icons.Rounded.Schedule, tint = MaterialTheme.colorScheme.primary)
+            Spacer(Modifier.width(14.dp))
+            Text("시간 직접 고르기", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium, modifier = Modifier.weight(1f))
+            Icon(Icons.Rounded.ChevronRight, null, tint = MaterialTheme.colorScheme.outline)
+        }
         Text(
             "선택지는 설정 > 미루기에서 바꿀 수 있어요",
             style = MaterialTheme.typography.bodySmall,
@@ -121,6 +152,54 @@ fun SnoozeSheet(todo: Todo, onDismiss: () -> Unit, onPick: (SnoozeOption) -> Uni
             modifier = Modifier.padding(top = 8.dp, start = 8.dp),
         )
     }
+}
+
+/** 미루기 시각 직접 고르기: 날짜(누르면 달력) + 시각 휠 + 확인 버튼 */
+@Composable
+private fun ColumnScope.CustomSnooze(title: String, now: Long, onBack: () -> Unit, onPick: (Long) -> Unit) {
+    val zone = ZoneId.systemDefault()
+    val c = MaterialTheme.colorScheme
+    // 처음 값은 1시간 뒤 (분 단위로 맞춤)
+    var at by remember { mutableLongStateOf((now + 60 * 60_000L).let { it - it % 60_000L }) }
+    var calendar by remember { mutableStateOf(false) }
+    val z = Instant.ofEpochMilli(at).atZone(zone)
+    val date = z.toLocalDate()
+    val minute = z.hour * 60 + z.minute
+    fun of(d: LocalDate, m: Int) = d.atStartOfDay(zone).plusMinutes(m.toLong()).toInstant().toEpochMilli()
+
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Rounded.ArrowBack, "뒤로") }
+        Column(Modifier.weight(1f)) {
+            Text("언제 다시 알려드릴까요?", style = MaterialTheme.typography.titleLarge)
+            Text(title, style = MaterialTheme.typography.bodyMedium, color = c.onSurfaceVariant, maxLines = 1)
+        }
+    }
+    Spacer(Modifier.height(16.dp))
+    // 날짜: 누르면 달력 ↔ 시각 휠
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp))
+            .background(if (calendar) c.primaryContainer else c.surfaceVariant)
+            .clickable(onClickLabel = "날짜 바꾸기") { calendar = !calendar }
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(Icons.Rounded.CalendarMonth, null, tint = c.primary)
+        Spacer(Modifier.width(10.dp))
+        Text(dateText(date), style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold,
+            color = if (calendar) c.primary else c.onSurface, modifier = Modifier.weight(1f))
+        Icon(if (calendar) Icons.Rounded.ExpandLess else Icons.Rounded.ExpandMore, null, tint = c.outline)
+    }
+    Spacer(Modifier.height(8.dp))
+    if (calendar) {
+        InlineCalendar(date, null) { at = of(it, minute); calendar = false }
+    } else {
+        TimeWheel(minute) { m -> at = of(date, m) }
+    }
+    Spacer(Modifier.height(16.dp))
+    val valid = at > System.currentTimeMillis()
+    PrimaryButton(if (valid) "${Format.dateTime(at)}에 다시 알림" else "지난 시각이에요", { onPick(at) }, enabled = valid)
 }
 
 /** 빠른 추가 시트 (위젯 +, 빠른 설정 타일) */
@@ -291,8 +370,8 @@ class SnoozeActivity : ComponentActivity() {
         val todo = TodoStore.get(this, id) ?: return finish()
         setContent {
             PinTodoTheme {
-                SnoozeSheet(todo, onDismiss = ::finish) { option ->
-                    Actions.snooze(this, id, option)
+                SnoozeSheet(todo, onDismiss = ::finish) { until ->
+                    Actions.snoozeUntil(this, id, until)
                     finish()
                 }
             }

@@ -421,7 +421,7 @@ private fun PickValue(text: String, big: Boolean, selected: Boolean, dim: Boolea
 }
 
 /** 11/12(목) · 오늘 */
-private fun dateText(date: LocalDate): String {
+fun dateText(date: LocalDate): String {
     val today = LocalDate.now()
     return Format.date(date) + when (date) {
         today -> " · 오늘"

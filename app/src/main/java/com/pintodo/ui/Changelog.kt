@@ -57,6 +57,15 @@ private fun fixed(t: String) = Change(ChangeKind.FIXED, t)
 
 val RELEASES = listOf(
     Release(
+        "0.4.12", "2026.11.18",
+        listOf(
+            new("미룰 때 원하는 날짜와 시간을 직접 고를 수 있어요"),
+            new("알림에서 완료를 눌러도 잠깐 동안 되돌릴 수 있어요"),
+            new("잠금화면에서도 할 일 내용이 보이게 설정할 수 있어요"),
+            new("앱 아이콘을 길게 눌러 바로 할 일을 추가해요"),
+        ),
+    ),
+    Release(
         "0.4.11", "2026.11.16",
         listOf(
             fixed("다크 모드가 바뀌거나 화면을 돌리면 편집하던 내용이 사라지던 문제를 고쳤어요"),

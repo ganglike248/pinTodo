@@ -37,6 +37,7 @@ import androidx.compose.material.icons.rounded.Palette
 import androidx.compose.material.icons.rounded.PushPin
 import androidx.compose.material.icons.rounded.Snooze
 import androidx.compose.material.icons.rounded.Tune
+import androidx.compose.material.icons.rounded.Lock
 import androidx.compose.material.icons.rounded.Watch
 import androidx.compose.material.icons.rounded.Widgets
 import androidx.compose.material3.AlertDialog
@@ -159,6 +160,14 @@ fun SettingsScreen(contentPadding: PaddingValues) {
                     icon = Icons.Rounded.Bedtime,
                     onClick = { update { it.copy(quietNight = !it.quietNight) } },
                     trailing = { Switch(s.quietNight, { v -> update { it.copy(quietNight = v) } }) },
+                )
+                Divider()
+                SettingRow(
+                    title = "잠금화면에 내용 보이기",
+                    value = if (s.lockScreenContent) "휴대폰에서 내용을 숨겨 둬도 할 일은 보여요" else "휴대폰의 잠금화면 설정을 따라요",
+                    icon = Icons.Rounded.Lock,
+                    onClick = { update { it.copy(lockScreenContent = !it.lockScreenContent) } },
+                    trailing = { Switch(s.lockScreenContent, { v -> update { it.copy(lockScreenContent = v) } }) },
                 )
                 Divider()
                 SettingRow(

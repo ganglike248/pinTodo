@@ -23,6 +23,7 @@ import com.pintodo.ui.Format
  */
 object Notifier {
     private const val CH_QUIET = "quiet"
+    private const val UNDO_TAG = "undo"
     private const val CH_SOUND = "alert_sound"
     private const val CH_VIBRATE = "alert_vibrate"
     private const val CH_BOTH = "alert_both"
@@ -102,6 +103,16 @@ object Notifier {
             .setStyle(Notification.BigTextStyle().bigText(bigText))
             .setOngoing(todo.pinned && !settings.wearable)
             .setLocalOnly(!toWear)
+            // 잠금화면: 설정을 켜면 '민감한 내용 숨기기'여도 내용을 보여 주고, 아니면 내용 없이 '할 일 알림'만
+            .setVisibility(if (settings.lockScreenContent) Notification.VISIBILITY_PUBLIC else Notification.VISIBILITY_PRIVATE)
+            .setPublicVersion(
+                Notification.Builder(context, channel)
+                    .setSmallIcon(R.drawable.ic_pin)
+                    .setColor((todo.color?.argb ?: 0xFF4A66E8).toInt())
+                    .setContentTitle("할 일 알림")
+                    .setContentText("잠금을 풀면 내용을 볼 수 있어요")
+                    .build()
+            )
             .setAutoCancel(false)
             .setOnlyAlertOnce(true)
             .setShowWhen(true)
@@ -130,6 +141,30 @@ object Notifier {
     }
 
     fun cancel(context: Context, id: Int) = manager(context).cancel(id)
+
+    /**
+     * 알림에서 [완료]를 누른 직후 30초 동안 보이는 '되돌리기' 알림 (실수로 눌렀을 때 앱의 기록 탭까지 가지 않아도 되게).
+     * tag가 있어서 [activeIds]·[cancel]과 섞이지 않음
+     */
+    fun showUndo(context: Context, todo: Todo) {
+        val undo = Notification.Action.Builder(null, "되돌리기", action(context, ActionReceiver.ACTION_UNDO_DONE, todo.id)).build()
+        val n = Notification.Builder(context, CH_QUIET)
+            .setSmallIcon(R.drawable.ic_check_circle)
+            .setColor((todo.color?.argb ?: 0xFF4A66E8).toInt())
+            .setContentTitle(if (todo.isRepeat) "오늘 완료했어요" else "완료했어요")
+            .setContentText(todo.title)
+            .setTimeoutAfter(30_000L)
+            .setAutoCancel(true)
+            .setOnlyAlertOnce(true)
+            .setCategory(Notification.CATEGORY_STATUS)
+            .setGroup(UNDO_TAG)
+            .addAction(undo)
+            .extend(Notification.WearableExtender().addAction(undo))
+            .build()
+        manager(context).notify(UNDO_TAG, todo.id, n)
+    }
+
+    fun cancelUndo(context: Context, id: Int) = manager(context).cancel(UNDO_TAG, id)
 
     // tag가 있는 것은 시스템이 만든 자동 그룹 요약이므로 제외
     fun activeIds(context: Context): Set<Int> =

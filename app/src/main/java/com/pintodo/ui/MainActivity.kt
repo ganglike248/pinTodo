@@ -279,8 +279,8 @@ private fun App(openRequest: MutableState<OpenRequest?>) {
     }
 
     snoozing?.let { todo ->
-        SnoozeSheet(todo, onDismiss = { snoozing = null }) { option ->
-            Actions.snooze(ctx, todo.id, option)
+        SnoozeSheet(todo, onDismiss = { snoozing = null }) { until ->
+            Actions.snoozeUntil(ctx, todo.id, until)
             snoozing = null
         }
     }

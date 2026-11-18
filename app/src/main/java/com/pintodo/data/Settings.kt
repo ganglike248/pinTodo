@@ -50,6 +50,7 @@ data class AppSettings(
     val wearable: Boolean = true,                         // 스마트워치로도 보내기 (끄면 휴대폰 전용 고정 알림)
     val defaultRemindEvery: Int? = null,                  // 새 할 일의 다시 울리기 간격(분)
     val quietNight: Boolean = false,                      // 밤(오후 10시~오전 8시)에는 다시 울리지 않기. 켜야만 동작 (모르는 사이 안 울리는 일이 없게)
+    val lockScreenContent: Boolean = false,               // 휴대폰에서 '민감한 내용 숨기기'를 켜도 잠금화면에 할 일 내용 보이기
 ) {
     /** 화면에 보여줄 미루기 선택지 (정의 순서 유지) */
     val enabledSnoozes get() = SnoozeOption.entries.filter { it in snoozeOptions }
@@ -87,6 +88,7 @@ object SettingsStore {
             .putBoolean("wearable", next.wearable)
             .putInt("defaultRemindEvery", next.defaultRemindEvery ?: 0)
             .putBoolean("quietNight", next.quietNight)
+            .putBoolean("lockScreenContent", next.lockScreenContent)
             .commit()
         state.value = next
     }
@@ -110,6 +112,7 @@ object SettingsStore {
             wearable = p.getBoolean("wearable", d.wearable),
             defaultRemindEvery = p.getInt("defaultRemindEvery", 0).takeIf { it > 0 },
             quietNight = p.getBoolean("quietNight", d.quietNight),
+            lockScreenContent = p.getBoolean("lockScreenContent", d.lockScreenContent),
         )
         loaded = true
     }
@@ -124,6 +127,7 @@ object SettingsStore {
         put("wearable", s.wearable)
         put("defaultRemindEvery", s.defaultRemindEvery ?: 0)
         put("quietNight", s.quietNight)
+        put("lockScreenContent", s.lockScreenContent)
     }
 
     /** 모르는 값은 기본값으로 */
@@ -142,6 +146,7 @@ object SettingsStore {
             wearable = o.optBoolean("wearable", d.wearable),
             defaultRemindEvery = o.optInt("defaultRemindEvery", 0).takeIf { it > 0 },
             quietNight = o.optBoolean("quietNight", d.quietNight),
+            lockScreenContent = o.optBoolean("lockScreenContent", d.lockScreenContent),
         )
     }
 
