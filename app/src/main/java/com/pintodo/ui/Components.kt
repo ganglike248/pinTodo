@@ -9,6 +9,13 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -83,6 +90,36 @@ fun ScreenHeader(
             }
         }
         trailing()
+    }
+}
+
+/**
+ * 머리글은 위에 고정하고 아래 목록만 스크롤 (할 일·기록·설정 탭).
+ * 목록이 스크롤되면 머리글 아래에 얇은 구분선을 보여 경계를 알 수 있게
+ */
+@Composable
+fun PinnedHeaderList(
+    contentPadding: PaddingValues,
+    header: @Composable () -> Unit,
+    bottomExtra: Dp = 24.dp,
+    spacing: Dp = 8.dp,
+    content: LazyListScope.() -> Unit,
+) {
+    val state = rememberLazyListState()
+    val scrolled by remember { derivedStateOf { state.firstVisibleItemIndex > 0 || state.firstVisibleItemScrollOffset > 0 } }
+    Column(Modifier.fillMaxSize().padding(top = contentPadding.calculateTopPadding())) {
+        Box(Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.background).padding(horizontal = 16.dp)) { header() }
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = if (scrolled) 1f else 0f))
+        LazyColumn(
+            Modifier.fillMaxSize(),
+            state = state,
+            contentPadding = PaddingValues(
+                start = 16.dp, end = 16.dp, top = 4.dp,
+                bottom = contentPadding.calculateBottomPadding() + bottomExtra,
+            ),
+            verticalArrangement = Arrangement.spacedBy(spacing),
+            content = content,
+        )
     }
 }
 

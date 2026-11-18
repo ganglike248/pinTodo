@@ -2,7 +2,7 @@
 
 완료할 때까지 알림창에 고정되는 안드로이드 투두 앱. **Google Play 출시 예정** (2026-10-02 결정, 아직 Play Console 등록 전). Kotlin + Jetpack Compose(Material 3), 외부 서버 없음.
 
-- **현재 버전**: v0.4.13 (스토어 출시 전이라 0.x, 출시 시 1.0.0) | GitHub: https://github.com/ganglike248/pinTodo (main 브랜치)
+- **현재 버전**: v0.4.14 (스토어 출시 전이라 0.x, 출시 시 1.0.0) | GitHub: https://github.com/ganglike248/pinTodo (main 브랜치)
 - 사용 기기: 갤럭시 S26 울트라 (One UI / Android 16)
 
 ## 운영 방향 (2026-10-06 결정)
@@ -50,6 +50,7 @@ adb install -r app/build/outputs/apk/sideload/app-sideload.apk
 - 목록 카드의 스와이프 상태는 `rememberSwipeToDismissBoxState`(saveable) 대신 `remember`로 생성 — saveable이면 실행 취소로 카드가 돌아올 때 '밀린 상태'로 복원되어 완료가 재실행되는 버그 있었음
 - 시스템 자동 그룹 요약 알림(tag 있음)은 `Notifier.activeIds`에서 제외
 - v1 데이터(`{id, text}`)는 `TodoStore.fromJson`에서 호환 처리
+- 할 일·기록·설정 탭은 `PinnedHeaderList`(Components.kt): 머리글은 위에 고정, 아래 목록만 스크롤(스크롤되면 머리글 아래 구분선)
 - 디자인 토큰은 `ui/Theme.kt`(TDS 기반). 페이지 배경=`background`, 카드=`surface`, 칩·입력 채움=`surfaceVariant` 규칙 유지. Material You 사용 시 `asAppScheme()`으로 같은 규칙에 맞춤
 - 위젯은 RemoteViews + `AppWidgetManager.updateAppWidget`로 즉시 갱신. Glance는 WorkManager를 거쳐 그려서 삼성 기기에서 갱신이 지연·누락됐음 → 다시 Glance로 바꾸지 말 것. 위젯 클래스명 `widget.TodoWidgetReceiver`는 이미 놓인 위젯 유지를 위해 변경 금지
 - `Todo.notify=false`(알림 없는 할 일)는 상태 `NO_ALERT`, 알림·알람 없음. 저장 시 일정 필드는 비움
@@ -66,7 +67,7 @@ adb install -r app/build/outputs/apk/sideload/app-sideload.apk
 - 반복 종료 `repeatUntil`(epochDay)·`repeatCount`: `Todo.endDate`(lazy)로 마지막 날 계산 → `occursOn`에서 제외. 횟수는 `repeatAnchor`(규칙·횟수를 바꾸면 오늘)부터 셈
 - 자동 백업: `res/xml/data_extraction_rules.xml`·`backup_rules.xml`에 `todos.xml`·`settings.xml`만 (ui.xml은 제외 → 새 폰에서 첫 실행 안내 다시 표시). 복원 후 알림은 앱을 처음 열 때 `Sync.run()`으로 다시 게시
 - 다시 울리기 `Todo.remindEvery`(분): `alertKey`가 간격마다 바뀌어 Sync가 다시 울림, `nextChange`에 다음 간격 포함. `AppSettings.quietNight`(**기본 꺼짐** — 기본으로 켜 두면 처음 쓰는 사람이 밤에 안 울리는 이유를 모름)를 켜면 밤(오후 10시~오전 8시)에는 다시 울리기만 조용히 넘기고 `alertedKey`는 갱신(회차 시작·미루기 종료 알림은 그대로 울림)
-- 성장 장치(`ui/Growth.kt`): 빈 목록의 예시 할 일, 앱 안 별점 요청(앱에서 5번째 완료 때 1회, Play In-App Review — 권한·데이터 수집 없음). 설정 > 정보에 별점 남기기·공유·의견 보내기(GitHub 이슈)
+- 성장 장치(`ui/Growth.kt`): 빈 목록의 예시 할 일, 앱 안 별점 요청(앱에서 5번째 완료 때 1회, Play In-App Review — 권한·데이터 수집 없음). 설정 > 정보에 별점 남기기·공유·의견 보내기(메일 `CONTACT_EMAIL`, 앱 버전·기기 정보 첨부, 메일 앱 없으면 주소 복사). **사용자에게 GitHub 링크를 보이지 않음**(일반 사용자는 모름) — 개인정보처리방침도 앱 안 화면(`PrivacyDialog`, `ui/Privacy.kt`)으로, 웹 `docs/privacy-policy.md`는 스토어 등록용이며 두 곳 내용을 함께 고칠 것
 - 일정 계산(`Todo`)·날짜 인식(`DateParser`)은 `app/src/test`의 JUnit 테스트로 검증: `./gradlew testDebugUnitTest`
 - 시각 표시는 전부 `Format.time`(오전/오후 12시간제)을 거칠 것. 휠도 `TimeWheel`(오전·오후/시/분) 하나만 사용
 - 반복은 `Todo.repeatType`(NONE/WEEKLY/MONTHLY/EVERY_DAYS) + `repeatInterval`(주·일 간격) + `monthDay`(31=말일) + `repeatAnchor`(격주·n일마다 기준일, epochDay). 회차 판정은 `occursOn()` 하나로. v0.4.3 이전 데이터는 `repeatDays`가 있으면 WEEKLY

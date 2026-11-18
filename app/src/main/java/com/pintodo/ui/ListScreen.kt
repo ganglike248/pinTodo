@@ -106,18 +106,11 @@ fun TodoScreen(
     val noAlert = active.filter { it.status(now) == Status.NO_ALERT }
     val showing = inProgress.count { it.status(now) == Status.SHOWING }
 
-    LazyColumn(
-        Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(
-            start = 16.dp, end = 16.dp,
-            top = contentPadding.calculateTopPadding(),
-            bottom = contentPadding.calculateBottomPadding() + 96.dp,
-        ),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
+    PinnedHeaderList(
+        contentPadding,
+        header = { ScreenHeader("PinTodo", if (active.isEmpty()) "할 일이 없어요" else "알림 중 ${showing}개 · 예정 ${upcoming.size}개") },
+        bottomExtra = 96.dp,
     ) {
-        item(key = "header") {
-            ScreenHeader("PinTodo", if (active.isEmpty()) "할 일이 없어요" else "알림 중 ${showing}개 · 예정 ${upcoming.size}개")
-        }
         item(key = "banners") { Banners() }
         if (active.isEmpty()) item(key = "empty") {
             Column {

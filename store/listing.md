@@ -10,8 +10,8 @@ Play Console에 그대로 붙여 넣는 값들. 그래픽은 이 폴더의 파�
 | 앱/게임 | 앱 |
 | 무료/유료 | 무료 |
 | 카테고리 | 생산성 |
-| 이메일 | (Play Console 개발자 계정 연락처 이메일) |
-| 웹사이트 | https://github.com/ganglike248/pinTodo |
+| 이메일 | business9498@gmail.com |
+| 웹사이트 | (비워 둠 — 일반 사용자에게 GitHub은 낯설어서 넣지 않음) |
 | 개인정보처리방침 | https://ganglike248.github.io/pinTodo/privacy-policy |
 
 ## 2. 간단한 설명 (80자)

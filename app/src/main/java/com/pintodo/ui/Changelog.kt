@@ -57,6 +57,14 @@ private fun fixed(t: String) = Change(ChangeKind.FIXED, t)
 
 val RELEASES = listOf(
     Release(
+        "0.4.14", "2026.11.18",
+        listOf(
+            improved("목록을 내려도 화면 맨 위 제목이 그대로 보여요"),
+            moved("의견 보내기가 메일로 바뀌었어요"),
+            improved("개인정보처리방침을 앱 안에서 바로 볼 수 있어요"),
+        ),
+    ),
+    Release(
         "0.4.13", "2026.11.18",
         listOf(
             new("새로 뜬 할 일은 30분 동안 제목 앞에 '신규'가 붙어요"),
@@ -208,6 +216,24 @@ private fun kindColor(kind: ChangeKind): Pair<Color, Color> {
 
 @Composable
 fun ChangelogDialog(onClose: () -> Unit) {
+    FullPageDialog("업데이트 기록", onClose) {
+        items(RELEASES, key = { it.version }) { release ->
+            GroupCard {
+                Row(Modifier.padding(start = 20.dp, end = 20.dp, top = 12.dp, bottom = 6.dp), verticalAlignment = Alignment.Bottom) {
+                    Text("v${release.version}", style = MaterialTheme.typography.titleMedium)
+                    Spacer(Modifier.width(8.dp))
+                    Text(release.date, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.outline)
+                }
+                release.changes.forEach { ChangeRow(it) }
+                Spacer(Modifier.height(6.dp))
+            }
+        }
+    }
+}
+
+/** 설정에서 여는 전체 화면 페이지 (뒤로 버튼 + 제목 + 스크롤 목록). 업데이트 기록·개인정보처리방침 */
+@Composable
+fun FullPageDialog(title: String, onClose: () -> Unit, content: androidx.compose.foundation.lazy.LazyListScope.() -> Unit) {
     Dialog(onDismissRequest = onClose, properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)) {
         // 다이얼로그 창은 상태바 아이콘 색을 따로 맞춰야 밝은 배경에서 보임
         val view = LocalView.current
@@ -228,7 +254,7 @@ fun ChangelogDialog(onClose: () -> Unit) {
                     navigationIcon = {
                         IconButton(onClick = onClose) { Icon(Icons.AutoMirrored.Rounded.ArrowBack, "뒤로") }
                     },
-                    title = { Text("업데이트 기록", style = MaterialTheme.typography.titleMedium) },
+                    title = { Text(title, style = MaterialTheme.typography.titleMedium) },
                 )
             },
         ) { padding ->
@@ -239,19 +265,8 @@ fun ChangelogDialog(onClose: () -> Unit) {
                     top = padding.calculateTopPadding(), bottom = padding.calculateBottomPadding() + 24.dp,
                 ),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                items(RELEASES, key = { it.version }) { release ->
-                    GroupCard {
-                        Row(Modifier.padding(start = 20.dp, end = 20.dp, top = 12.dp, bottom = 6.dp), verticalAlignment = Alignment.Bottom) {
-                            Text("v${release.version}", style = MaterialTheme.typography.titleMedium)
-                            Spacer(Modifier.width(8.dp))
-                            Text(release.date, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.outline)
-                        }
-                        release.changes.forEach { ChangeRow(it) }
-                        Spacer(Modifier.height(6.dp))
-                    }
-                }
-            }
+                content = content,
+            )
         }
     }
 }

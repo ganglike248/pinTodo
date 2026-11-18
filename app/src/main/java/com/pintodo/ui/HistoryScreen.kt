@@ -62,16 +62,9 @@ fun HistoryScreen(
     val groups = done.groupBy { Format.dayLabel(it.doneAt!!) }
     var confirmClear by remember { mutableStateOf(false) }
 
-    LazyColumn(
-        Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(
-            start = 16.dp, end = 16.dp,
-            top = contentPadding.calculateTopPadding(),
-            bottom = contentPadding.calculateBottomPadding() + 24.dp,
-        ),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        item(key = "header") {
+    PinnedHeaderList(
+        contentPadding,
+        header = {
             ScreenHeader("기록", if (allDone.isEmpty()) null else "완료한 할 일 ${allDone.size}개") {
                 if (allDone.isNotEmpty()) {
                     TextButton(onClick = { confirmClear = true }) {
@@ -79,7 +72,8 @@ fun HistoryScreen(
                     }
                 }
             }
-        }
+        },
+    ) {
         if (allDone.isEmpty()) {
             item(key = "empty") {
                 EmptyState("완료한 할 일이 없어요", "완료한 할 일은 여기에 모이고\n언제든 되돌릴 수 있어요", Icons.Rounded.TaskAlt)

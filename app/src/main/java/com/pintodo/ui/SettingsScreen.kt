@@ -73,8 +73,6 @@ import java.time.LocalDate
 
 private enum class SettingSheet { QUICK_SNOOZE, SNOOZE_OPTIONS, ALERT_MODE }
 
-const val PRIVACY_URL = "https://ganglike248.github.io/pinTodo/privacy-policy"
-const val FEEDBACK_URL = "https://github.com/ganglike248/pinTodo/issues"
 private const val STORE_URL = "https://play.google.com/store/apps/details?id=com.pintodo"
 
 private fun openUrl(ctx: Context, url: String) {
@@ -98,6 +96,7 @@ fun SettingsScreen(contentPadding: PaddingValues) {
     val s by SettingsStore.flow(ctx).collectAsStateWithLifecycle()
     var sheet by remember { mutableStateOf<SettingSheet?>(null) }
     var showChangelog by remember { mutableStateOf(false) }
+    var showPrivacy by remember { mutableStateOf(false) }
     var batteryOk by remember { mutableStateOf(ignoringBattery(ctx)) }
     var exactOk by remember { mutableStateOf(Sync.canExact(ctx)) }
     LifecycleResumeEffect(Unit) {
@@ -126,16 +125,7 @@ fun SettingsScreen(contentPadding: PaddingValues) {
         Sync.run(ctx) // 알림 버튼(미루기 라벨) 반영
     }
 
-    LazyColumn(
-        Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(
-            start = 16.dp, end = 16.dp,
-            top = contentPadding.calculateTopPadding(),
-            bottom = contentPadding.calculateBottomPadding() + 24.dp,
-        ),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        item { ScreenHeader("설정") }
+    PinnedHeaderList(contentPadding, header = { ScreenHeader("설정") }, spacing = 12.dp) {
 
         item {
             Section("알림") {
@@ -307,16 +297,16 @@ fun SettingsScreen(contentPadding: PaddingValues) {
                 Divider()
                 SettingRow(
                     title = "의견 보내기",
-                    value = "불편한 점이나 바라는 기능을 알려 주세요",
+                    value = "불편한 점이나 바라는 기능을 메일로 알려 주세요",
                     icon = Icons.Rounded.Feedback,
-                    onClick = { openUrl(ctx, FEEDBACK_URL) },
+                    onClick = { sendFeedback(ctx) },
                 )
                 Divider()
                 SettingRow(
                     title = "개인정보처리방침",
                     value = "수집하는 정보가 없어요",
                     icon = Icons.Rounded.Shield,
-                    onClick = { openUrl(ctx, PRIVACY_URL) },
+                    onClick = { showPrivacy = true },
                 )
             }
         }
@@ -358,6 +348,7 @@ fun SettingsScreen(contentPadding: PaddingValues) {
     }
 
     if (showChangelog) ChangelogDialog(onClose = { showChangelog = false })
+    if (showPrivacy) PrivacyDialog(onClose = { showPrivacy = false })
 
     restoring?.let { content ->
         val current = TodoStore.all(ctx).size
