@@ -51,7 +51,9 @@ class TodoTest {
         val t = todo(startAt = at(5, 14), endAt = at(5, 18)).copy(snoozeUntil = at(5, 15))
         assertEquals(Status.SNOOZED, t.status(at(5, 14, 30)))
         assertEquals(at(5, 15), t.nextChange(at(5, 14, 30)))
-        assertEquals(at(5, 18), t.nextChange(at(5, 15)))
+        // 미루기가 끝나 다시 뜨면 30분 뒤 '신규' 표시가 사라질 때 한 번 더 그리고, 그다음은 구간 끝
+        assertEquals(at(5, 15, 30), t.nextChange(at(5, 15)))
+        assertEquals(at(5, 18), t.nextChange(at(5, 15, 30)))
     }
 
     // ── 반복 ──

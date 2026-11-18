@@ -22,6 +22,9 @@ object Sync {
 
         val todos = TodoStore.all(context)
         val alerted = mutableMapOf<Int, Long>()
+        val shown = mutableListOf<com.pintodo.data.Todo>()
+        // 묶음 요약을 지우면 안드로이드가 묶음 안 알림까지 모두 지움 → 1개 이하로 줄 때는 요약을 먼저 지우고 나서 할 일 알림을 게시
+        if (todos.count { it.status(now) == Status.SHOWING } < 2) Notifier.cancelSummary(context)
         val quiet = SettingsStore.get(context).let { it.quietNight && SettingsStore.isNight(now) }
 
         for (todo in todos) {
@@ -33,12 +36,16 @@ object Sync {
                 // 이미 떠 있는 알림의 갱신은 setOnlyAlertOnce 때문에 울리지 않으므로 새로 게시
                 if (alert) Notifier.cancel(context, todo.id)
                 Notifier.show(context, todo, alert, now)
+                shown += todo
                 if (fresh) alerted[todo.id] = key!!
             } else {
                 Notifier.cancel(context, todo.id)
             }
             scheduleAlarm(context, todo.id, todo.nextChange(now))
         }
+
+        // 2개 이상 떠 있으면 묶음 요약 (최근 것이 위, 머리글에 개수·신규 수)
+        if (shown.size >= 2) Notifier.showSummary(context, shown, now)
 
         // 삭제된 할 일의 잔여 알림 정리
         val ids = todos.map { it.id }.toSet()

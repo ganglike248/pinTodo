@@ -73,6 +73,34 @@ class AlertAndStoreTest {
         assertNull(t.shownSince(at(14, 9)))                   // 13일 지남 → Android 16이 무시하기 전에 뺌
     }
 
+    // ── 신규 표시 ──
+
+    @Test fun `뜬 지 30분 동안만 신규이고 그때 다시 그리도록 예약`() {
+        val t = todo().copy(startAt = at(5, 14))
+        assertTrue(t.isNew(at(5, 14, 10)))
+        assertEquals(at(5, 14, 30), t.nextChange(at(5, 14, 10)))
+        assertFalse(t.isNew(at(5, 14, 30)))
+        assertNull(t.nextChange(at(5, 14, 30)))
+    }
+
+    @Test fun `지난 시각으로 만든 할 일도 만든 때부터 신규`() {
+        val t = todo().copy(startAt = at(5, 9), createdAt = at(5, 14))
+        assertTrue(t.isNew(at(5, 14, 20)))
+        assertFalse(t.isNew(at(5, 14, 40)))
+    }
+
+    @Test fun `미루기가 끝나 다시 뜨면 다시 신규, 미뤄 둔 동안은 아님`() {
+        val t = todo().copy(startAt = at(5, 9), snoozeUntil = at(5, 15))
+        assertFalse(t.isNew(at(5, 14, 50)))
+        assertTrue(t.isNew(at(5, 15, 10)))
+    }
+
+    @Test fun `반복은 회차마다 신규, 다시 울리기는 신규 아님`() {
+        val t = todo().copy(repeatDays = setOf(1, 2), repeatType = RepeatType.WEEKLY, dailyStart = 9 * 60, remindEvery = 60)
+        assertTrue(t.isNew(at(6, 9, 5)))
+        assertFalse(t.isNew(at(6, 10, 5)))   // 10시 다시 울리기 때는 신규 아님
+    }
+
     // ── 밤(오후 10시~오전 8시) ──
 
     @Test fun `밤 판정 경계`() {

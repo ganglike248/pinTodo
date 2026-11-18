@@ -47,6 +47,9 @@ enum class LabelColor(val label: String, val argb: Long) {
 /** 알림 머리글 시각(when)으로 쓸 수 있는 최대 경과 시간 (Android 16 제한 14일보다 여유 있게) */
 private const val MAX_WHEN_AGE = 13 * 24 * 60 * 60_000L
 
+/** 새로 뜬 할 일에 '신규' 표시를 붙여 두는 시간 (알림이 여러 개 겹쳐 있을 때 방금 뜬 것을 알아보게) */
+const val NEW_MILLIS = 30 * 60_000L
+
 /** 알림이 떠 있어야 하는 구간. end == null 이면 완료할 때까지 */
 data class Window(val start: Long, val end: Long?)
 
@@ -138,6 +141,18 @@ data class Todo(
         return maxOf(w.start, snoozeUntil?.takeIf { it <= now } ?: 0L)
     }
 
+    /**
+     * '신규' 표시가 사라지는 시각. 뜬 시각 = 회차 시작·미루기 끝·만든 시각 중 가장 늦은 것
+     * (지난 시각으로 정해 둔 할 일을 방금 만들었어도 '신규'로 보이게)
+     */
+    fun newUntil(now: Long): Long? = shownAt(now)?.plus(NEW_MILLIS)
+
+    /** 이번에 알림창에 뜬 시각 (회차 시작·미루기 끝·만든 시각 중 가장 늦은 것). 묶음 안에서 최근 것을 위로 정렬할 때도 씀 */
+    fun shownAt(now: Long): Long? = baseAlertKey(now)?.let { maxOf(it, createdAt) }
+
+    /** 지금 알림창에 떠 있고, 뜬 지 30분이 안 됐으면 '신규' */
+    fun isNew(now: Long): Boolean = status(now) == Status.SHOWING && newUntil(now)?.let { now < it } == true
+
     /** 알림 머리글에 보일 '뜬 시각'. 13일보다 오래됐으면 null (Android 16은 2주 넘은 when의 알림을 무시함) */
     fun shownSince(now: Long): Long? = (alertKey(now) ?: now).takeIf { now - it < MAX_WHEN_AGE }
 
@@ -150,6 +165,8 @@ data class Todo(
         nextStart(now),
         // 표시 중이면 다음 다시 울리기 시각
         remindMillis?.takeIf { status(now) == Status.SHOWING }?.let { every -> alertKey(now)?.plus(every) },
+        // '신규' 표시가 사라질 때 알림을 다시 그림
+        newUntil(now)?.takeIf { it > now && status(now) == Status.SHOWING },
     ).minOrNull()
 
     /** 이 날짜에 회차가 시작되는지 (반복 종료일·횟수 포함) */

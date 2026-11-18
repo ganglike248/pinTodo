@@ -57,6 +57,14 @@ private fun fixed(t: String) = Change(ChangeKind.FIXED, t)
 
 val RELEASES = listOf(
     Release(
+        "0.4.13", "2026.11.18",
+        listOf(
+            new("새로 뜬 할 일은 30분 동안 제목 앞에 '신규'가 붙어요"),
+            improved("알림이 여러 개면 최근에 뜬 할 일이 맨 위에 오고, 몇 개인지 함께 보여 줘요"),
+            improved("무음으로 정한 할 일도 처음 뜰 때 소리 없이 화면 위에 잠깐 보여 줘요"),
+        ),
+    ),
+    Release(
         "0.4.12", "2026.11.18",
         listOf(
             new("미룰 때 원하는 날짜와 시간을 직접 고를 수 있어요"),

@@ -2,7 +2,7 @@
 
 완료할 때까지 알림창에 고정되는 안드로이드 투두 앱. **Google Play 출시 예정** (2026-10-02 결정, 아직 Play Console 등록 전). Kotlin + Jetpack Compose(Material 3), 외부 서버 없음.
 
-- **현재 버전**: v0.4.12 (스토어 출시 전이라 0.x, 출시 시 1.0.0) | GitHub: https://github.com/ganglike248/pinTodo (main 브랜치)
+- **현재 버전**: v0.4.13 (스토어 출시 전이라 0.x, 출시 시 1.0.0) | GitHub: https://github.com/ganglike248/pinTodo (main 브랜치)
 - 사용 기기: 갤럭시 S26 울트라 (One UI / Android 16)
 
 ## 운영 방향 (2026-10-06 결정)
@@ -43,7 +43,8 @@ adb install -r app/build/outputs/apk/sideload/app-sideload.apk
 ## 핵심 설계 (수정 시 주의)
 - 앱 표시 이름은 **PinTodo**(`app_name`), 패키지명(applicationId·namespace)은 **`com.pintodo`**. Play에 한 번 올리면 패키지명은 영구 변경 불가
 - **Android 14+는 ongoing 알림도 스와이프로 지워짐** → `deleteIntent`로 감지해 `ActionReceiver`에서 즉시 재게시. 그룹째 지우면 알림마다 호출되므로 전체 Sync가 아니라 해당 알림만 재게시
-- **소리·진동 1회**: 처음 게시는 알림 방식별 HIGH 채널, 재게시는 `quiet` 채널. `Todo.alertedKey`(이미 울린 회차 키)와 `alertKey(now)`(회차 시작 또는 미루기 종료 시각)를 비교해 결정. 알림 채널 설정은 생성 후 변경 불가 → 바꾸려면 새 채널 ID 사용
+- **소리·진동 1회**: 처음 게시는 알림 방식별 HIGH 채널(무음은 `alert_popup`: 소리 없이 팝업만), 재게시는 `quiet` 채널. `Todo.alertedKey`(이미 울린 회차 키)와 `alertKey(now)`(회차 시작 또는 미루기 종료 시각)를 비교해 결정. 알림 채널 설정은 생성 후 변경 불가 → 바꾸려면 새 채널 ID 사용
+- **새로 뜬 할 일 알아보기**: 알림이 여러 개 겹쳐 있으면 방금 뜬 게 뭔지 몰라서 (1) 뜬 지 30분(`NEW_MILLIS`) 안이면 제목 앞에 '신규 · '(`Todo.isNew`/`newUntil`, 뜬 시각 = 회차 시작·미루기 끝·만든 시각 중 가장 늦은 것, 그때 지우도록 `nextChange`에 포함) (2) 무음도 처음 뜰 때는 HIGH·소리 없는 `alert_popup` 채널로 팝업(다시 울리기 간격엔 quiet) (3) 할 일 알림은 앱이 직접 묶음(`GROUP`): `setSortKey`(뜬 시각 역순)로 최근 것이 위, 2개 이상이면 요약(`showSummary`, tag `summary`, 머리글 '할 일 3개 · 신규 1', 소리 없음 `GROUP_ALERT_CHILDREN`, 워치 안 보내면 요약도 ongoing, 밀어서 지우면 `ACTION_SUMMARY_DISMISSED` → Sync). **요약을 지우면 안드로이드가 묶음 안 알림까지 모두 지움** → 1개 이하로 줄 때는 `Sync`가 할 일 알림을 게시하기 전에 `cancelSummary`
 - **모든 상태 반영은 `Sync.run()` 하나로**: 할 일 표시/숨김 + 다음 상태 변경 시각(`Todo.nextChange`)에 정확한 알람 예약
 - MainActivity의 `editing`(열린 편집 화면)은 `rememberSaveable(EditTargetSaver)`로 저장 — `remember`였을 땐 다크 모드 전환·회전·글자 크기 변경 때 편집 화면이 닫히고 입력이 사라졌음
 - 목록 카드의 스와이프 상태는 `rememberSwipeToDismissBoxState`(saveable) 대신 `remember`로 생성 — saveable이면 실행 취소로 카드가 돌아올 때 '밀린 상태'로 복원되어 완료가 재실행되는 버그 있었음

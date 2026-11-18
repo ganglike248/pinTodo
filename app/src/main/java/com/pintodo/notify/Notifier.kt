@@ -19,14 +19,20 @@ import com.pintodo.ui.Format
 /**
  * 알림 채널 구성
  * - 처음 뜰 때: 알림 방식(소리/진동/둘 다)에 맞는 HIGH 채널 → 1회 울림 + 팝업
+ *   무음도 HIGH(소리·진동 없음) 채널로 팝업만 → 알림이 여러 개 겹쳐 있어도 새로 뜬 걸 알아챔
  * - 다시 게시(스와이프 후 복원, 앱 실행 시 복원 등): QUIET 채널 → 울리지 않음
  */
 object Notifier {
     private const val CH_QUIET = "quiet"
     private const val UNDO_TAG = "undo"
+    // 할 일 알림은 앱이 직접 묶음: 최근에 뜬 것이 맨 위, 머리글에 '할 일 3개 · 신규 1'
+    private const val GROUP = "com.pintodo.todos"
+    private const val SUMMARY_TAG = "summary"
+    private const val SUMMARY_ID = 0
     private const val CH_SOUND = "alert_sound"
     private const val CH_VIBRATE = "alert_vibrate"
     private const val CH_BOTH = "alert_both"
+    private const val CH_POPUP = "alert_popup"
     private val VIBRATION = longArrayOf(0, 250, 150, 250)
 
     private var channelsReady = false
@@ -60,6 +66,11 @@ object Notifier {
                 enableVibration(true)
                 vibrationPattern = VIBRATION
             },
+            NotificationChannel(CH_POPUP, "새 알림 · 무음", NotificationManager.IMPORTANCE_HIGH).apply {
+                description = "무음으로 정한 할 일이 처음 뜰 때 소리·진동 없이 화면 위에 잠깐 보여 줌"
+                setSound(null, null)
+                enableVibration(false)
+            },
             NotificationChannel(CH_BOTH, "새 알림 · 소리+진동", NotificationManager.IMPORTANCE_HIGH).apply {
                 description = "할 일이 처음 뜰 때 소리와 진동으로 알림"
                 setSound(sound, attrs)
@@ -71,12 +82,14 @@ object Notifier {
 
     fun show(context: Context, todo: Todo, alert: Boolean, now: Long) {
         val channel = if (!alert) CH_QUIET else when (todo.alertMode) {
-            AlertMode.SILENT -> CH_QUIET
+            // 무음: 처음 뜰 때(회차 시작·미루기 끝)만 소리 없이 팝업, 다시 울리기 간격에는 조용히 (편집 화면 안내와 같게)
+            AlertMode.SILENT -> if (todo.isReminder(now)) CH_QUIET else CH_POPUP
             AlertMode.SOUND -> CH_SOUND
             AlertMode.VIBRATE -> CH_VIBRATE
             AlertMode.BOTH -> CH_BOTH
         }
         val settings = SettingsStore.get(context)
+        val fresh = todo.isNew(now)
         // 내용이 없어도 언제로 정한 할 일인지 보이도록 일정은 항상 표시
         val schedule = Format.notificationSchedule(todo)
         // 펼치면: 메모 / 체크리스트(최대 8개) / 일정
@@ -98,7 +111,8 @@ object Notifier {
         val builder = Notification.Builder(context, channel)
             .setSmallIcon(R.drawable.ic_pin)
             .setColor((todo.color?.argb ?: 0xFF4A66E8).toInt())
-            .setContentTitle(todo.title)
+            // 뜬 지 30분 안이면 '신규' (겹쳐 있는 알림 중 방금 뜬 것을 알아보게, 시간이 지나면 Sync가 다시 그려 지움)
+            .setContentTitle(if (fresh) "신규 · ${todo.title}" else todo.title)
             .setContentText(text)
             .setStyle(Notification.BigTextStyle().bigText(bigText))
             .setOngoing(todo.pinned && !settings.wearable)
@@ -117,6 +131,9 @@ object Notifier {
             .setOnlyAlertOnce(true)
             .setShowWhen(true)
             .setCategory(Notification.CATEGORY_REMINDER)
+            // 묶음 안에서 최근에 뜬 것이 위로 (sortKey는 글자 순 오름차순이라 뜬 시각을 거꾸로 셈)
+            .setGroup(GROUP)
+            .setSortKey(sortKey(todo.shownAt(now) ?: now))
             .setContentIntent(openApp(context, todo.id))
             .setDeleteIntent(action(context, ActionReceiver.ACTION_DISMISSED, todo.id))
             // 알림 버튼은 최대 3개: 완료 / 자주 쓰는 미루기 / 미루기 선택
@@ -141,6 +158,54 @@ object Notifier {
     }
 
     fun cancel(context: Context, id: Int) = manager(context).cancel(id)
+
+    /** 주의: 요약을 지우면 묶음 안 알림도 모두 지워짐 → 할 일 알림을 게시하기 전에 부를 것 ([Sync.run]) */
+    fun cancelSummary(context: Context) = manager(context).cancel(SUMMARY_TAG, SUMMARY_ID)
+
+    private fun sortKey(shownAt: Long) = "%019d".format(Long.MAX_VALUE - shownAt)
+
+    /**
+     * 할 일 알림 묶음의 요약. 2개 이상 떠 있을 때만 (1개면 그대로 한 장, 그때 지우는 건 [cancelSummary]).
+     * 머리글에 '할 일 3개 · 신규 1', 접었을 때도 최근 것부터 제목을 보여 줌.
+     * 소리는 내지 않고(자식 알림만 울림), 밀어서 지우면 [ActionReceiver.ACTION_SUMMARY_DISMISSED]로 다시 게시
+     */
+    fun showSummary(context: Context, shown: List<Todo>, now: Long) {
+        val settings = SettingsStore.get(context)
+        val recent = shown.sortedByDescending { it.shownAt(now) ?: 0L }
+        val fresh = recent.count { it.isNew(now) }
+        val header = "할 일 ${shown.size}개" + if (fresh > 0) " · 신규 $fresh" else ""
+        val lines = recent.map { (if (it.isNew(now)) "신규 · " else "") + it.title }
+        val style = Notification.InboxStyle().setSummaryText(header)
+        lines.take(6).forEach { style.addLine(it) }
+        val n = Notification.Builder(context, CH_QUIET)
+            .setSmallIcon(R.drawable.ic_pin)
+            .setColor(0xFF4A66E8.toInt())
+            .setContentTitle(header)
+            .setContentText(lines.joinToString(", "))
+            .setSubText(header)
+            .setStyle(style)
+            .setGroup(GROUP)
+            .setGroupSummary(true)
+            .setGroupAlertBehavior(Notification.GROUP_ALERT_CHILDREN)
+            .setOnlyAlertOnce(true)
+            // 고정(워치로 안 보냄) 할 일이 하나라도 있으면 요약도 고정
+            .setOngoing(!settings.wearable && shown.any { it.pinned })
+            .setLocalOnly(!settings.wearable)
+            .setVisibility(Notification.VISIBILITY_PRIVATE)
+            .setCategory(Notification.CATEGORY_REMINDER)
+            .setWhen(recent.first().shownSince(now) ?: now)
+            .setShowWhen(true)
+            .setContentIntent(PendingIntent.getActivity(
+                context, SUMMARY_ID, Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP),
+                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+            ))
+            .setDeleteIntent(PendingIntent.getBroadcast(
+                context, SUMMARY_ID, Intent(context, ActionReceiver::class.java).setAction(ActionReceiver.ACTION_SUMMARY_DISMISSED),
+                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+            ))
+            .build()
+        manager(context).notify(SUMMARY_TAG, SUMMARY_ID, n)
+    }
 
     /**
      * 알림에서 [완료]를 누른 직후 30초 동안 보이는 '되돌리기' 알림 (실수로 눌렀을 때 앱의 기록 탭까지 가지 않아도 되게).

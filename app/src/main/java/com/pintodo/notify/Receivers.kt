@@ -15,10 +15,12 @@ class ActionReceiver : BroadcastReceiver() {
         const val ACTION_DISMISSED = "com.pintodo.DISMISSED"
         const val ACTION_UNDO_HIDE = "com.pintodo.UNDO_HIDE"   // 위젯: 반복의 '오늘 완료' 취소
         const val ACTION_UNDO_DONE = "com.pintodo.UNDO_DONE"   // 완료 직후 '되돌리기' 알림
+        const val ACTION_SUMMARY_DISMISSED = "com.pintodo.SUMMARY_DISMISSED"   // 묶음 요약을 밀어서 지움 → 다시 게시
         const val EXTRA_ID = "id"
     }
 
     override fun onReceive(context: Context, intent: Intent) {
+        if (intent.action == ACTION_SUMMARY_DISMISSED) { Sync.run(context); return }
         val id = intent.getIntExtra(EXTRA_ID, -1)
         val now = System.currentTimeMillis()
         val todo = TodoStore.get(context, id) ?: run { Notifier.cancel(context, id); Notifier.cancelUndo(context, id); return }

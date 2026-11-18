@@ -61,7 +61,7 @@ fun rememberPhoneMode(): PhoneMode {
  * 안드로이드는 진동 모드일 때 소리 알림을 진동으로 바꿔 울리고, 무음·방해 금지에서는 둘 다 막는다.
  */
 fun describeAlert(mode: AlertMode, phone: PhoneMode, reminds: Boolean = false): Pair<String, Boolean> {
-    if (mode == AlertMode.SILENT) return "소리·진동 없이 알림창에만 조용히 표시돼요." to false
+    if (mode == AlertMode.SILENT) return "소리·진동 없이, 처음 뜰 때 화면 위에 잠깐 보여 줘요." to false
     val once = if (reminds) "처음 뜰 때와 다시 울릴 때" else "처음 뜰 때 한 번만"
     return when (phone) {
         PhoneMode.SOUND -> when (mode) {

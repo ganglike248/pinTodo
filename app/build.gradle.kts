@@ -14,8 +14,8 @@ android {
         applicationId = "com.pintodo"
         minSdk = 26
         targetSdk = 36
-        versionCode = 18
-        versionName = "0.4.12"
+        versionCode = 19
+        versionName = "0.4.13"
     }
 
     // Play 업로드 키: 저장소 밖(~/.android/pintodo/keystore.properties)에 두고 커밋하지 않음
