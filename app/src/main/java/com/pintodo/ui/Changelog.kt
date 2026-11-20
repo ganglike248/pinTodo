@@ -57,6 +57,13 @@ private fun fixed(t: String) = Change(ChangeKind.FIXED, t)
 
 val RELEASES = listOf(
     Release(
+        "0.4.15", "2026.11.20",
+        listOf(
+            moved("알림에서 완료해도 '완료했어요' 알림이 더 뜨지 않아요"),
+            moved("실수로 완료했다면 기록 탭에서 되돌릴 수 있어요"),
+        ),
+    ),
+    Release(
         "0.4.14", "2026.11.18",
         listOf(
             improved("목록을 내려도 화면 맨 위 제목이 그대로 보여요"),

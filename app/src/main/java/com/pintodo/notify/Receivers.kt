@@ -14,7 +14,6 @@ class ActionReceiver : BroadcastReceiver() {
         const val ACTION_SNOOZE = "com.pintodo.SNOOZE"
         const val ACTION_DISMISSED = "com.pintodo.DISMISSED"
         const val ACTION_UNDO_HIDE = "com.pintodo.UNDO_HIDE"   // 위젯: 반복의 '오늘 완료' 취소
-        const val ACTION_UNDO_DONE = "com.pintodo.UNDO_DONE"   // 완료 직후 '되돌리기' 알림
         const val ACTION_SUMMARY_DISMISSED = "com.pintodo.SUMMARY_DISMISSED"   // 묶음 요약을 밀어서 지움 → 다시 게시
         const val EXTRA_ID = "id"
     }
@@ -23,18 +22,12 @@ class ActionReceiver : BroadcastReceiver() {
         if (intent.action == ACTION_SUMMARY_DISMISSED) { Sync.run(context); return }
         val id = intent.getIntExtra(EXTRA_ID, -1)
         val now = System.currentTimeMillis()
-        val todo = TodoStore.get(context, id) ?: run { Notifier.cancel(context, id); Notifier.cancelUndo(context, id); return }
+        val todo = TodoStore.get(context, id) ?: run { Notifier.cancel(context, id); return }
 
         when (intent.action) {
-            ACTION_DONE -> {
-                TodoStore.modify(context, id) { Actions.complete(it, now) }
-                Notifier.showUndo(context, todo)
-            }
-            ACTION_UNDO_DONE -> {
-                // 한 번짜리는 완료 취소, 반복은 '오늘 완료' 취소. 이미 울린 회차라 다시 울리지 않고 조용히 다시 뜸
-                TodoStore.modify(context, id) { if (it.isRepeat) it.copy(hiddenKey = null) else it.copy(doneAt = null) }
-                Notifier.cancelUndo(context, id)
-            }
+            // 완료 뒤 '되돌리기' 알림은 띄우지 않음(v0.4.12에 넣었다가 완료할 때마다 알림이 한 번 더 떠서 불편 → v0.4.15 제거).
+            // 실수로 완료했으면 앱의 기록 탭에서 되돌림
+            ACTION_DONE -> TodoStore.modify(context, id) { Actions.complete(it, now) }
             ACTION_SNOOZE -> Actions.snooze(context, id, SettingsStore.get(context).quickSnooze)
             ACTION_UNDO_HIDE -> TodoStore.modify(context, id) { it.copy(hiddenKey = null) }
             ACTION_DISMISSED -> {

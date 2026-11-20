@@ -2,7 +2,7 @@
 
 완료할 때까지 알림창에 고정되는 안드로이드 투두 앱. **Google Play 출시 예정** (2026-10-02 결정, 아직 Play Console 등록 전). Kotlin + Jetpack Compose(Material 3), 외부 서버 없음.
 
-- **현재 버전**: v0.4.14 (스토어 출시 전이라 0.x, 출시 시 1.0.0) | GitHub: https://github.com/ganglike248/pinTodo (main 브랜치)
+- **현재 버전**: v0.4.15 (스토어 출시 전이라 0.x, 출시 시 1.0.0) | GitHub: https://github.com/ganglike248/pinTodo (main 브랜치)
 - 사용 기기: 갤럭시 S26 울트라 (One UI / Android 16)
 
 ## 운영 방향 (2026-10-06 결정)
@@ -56,7 +56,7 @@ adb install -r app/build/outputs/apk/sideload/app-sideload.apk
 - `Todo.notify=false`(알림 없는 할 일)는 상태 `NO_ALERT`, 알림·알람 없음. 저장 시 일정 필드는 비움
 - 위젯·타일 갱신은 `Sync.run()` 끝에서 함께 처리 — 할 일을 바꾸는 경로는 반드시 `Sync.run()`을 거칠 것
 - 미루기 시트(`SnoozeSheet`, 알림의 '미루기…'·목록 밀기)는 설정의 선택지 + '시간 직접 고르기'(`CustomSnooze`: 날짜(누르면 `InlineCalendar`) + `TimeWheel`) → `Actions.snoozeUntil(시각)`
-- 알림의 [완료] → `ActionReceiver`가 30초짜리 '되돌리기' 알림(`Notifier.showUndo`, tag `undo`라 `activeIds`·`cancel(id)`과 안 섞임) → `ACTION_UNDO_DONE`이면 한 번짜리는 `doneAt`, 반복은 `hiddenKey`를 지움(이미 울린 회차라 quiet로 다시 뜸)
+- 알림의 [완료] 뒤에 '되돌리기' 알림을 띄우지 말 것 — v0.4.12에 30초짜리로 넣었다가 완료할 때마다 알림이 한 번 더 떠서 불편하다는 피드백으로 v0.4.15에 제거. 되돌리기는 앱의 기록 탭
 - 잠금화면: `AppSettings.lockScreenContent`(기본 꺼짐)면 `VISIBILITY_PUBLIC`, 아니면 PRIVATE + 내용 없는 `publicVersion`('할 일 알림'). 앱 아이콘 길게 누르기 바로가기는 `res/xml/shortcuts.xml`(→ `QuickAddActivity`)
 - 알림 버튼은 최대 3개: [완료][설정의 quickSnooze][미루기…(SnoozeActivity)]. 워치용 `WearableExtender`에는 [완료][quickSnooze]만
 - **스마트워치**: 워치는 ongoing 알림을 넘겨받지 않음 → `AppSettings.wearable`(기본 켬)이면 `setOngoing(false)` + deleteIntent 재게시로 고정. 밀어서 지운 회차는 `Todo.wearDismissedKey`에 기록해 `setLocalOnly(true)`로 재게시(워치에서 사라지고 휴대폰에만 남음, 워치↔휴대폰 재게시 무한 반복 방지)
