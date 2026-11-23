@@ -14,8 +14,8 @@ android {
         applicationId = "com.pintodo"
         minSdk = 26
         targetSdk = 36
-        versionCode = 22
-        versionName = "1.0.0"
+        versionCode = 23
+        versionName = "1.1.0"
     }
 
     // Play 업로드 키: 저장소 밖(~/.android/pintodo/keystore.properties)에 두고 커밋하지 않음
@@ -72,6 +72,7 @@ dependencies {
     implementation("androidx.activity:activity-compose:1.13.0")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.10.0")
     implementation("com.google.android.play:review:2.0.2")   // 앱 안 별점 요청
+    implementation("com.google.android.play:app-update:2.1.0")   // 앱 안 업데이트 안내
 
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.json:json:20240303")   // 단위 테스트에서 TodoStore JSON 변환 (안드로이드 스텁 대신)

@@ -2,7 +2,7 @@
 
 완료할 때까지 알림창에 고정되는 안드로이드 투두 앱. **Google Play 정식 출시**(1.0.0, 2026-11-23 — 비공개 테스트 후 프로덕션 승인). Kotlin + Jetpack Compose(Material 3), 외부 서버 없음.
 
-- **현재 버전**: v1.0.0 (정식 출시. 이후 기능 추가는 1.x.0, 수정은 1.0.x) | GitHub: https://github.com/ganglike248/pinTodo (main 브랜치)
+- **현재 버전**: v1.1.0 (1.0.0 정식 출시. 이후 기능 추가는 1.x.0, 수정은 1.0.x) | GitHub: https://github.com/ganglike248/pinTodo (main 브랜치)
 - 사용 기기: 갤럭시 S26 울트라 (One UI / Android 16)
 
 ## 운영 방향 (2026-10-06 결정)
@@ -68,6 +68,7 @@ adb install -r app/build/outputs/apk/sideload/app-sideload.apk
 - 반복 종료 `repeatUntil`(epochDay)·`repeatCount`: `Todo.endDate`(lazy)로 마지막 날 계산 → `occursOn`에서 제외. 횟수는 `repeatAnchor`(규칙·횟수를 바꾸면 오늘)부터 셈
 - 자동 백업: `res/xml/data_extraction_rules.xml`·`backup_rules.xml`에 `todos.xml`·`settings.xml`만 (ui.xml은 제외 → 새 폰에서 첫 실행 안내 다시 표시). 복원 후 알림은 앱을 처음 열 때 `Sync.run()`으로 다시 게시
 - 다시 울리기 `Todo.remindEvery`(분): `alertKey`가 간격마다 바뀌어 Sync가 다시 울림, `nextChange`에 다음 간격 포함. `AppSettings.quietNight`(**기본 꺼짐** — 기본으로 켜 두면 처음 쓰는 사람이 밤에 안 울리는 이유를 모름)를 켜면 밤(오후 10시~오전 8시)에는 다시 울리기만 조용히 넘기고 `alertedKey`는 갱신(회차 시작·미루기 종료 알림은 그대로 울림)
+- 앱 안 업데이트(`ui/AppUpdate.kt`, Play In-App Updates 유연한 방식): 앱으로 돌아올 때마다 확인, 새 버전은 버전마다 한 번만 Play 창으로 묻고(`update_asked_version`), 다 받으면 스낵바 [다시 시작] → `completeUpdate`. Play 설치본에서만 동작(사이드로드·에뮬레이터는 조용히 무시) → 확인은 내부 테스트 트랙에 두 버전을 올려서
 - 성장 장치(`ui/Growth.kt`): 빈 목록의 예시 할 일, 앱 안 별점 요청(앱에서 5번째 완료 때 1회, Play In-App Review — 권한·데이터 수집 없음). 설정 > 정보에 별점 남기기·공유·의견 보내기(메일 `CONTACT_EMAIL`, 앱 버전·기기 정보 첨부, 메일 앱 없으면 주소 복사). **사용자에게 GitHub 링크를 보이지 않음**(일반 사용자는 모름) — 개인정보처리방침도 앱 안 화면(`PrivacyDialog`, `ui/Privacy.kt`)으로, 웹 `docs/privacy-policy.md`는 스토어 등록용이며 두 곳 내용을 함께 고칠 것
 - 일정 계산(`Todo`)·날짜 인식(`DateParser`)은 `app/src/test`의 JUnit 테스트로 검증: `./gradlew testDebugUnitTest`
 - 시각 표시는 전부 `Format.time`(오전/오후 12시간제)을 거칠 것. 휠도 `TimeWheel`(오전·오후/시/분) 하나만 사용

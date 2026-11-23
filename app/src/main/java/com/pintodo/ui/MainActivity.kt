@@ -180,6 +180,8 @@ private fun App(openRequest: MutableState<OpenRequest?>) {
         }
     }
 
+    AppUpdatePrompt(snackbar)
+
     if (onboarding) {
         OnboardingScreen(onDone = { onboarding = false })
         return

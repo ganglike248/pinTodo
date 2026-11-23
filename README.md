@@ -4,7 +4,7 @@
 
 할 일을 추가하면 알림창에 고정됩니다. 옆으로 밀어도, "모두 지우기"를 눌러도 다시 나타나고, **'완료' 버튼을 눌러야만** 사라져요.
 
-> 현재 버전: **v1.0.0** · Android 8.0(API 26) 이상 · [Google Play](https://play.google.com/store/apps/details?id=com.pintodo)
+> 현재 버전: **v1.1.0** · Android 8.0(API 26) 이상 · [Google Play](https://play.google.com/store/apps/details?id=com.pintodo)
 
 <br>
 
@@ -255,6 +255,7 @@ app/src/test/java/com/pintodo/
 
 | 버전 | 내용 |
 |---|---|
+| v1.1.0 | 새 버전이 나오면 앱 안에서 업데이트 안내 |
 | v1.0.0 | Google Play 정식 출시, 저장된 할 일이 깨져도 앱이 멈추지 않게 보강 |
 | v0.4.15 | 알림에서 완료하면 '되돌리기' 알림이 한 번 더 뜨던 것 제거 |
 | v0.4.14 | 화면 머리글 고정, 의견 보내기를 메일로, 개인정보처리방침을 앱 안에서 보기(웹 페이지의 권한 표 깨짐 수정) |
