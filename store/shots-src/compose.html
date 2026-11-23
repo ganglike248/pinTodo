@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>PinTodo 스토어 그래픽</title>
+<style>
+@font-face { font-family: P; src: url("work/font/Pretendard.woff2") format("woff2"); font-weight: 100 900; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #222; font-family: P, sans-serif; color: #fff; word-break: keep-all; }
+.slide { position: relative; width: 1080px; height: 2160px; overflow: hidden; margin-bottom: 40px;
+  background: linear-gradient(160deg, #5b7cfa 0%, #4a68e6 45%, #3550c8 100%); }
+.head { position: absolute; left: 0; right: 0; top: 0; height: 580px; padding-top: 120px !important; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; text-align: center; padding: 0 60px; }
+.brandpill { position: absolute; left: 50%; top: 56px; transform: translateX(-50%); display: inline-flex; align-items: center; gap: 14px; height: 78px; padding: 0 30px 0 16px; border-radius: 39px;
+  background: #fff; color: #2f49c4; font-size: 36px; font-weight: 800; letter-spacing: -.5px; box-shadow: 0 12px 30px rgba(10, 20, 80, .28); }
+.brandpill img { width: 50px; height: 50px; border-radius: 14px; }
+.title { font-size: 84px; font-weight: 800; line-height: 1.22; letter-spacing: -2.5px; white-space: pre-line; }
+.sub { margin-top: 26px; font-size: 40px; font-weight: 500; line-height: 1.35; color: rgba(255,255,255,.84); letter-spacing: -1px; }
+/* 폰 목업: 금속 테두리 + 얇은 검은 베젤 + 펀치홀 카메라 + 옆 버튼 */
+.phone { position: absolute; left: 50%; transform: translateX(-50%); padding: 14px; border-radius: 96px;
+  background: #07080b;
+  box-shadow: 0 0 0 5px #4a4f5c, 0 0 0 7px #23262e, 0 0 0 8px rgba(255,255,255,.18), 0 50px 110px rgba(10, 20, 80, .55), 0 18px 40px rgba(10, 20, 80, .35); }
+.phone::before, .phone::after { content: ""; position: absolute; right: -14px; width: 7px; border-radius: 4px;
+  background: linear-gradient(90deg, #23262e, #5a606e); }
+.phone::before { top: 300px; height: 190px; }
+.phone::after { top: 540px; height: 110px; }
+.screen { position: relative; overflow: hidden; border-radius: 82px; background: #f2f3f5; }
+.cam { position: absolute; left: 50%; top: 22px; width: 30px; height: 30px; margin-left: -15px; border-radius: 50%; z-index: 3;
+  background: radial-gradient(circle at 40% 40%, #2a3350 0 18%, #07080b 32%); box-shadow: 0 0 0 3px rgba(0,0,0,.25); }
+.glare { position: absolute; inset: 0; z-index: 2; pointer-events: none; background: linear-gradient(125deg, rgba(255,255,255,.10) 0%, rgba(255,255,255,0) 32%); }
+.screen img.full { display: block; width: 100%; }
+.crop { position: absolute; left: 0; width: 100%; }
+.sb { position: absolute; left: 0; top: 0; width: 100%; mix-blend-mode: multiply; }
+/* 1번 비교 */
+.cmp { position: absolute; left: 60px; right: 60px; }
+.tag { display: inline-flex; align-items: center; gap: 12px; height: 64px; padding: 0 28px; border-radius: 32px;
+  font-size: 34px; font-weight: 700; letter-spacing: -.5px; }
+.tag.gray { background: rgba(255,255,255,.16); color: rgba(255,255,255,.9); }
+.tag.white { background: #fff; color: #3550c8; }
+.tag img { width: 40px; height: 40px; border-radius: 10px; }
+.noti { position: relative; margin-top: 28px; border-radius: 40px; overflow: hidden; background: #e9eaf7;
+  box-shadow: 0 24px 60px rgba(10, 20, 80, .35); background-repeat: no-repeat; }
+.ghost { position: relative; margin-top: 28px; border-radius: 40px; border: 4px dashed rgba(255,255,255,.35); }
+.ghost .noti { position: absolute; left: 0; top: -4px; width: 100%; margin: 0; opacity: .55; transform: translateX(300px) rotate(1.5deg); }
+.note { margin-top: 26px; font-size: 40px; font-weight: 600; letter-spacing: -1px; }
+.note.dim { color: rgba(255,255,255,.72); }
+.badge { position: absolute; right: 22px; top: -26px; background: #ffcf3a; color: #3a2a00; font-size: 30px; font-weight: 800;
+  padding: 12px 24px; border-radius: 30px; box-shadow: 0 10px 24px rgba(0,0,0,.2); letter-spacing: -.5px; }
+.down { text-align: center; font-size: 64px; color: rgba(255,255,255,.6); }
+.brand { position: absolute; left: 0; right: 0; bottom: 200px; display: flex; justify-content: center; align-items: center; gap: 22px;
+  font-size: 50px; font-weight: 800; letter-spacing: -1px; }
+.brand img { width: 92px; height: 92px; border-radius: 24px; box-shadow: 0 12px 30px rgba(0,0,0,.25); }
+/* 워치 */
+.watch { position: absolute; left: 50%; top: 600px; transform: translateX(-50%); width: 820px; height: 1400px; }
+.band { position: absolute; left: 50%; transform: translateX(-50%); width: 420px; height: 420px; background: linear-gradient(#2a2e3a, #1d2029); border-radius: 60px; }
+.band.top { top: 0; } .band.bot { bottom: 0; }
+.case { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 820px; height: 820px; border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #4a4f5e, #1a1c23 70%); box-shadow: 0 50px 100px rgba(10, 20, 80, .5); }
+.crown { position: absolute; right: -26px; top: 330px; width: 44px; height: 120px; border-radius: 14px; background: #2b2f3b; }
+.wscreen { position: absolute; inset: 44px; border-radius: 50%; background: #000; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; text-align: center; padding: 0 90px; }
+.wapp { display: flex; align-items: center; gap: 14px; font-size: 30px; color: #b9bdc9; font-weight: 600; }
+.wapp i { width: 50px; height: 50px; border-radius: 50%; background: #3182f6; display: flex; align-items: center; justify-content: center; }
+.wtitle { margin-top: 26px; font-size: 54px; font-weight: 800; letter-spacing: -1.5px; }
+.wmemo { margin-top: 12px; font-size: 34px; color: #a6abb8; letter-spacing: -.5px; }
+.wbtns { margin-top: 40px; display: flex; flex-direction: column; gap: 16px; width: 440px; }
+.wbtn { height: 92px; border-radius: 46px; display: flex; align-items: center; justify-content: center; font-size: 38px; font-weight: 700; }
+.wbtn.p { background: #3182f6; } .wbtn.s { background: #262a33; }
+/* 8번 배지 */
+.chips { position: absolute; left: 0; right: 0; top: 470px; display: flex; justify-content: center; gap: 18px; }
+.chip { display: flex; align-items: center; gap: 10px; background: rgba(255,255,255,.95); color: #2b3a8f; font-size: 34px; font-weight: 700;
+  height: 76px; padding: 0 30px; border-radius: 38px; letter-spacing: -.5px; box-shadow: 0 12px 30px rgba(10,20,80,.25); }
+.chip b { color: #3182f6; font-size: 36px; }
+/* 그래픽 이미지 */
+.feature { position: relative; width: 1024px; height: 500px; overflow: hidden; background: linear-gradient(150deg, #5b7cfa 0%, #4a68e6 50%, #3550c8 100%); }
+.feature .left { position: absolute; left: 72px; top: 0; bottom: 0; display: flex; flex-direction: column; justify-content: center; }
+.feature .app { display: flex; align-items: center; gap: 14px; font-size: 30px; font-weight: 800; letter-spacing: -.5px; }
+.feature .app img { width: 56px; height: 56px; border-radius: 14px; }
+.feature h1 { margin-top: 30px; font-size: 54px; font-weight: 800; line-height: 1.24; letter-spacing: -1.8px; }
+.feature p { margin-top: 20px; font-size: 25px; font-weight: 500; color: rgba(255,255,255,.86); letter-spacing: -.5px; }
+
+/* 오버레이 */
+.ov { position: absolute; }
+.slot { border: 4px dashed rgba(80, 96, 170, .45); border-radius: 26px; background: rgba(220, 224, 242, .6); }
+.fly { border-radius: 26px; background-repeat: no-repeat; opacity: .78; transform: rotate(3deg); box-shadow: 0 20px 40px rgba(10,20,80,.3); }
+.pill { position: absolute; white-space: nowrap; font-size: 30px; font-weight: 800; padding: 12px 24px; border-radius: 30px; letter-spacing: -.5px; box-shadow: 0 10px 24px rgba(10,20,80,.25); }
+.pill.y { background: #ffcf3a; color: #3a2a00; }
+.pill.w { background: #fff; color: #44508a; }
+.zoom { position: absolute; left: 50px; right: 50px; border-radius: 44px; overflow: hidden; background-repeat: no-repeat;
+  box-shadow: 0 40px 90px rgba(10, 20, 80, .5), 0 0 0 6px rgba(255,255,255,.55); }
+/* 마지막 장 */
+.hero { position: absolute; left: 0; right: 0; top: 610px; display: flex; flex-direction: column; align-items: center; }
+.hero img { width: 200px; height: 200px; border-radius: 56px; box-shadow: 0 30px 70px rgba(10,20,80,.45); }
+.hero .nm { margin-top: 34px; font-size: 64px; font-weight: 800; letter-spacing: -1.5px; }
+.rows { position: absolute; left: 90px; right: 90px; top: 1080px; display: flex; flex-direction: column; gap: 26px; }
+.row { display: flex; align-items: center; gap: 30px; background: #fff; border-radius: 36px; padding: 34px 40px; box-shadow: 0 18px 40px rgba(10,20,80,.25); }
+.row i { flex: none; width: 84px; height: 84px; border-radius: 50%; background: #e8efff; color: #3182f6; font-style: normal; font-size: 44px; font-weight: 900; display: flex; align-items: center; justify-content: center; }
+.row i.x { background: #ffeef0; color: #f04452; }
+.row b { display: block; color: #191f28; font-size: 44px; font-weight: 800; letter-spacing: -1px; }
+.row span { display: block; margin-top: 6px; color: #6b7684; font-size: 32px; font-weight: 500; letter-spacing: -.5px; }
+.tagline { position: absolute; left: 0; right: 0; bottom: 130px; text-align: center; font-size: 40px; font-weight: 600; color: rgba(255,255,255,.88); letter-spacing: -1px; }
+.vs { position: absolute; left: 60px; right: 60px; background: #fff; border-radius: 52px; padding: 40px 36px 44px;
+  box-shadow: 0 40px 90px rgba(10, 20, 80, .45); }
+.vs .lb { display: flex; align-items: center; gap: 14px; font-size: 36px; font-weight: 800; letter-spacing: -1px; margin: 0 6px 18px; }
+.vs .lb i { flex: none; width: 52px; height: 52px; border-radius: 50%; font-style: normal; font-size: 30px; font-weight: 900; display: flex; align-items: center; justify-content: center; }
+.vs .lb.no { color: #8b95a1; } .vs .lb.no i { background: #ffeef0; color: #f04452; }
+.vs .lb.ok { color: #2f49c4; } .vs .lb.ok i { background: #e8efff; color: #3182f6; }
+.vs .nt { border-radius: 30px; background-repeat: no-repeat; }
+.vs .nt.dim { filter: grayscale(1); opacity: .55; }
+.vs .gap { height: 40px; border-bottom: 2px dashed #e5e8eb; margin: 0 6px 40px; }
+/* 1번: 직접 그린 알림 카드 */
+.ghost2 { position: absolute; left: 60px; right: 60px; height: 170px; border-radius: 40px; overflow: hidden; }
+.ghost2 .in { position: absolute; left: 300px; top: 0; width: 960px; height: 170px; border-radius: 40px; background: rgba(255,255,255,.22);
+  display: flex; align-items: center; gap: 28px; padding: 0 40px; -webkit-mask-image: linear-gradient(90deg, #000 30%, transparent 75%); }
+.ghost2 .ic { width: 84px; height: 84px; border-radius: 50%; background: rgba(255,255,255,.35); }
+.ghost2 .tx b { display: block; font-size: 40px; font-weight: 700; color: rgba(255,255,255,.85); }
+.ghost2 .tx span { display: block; margin-top: 6px; font-size: 32px; color: rgba(255,255,255,.65); }
+.ghost2 .slot { position: absolute; inset: 0; border: 4px dashed rgba(255,255,255,.35); border-radius: 40px; background: none; }
+.qmark { position: absolute; right: 110px; height: 170px; display: flex; align-items: center; font-size: 132px; font-weight: 800; color: rgba(255,255,255,.9); text-shadow: 0 10px 30px rgba(10,20,80,.3); transform: rotate(14deg); transform-origin: 50% 70%; }
+.swipe { position: absolute; left: 110px; font-size: 64px; color: rgba(255,255,255,.75); font-weight: 300; }
+.nc { position: absolute; left: 60px; right: 60px; background: #fff; border-radius: 48px; padding: 44px 46px 40px; box-shadow: 0 40px 90px rgba(10, 20, 80, .45); color: #191f28; }
+.nc .top { display: flex; align-items: center; gap: 16px; font-size: 30px; color: #6b7684; font-weight: 600; }
+.nc .top img { width: 64px; height: 64px; border-radius: 50%; }
+.nc .tt { margin: 26px 0 0 80px; font-size: 50px; font-weight: 800; letter-spacing: -1.5px; }
+.nc .tt em { font-style: normal; color: #3182f6; }
+.nc .mm { margin: 10px 0 0 80px; font-size: 38px; color: #4e5968; letter-spacing: -.5px; }
+.nc .sc { margin: 8px 0 0 80px; font-size: 32px; color: #8b95a1; }
+.nc .ac { display: flex; gap: 20px; margin: 34px 0 0 80px; }
+.nc .ac span { font-size: 36px; font-weight: 700; color: #3182f6; padding: 16px 30px; border-radius: 40px; background: #e8f3ff; }
+.nc .ac span.p { background: #3182f6; color: #fff; }
+.facts { position: absolute; left: 60px; right: 60px; display: flex; flex-direction: column; gap: 22px; }
+.fact { display: flex; align-items: center; gap: 22px; height: 104px; padding: 0 36px; border-radius: 52px; background: rgba(255,255,255,.14);
+  font-size: 40px; font-weight: 700; letter-spacing: -1px; }
+.fact i { flex: none; width: 60px; height: 60px; border-radius: 50%; background: #fff; color: #3182f6; font-style: normal; font-size: 34px; font-weight: 900; display: flex; align-items: center; justify-content: center; }
+.fact.ok i { background: #ffcf3a; color: #3a2a00; }
+/* 그래픽 이미지 v2 (예전 구성 유지) */
+.feat { position: relative; width: 1024px; height: 500px; overflow: hidden; background: linear-gradient(150deg, #5b7cfa 0%, #4a68e6 50%, #3550c8 100%); }
+.feat .l { position: absolute; left: 130px; top: 0; bottom: 0; display: flex; flex-direction: column; justify-content: center; }
+.icon3d { width: 104px; height: 104px; perspective: 600px; margin-bottom: 26px; }
+.icon3d .b { position: relative; width: 104px; height: 104px; border-radius: 28px; transform: rotateX(14deg) rotateY(-18deg) rotateZ(-4deg);
+  background: linear-gradient(145deg, #7c95ff 0%, #4f6ef0 45%, #3149c9 100%);
+  box-shadow: 1px 2px 0 #3a52cf, 2px 4px 0 #3349c1, 3px 6px 0 #2d41b3, 4px 8px 0 #283aa6, 5px 10px 0 #233498,
+              14px 26px 30px rgba(10, 20, 70, .45), inset 0 2px 0 rgba(255,255,255,.45), inset 0 -6px 12px rgba(20, 30, 120, .35); }
+.icon3d .b::before { content: ""; position: absolute; inset: 0; border-radius: 28px; background: linear-gradient(160deg, rgba(255,255,255,.45) 0%, rgba(255,255,255,0) 45%); }
+.icon3d svg { position: absolute; left: 50%; top: 50%; width: 58px; height: 58px; transform: translate(-50%, -50%); filter: drop-shadow(2px 5px 4px rgba(15, 25, 100, .45)); }
+.feat .ficon { width: 112px; height: 112px; padding: 6px; background: #fff; border-radius: 32px; margin-bottom: 26px; box-shadow: 0 16px 36px rgba(10,20,80,.45); }
+.feat .ficon { object-fit: cover; }
+.feat .nm { font-size: 76px; font-weight: 800; letter-spacing: -2px; line-height: 1; }
+.feat .cp { margin-top: 22px; font-size: 32px; font-weight: 800; line-height: 1.32; letter-spacing: -1px; }
+.feat .ft { margin-top: 18px; font-size: 21px; font-weight: 600; color: rgba(255,255,255,.8); letter-spacing: -.3px; }
+.fphone { position: absolute; left: 600px; top: 52px; padding: 8px; border-radius: 46px; background: #07080b;
+  box-shadow: 0 0 0 3px #4a4f5c, 0 0 0 4px #23262e, 0 0 0 5px rgba(255,255,255,.18), 0 30px 60px rgba(10, 20, 80, .5); }
+.fphone::after { content: ""; position: absolute; right: -8px; top: 150px; width: 4px; height: 90px; border-radius: 2px; background: linear-gradient(90deg, #23262e, #5a606e); }
+.fphone .sc { position: relative; overflow: hidden; width: 290px; height: 623px; border-radius: 39px; background: #f2f3f5; }
+.fphone .sc img { position: absolute; left: 0; width: 100%; }
+</style>
+</head>
+<body>
+<div id="out"></div>
+<script>
+const R = "work/raw/", ICON = "../icon-512.png";
+const W = 1080, H = 2400;
+// 폰 틀: 화면 너비 sw, 위치 top. 화면 내용: 전체 스크린샷 또는 (알림창) 위를 잘라 붙이고 상태 표시줄을 얹음
+// 상태 표시줄(원본 위 80px, 시계·배터리)은 잘라내고 그 아래부터 보여 줌
+const SB = 80;
+function phone(sw, top, img, cut) {
+  const s = sw / W, sh = Math.round((H - SB) * s);
+  let inner;
+  if (cut) {
+    // 알림창: 빠른 설정 타일(cut 위)도 잘라냄. 아래 제스처 바(원본 맨 아래 150px)는 잘라내고, 빈 아래쪽은 알림창 배경색으로 이어 붙인 뒤 제스처 바를 다시 그림
+    inner = `<div class="screen" style="width:${sw}px;height:${sh}px;background:linear-gradient(#cfd3ea, #b9bed6 60%, #b4b9d2)">
+      <img class="crop" src="${R}${img}.png" style="top:${-cut * s}px;clip-path:inset(${cut * s}px 0 ${150 * s}px 0);-webkit-mask-image:linear-gradient(to bottom, #000 85%, transparent 97%)">
+      <div style="position:absolute;left:50%;bottom:${36 * s}px;width:${236 * s}px;height:${12 * s}px;margin-left:${-118 * s}px;border-radius:9px;background:#5b5f6b"></div><div class="glare"></div></div>`;
+  } else inner = `<div class="screen" style="width:${sw}px;height:${sh}px"><img class="crop" src="${R}${img}.png" style="top:${-SB * s}px"><div class="glare"></div></div>`;
+  return `<div class="phone" style="top:${top}px">${inner}</div>`;
+}
+function head(t, s, brand = true) { return `<div class="head">${brand ? `<div class="brandpill"><img src="${ICON}">PinTodo</div>` : ""}<div class="title">${t}</div><div class="sub">${s}</div></div>`; }
+function notiCrop(y, s) {  // cmp.png 의 알림 한 줄 안쪽 (x 62..1018, 높이 160 — 원본 둥근 모서리 제외)
+  return `style="height:${160 * s}px;background-image:url(${R}cmp.png);background-size:${W * s}px auto;background-position:${-62 * s}px ${-y * s}px"`;
+}
+const sN = 960 / 956;
+const PS = 700 / W, PT = 600, PL = (1080 - 732) / 2 + 16;   // 폰(화면 너비 700) 화면 왼쪽 위 = (PL, PT+16)
+const sy = (y, cut = 466) => PT + 16 + (80 + y - cut) * PS;         // 원본 y → 슬라이드 y (알림창 화면)
+const sx = x => PL + x * PS;
+function bg(img, x, y, s) { return `background-image:url(${R}${img}.png);background-size:${W * s}px auto;background-position:${-x * s}px ${-y * s}px`; }
+const CS = 888 / 956;
+const slides = [
+  // 1. 공감: 보통 알림은 밀면 사라지지만 PinTodo 알림은 남음 (직접 그린 카드)
+  head("알림, 밀면 끝이었죠?", "PinTodo는 끝낼 때까지 상단바에 남아 있어요") + `
+  <div class="pill w" style="left:60px;top:700px">보통 알림 · 밀면 사라지고 끝</div>
+  <div class="ghost2" style="top:790px"><div class="slot"></div>
+    <div class="in"><div class="ic"></div><div class="tx"><b>택배 반품 신청</b><span>오늘 자정까지 수거 신청하기</span></div></div></div>
+  <div class="swipe" style="top:830px">→</div>
+  <div class="qmark" style="top:790px">?</div>
+  <div class="pill y" style="left:60px;top:1080px">↻ PinTodo · 밀어도 다시 나타나요</div>
+  <div class="nc" style="top:1170px">
+    <div class="top"><img src="${ICON}">PinTodo · 지금</div>
+    <div class="tt">택배 반품 신청</div>
+    <div class="mm">수거 신청까지 해야 끝</div>
+    <div class="sc">오늘 오후 11:59까지</div>
+    <div class="ac"><span class="p">완료</span><span>10분 뒤</span><span>미루기…</span></div>
+  </div>
+  <div class="facts" style="top:1760px">
+    <div class="fact"><i>↻</i>밀어서 지워도, '모두 지우기'를 눌러도</div>
+    <div class="fact ok"><i>✓</i>[완료]를 눌러야만 사라져요</div>
+  </div>`,
+  // 2. 앱 화면
+  head("적어 두기만 하세요", "시간이 되면 상단바에 띄우고, 끝낼 때까지 남겨 둬요") + phone(700, PT, "list"),
+  // 3. 빠른 추가
+  head("생각난 그 순간,\n바로 적어요", "'내일 오후 3시'라고 쓰면 시간까지 자동으로") + phone(700, PT, "quick"),
+  // 4. 알림에서 바로 (펼친 체크리스트 알림을 크게)
+  head("앱 열 필요 없이\n상단바에서 바로 완료", "체크리스트도 알림에서 바로 확인") + phone(700, PT, "noti", 532) + `
+  <div class="zoom" style="top:1195px;height:${(1424 - 736) * 980 / 996}px;${bg("noti", 42, 736, 980 / 996)}"></div>`,
+  // 5. 미루기
+  head("지금은 못 하겠다면?", "미뤄 두면 그때 다시 알려 줘요") + phone(700, PT, "snooze"),
+  // 6. 반복
+  head("매일 영양제, 매달 관리비", "반복하는 일은 한 번만 적어 두세요") + phone(700, PT, "edit"),
+  // 7. 위젯
+  head("홈 화면에서도\n한눈에", "위젯에서 바로 완료·미루기") + phone(700, PT, "home"),
+  // 8. 광고·로그인 없음
+  head("광고 없이,\n로그인 없이", "필요한 기능만, 처음부터 끝까지 무료로", false) + `
+  <div class="hero"><img src="${ICON}"><div class="nm">PinTodo</div></div>
+  <div class="rows">
+    <div class="row"><i><svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#3182f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg></i><div><b>광고 X</b><span>화면을 가리는 광고가 없어요</span></div></div>
+    <div class="row"><i><svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#3182f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></svg></i><div><b>가입·로그인 X</b><span>설치하고 바로 써요</span></div></div>
+    <div class="row"><i><svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#3182f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="13" rx="2"/><path d="M12 8v13M3 12h18"/><path d="M12 8c-2-3-6-3-6-.5S10 8 12 8zM12 8c2-3 6-3 6-.5S14 8 12 8z"/></svg></i><div><b>결제 X</b><span>모든 기능을 무료로 사용하세요</span></div></div>
+    <div class="row"><i><svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#3182f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></i><div><b>내 휴대폰에만 저장</b><span>할 일을 어디로도 보내지 않아요</span></div></div>
+  </div>
+  <div class="tagline">내 기억력을 믿기 어려울 때, PinTodo</div>`,
+];
+const fsw = 330, fs = fsw / W;
+const feature = `<div class="feature" id="feature">
+  <div class="left">
+    <div class="app"><img src="${ICON}">PinTodo</div>
+    <h1>밀어서 지운 알림,<br>그 할 일 기억나세요?</h1>
+    <p>끝낼 때까지 상단바에 남아 있는 할 일</p>
+  </div>
+  <div style="position:absolute;left:640px;top:44px;transform:scale(1);transform-origin:top left">
+    <div class="phone" style="left:0;transform:none;top:0;border-radius:40px;padding:9px">
+      <div class="screen" style="width:${fsw}px;height:${Math.round(H * fs)}px;border-radius:32px;background:#c9cee6">
+        <img class="crop" src="${R}noti.png" style="top:${80 * fs - 466 * fs}px;clip-path:inset(${466 * fs}px 0 0 0)">
+        <img class="sb" src="${R}list.png" style="width:${fsw}px;clip-path:inset(0 0 ${(H - 80) * fs}px 0)">
+      </div></div></div>
+</div>`;
+const feat2 = `<div class="feat" id="feature2">
+  <div class="l">
+    <img class="ficon" src="${ICON}">
+    <div class="nm">PinTodo</div>
+    <div class="cp">완료할 때까지<br>알림창에 고정되는 할 일</div>
+    <div class="ft">체크리스트 · 반복 일정 · 위젯 · 스마트워치 알림</div>
+  </div>
+  <div class="fphone"><div class="sc"><img src="${R}list.png" style="top:${-80 * 290 / 1080}px"></div></div>
+</div>`;
+document.getElementById("out").innerHTML = slides.map((h, i) => `<div class="slide" id="s${i + 1}">${h}</div>`).join("") + feature + feat2;
+document.fonts.ready.then(() => Promise.all([...document.images].map(i => i.decode().catch(() => {})))).then(() => { window.READY = true; });
+</script>
+</body>
+</html>

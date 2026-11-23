@@ -28,6 +28,7 @@
 - [x] ~~`REQUEST_IGNORE_BATTERY_OPTIMIZATIONS`~~ 제거 → 앱 정보 화면(배터리 > 제한 없음)으로 안내 (v0.4.2)
 - [x] 개인정보처리방침 `docs/privacy-policy.md` → GitHub Pages(main /docs) 켜면 https://ganglike248.github.io/pinTodo/privacy-policy
 - [x] 스토어 그래픽 `store/`(아이콘 512, 그래픽 1024×500, 스크린샷 1080×2160 — Play는 긴 변이 짧은 변의 2배 이하만 허용이라 화면을 자르지 말고 설명 문구와 함께 틀 안에 축소해 넣음)
+- [x] 정식 출시 후 등록 정보 개편(2026-11-23): 기능 나열 대신 공감형 문구(`store/listing.md`), 스크린샷 8장·그래픽 이미지는 `store/shots-src/`(에뮬레이터 촬영 → HTML 합성, 상태 표시줄은 잘라냄)로 다시 만듦. 홍보 영상은 더 이상 만들지 않음
 - [x] Play Console 등록 → 비공개 테스트 → 프로덕션 승인 (2026-11)
 - [x] 정식 출시 1.0.0 (versionCode 22), 이후 versionCode는 계속 증가
 
