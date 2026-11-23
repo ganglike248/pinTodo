@@ -5,7 +5,7 @@ from playwright.async_api import async_playwright
 from PIL import Image
 P = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.abspath(sys.argv[1]) if len(sys.argv) > 1 else os.path.dirname(P)
-NAMES = ["01-hook", "02-list", "03-quick-add", "04-notification", "05-snooze", "06-repeat", "07-widget", "08-no-ads"]
+NAMES = ["01-pin", "02-hook", "03-notification", "04-new-todo", "05-repeat", "06-snooze", "07-widget", "08-no-ads"]
 async def main():
     async with async_playwright() as p:
         b = await p.chromium.launch(args=["--allow-file-access-from-files"])

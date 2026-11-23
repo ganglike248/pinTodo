@@ -9,7 +9,7 @@
 body { background: #222; font-family: P, sans-serif; color: #fff; word-break: keep-all; }
 .slide { position: relative; width: 1080px; height: 2160px; overflow: hidden; margin-bottom: 40px;
   background: linear-gradient(160deg, #5b7cfa 0%, #4a68e6 45%, #3550c8 100%); }
-.head { position: absolute; left: 0; right: 0; top: 0; height: 580px; padding-top: 120px !important; display: flex; flex-direction: column;
+.head { position: absolute; left: 0; right: 0; top: 0; height: 480px; padding-top: 110px !important; display: flex; flex-direction: column;
   align-items: center; justify-content: center; text-align: center; padding: 0 60px; }
 .brandpill { position: absolute; left: 50%; top: 56px; transform: translateX(-50%); display: inline-flex; align-items: center; gap: 14px; height: 78px; padding: 0 30px 0 16px; border-radius: 39px;
   background: #fff; color: #2f49c4; font-size: 36px; font-weight: 800; letter-spacing: -.5px; box-shadow: 0 12px 30px rgba(10, 20, 80, .28); }
@@ -152,7 +152,86 @@ body { background: #222; font-family: P, sans-serif; color: #fff; word-break: ke
   box-shadow: 0 0 0 3px #4a4f5c, 0 0 0 4px #23262e, 0 0 0 5px rgba(255,255,255,.18), 0 30px 60px rgba(10, 20, 80, .5); }
 .fphone::after { content: ""; position: absolute; right: -8px; top: 150px; width: 4px; height: 90px; border-radius: 2px; background: linear-gradient(90deg, #23262e, #5a606e); }
 .fphone .sc { position: relative; overflow: hidden; width: 290px; height: 623px; border-radius: 39px; background: #f2f3f5; }
-.fphone .sc img { position: absolute; left: 0; width: 100%; }
+.fphone .sc > img { position: absolute; left: 0; width: 100%; }
+/* 갤럭시(One UI) 느낌 알림창 — 기기 픽셀(가로 1080) 기준으로 그린 뒤 폰 화면 크기로 축소 */
+.gsh { position: relative; width: 1080px; height: 2320px; padding: 70px 44px; color: #fff; font-family: P, sans-serif;
+  background: radial-gradient(circle at 18% 12%, #5a6fb8 0, rgba(90,111,184,0) 42%), radial-gradient(circle at 88% 62%, #7a5aae 0, rgba(122,90,174,0) 48%),
+    radial-gradient(circle at 30% 92%, #3d7f9e 0, rgba(61,127,158,0) 40%), linear-gradient(180deg, #2a3563, #161b33); }
+.gq { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; }
+.gq div { height: 170px; border-radius: 58px; background: rgba(255,255,255,.15); display: flex; align-items: center; justify-content: center; }
+.gq div.on { background: #4c86ff; }
+.gb { margin-top: 28px; height: 104px; border-radius: 52px; background: rgba(255,255,255,.15); overflow: hidden; }
+.gb div { height: 100%; width: 62%; background: rgba(255,255,255,.93); border-radius: 52px; display: flex; align-items: center; justify-content: flex-end; padding-right: 30px; }
+.gn { margin-top: 40px; display: flex; flex-direction: column; gap: 18px; }
+.gc { background: rgba(250,250,252,.97); color: #1c1c1e; border-radius: 58px; padding: 44px 48px 46px; }
+.gh { display: flex; align-items: center; gap: 18px; font-size: 34px; color: #6e6e73; }
+.gh img { width: 62px; height: 62px; border-radius: 50%; }
+.gh b { color: #1c1c1e; font-weight: 700; }
+.gh i { margin-left: auto; width: 64px; height: 64px; border-radius: 50%; background: #efeff4; display: flex; align-items: center; justify-content: center; }
+.gt { margin-top: 22px; font-size: 48px; font-weight: 700; letter-spacing: -1px; }
+.gt em { font-style: normal; color: #3e7bfa; }
+.gm { margin-top: 8px; font-size: 40px; color: #48484a; letter-spacing: -.5px; }
+.gs { margin-top: 10px; font-size: 34px; color: #8e8e93; }
+.gl { margin-top: 18px; display: flex; flex-direction: column; gap: 14px; font-size: 42px; }
+.gl div { display: flex; align-items: center; gap: 22px; }
+.gl u { text-decoration: none; width: 46px; height: 46px; border-radius: 12px; border: 4px solid #c7c7cc; display: flex; align-items: center; justify-content: center; }
+.gl div.d { color: #8e8e93; text-decoration: line-through; }
+.gl div.d u { background: #3e7bfa; border-color: #3e7bfa; }
+.ga { margin-top: 36px; display: flex; gap: 20px; }
+.ga span { flex: 1; text-align: center; font-size: 40px; font-weight: 700; color: #3e7bfa; background: #eef3ff; border-radius: 44px; padding: 24px 0; }
+.ga span.p { background: #3e7bfa; color: #fff; }
+.gf { margin-top: 30px; display: flex; justify-content: flex-end; gap: 20px; }
+.gf span { font-size: 36px; font-weight: 600; padding: 20px 36px; border-radius: 44px; background: rgba(255,255,255,.16); }
+.gzoom { position: absolute; width: 992px; transform-origin: 0 0; border-radius: 58px; box-shadow: 0 50px 110px rgba(10, 20, 80, .55), 0 0 0 8px rgba(255,255,255,.5); }
+.bigpin { position: absolute; z-index: 5; filter: drop-shadow(10px 22px 18px rgba(10, 20, 70, .45)); }
+.gzoom .gc { background: #fafafc; }
+.glab { align-self: flex-start; font-size: 38px; font-weight: 800; padding: 18px 32px; border-radius: 44px; background: #fff; color: #3a3f5c; margin-top: 16px; letter-spacing: -.5px; }
+.glab.y { background: #ffcf3a; color: #3a2a00; }
+.gslot { position: relative; height: 262px; border: 5px dashed rgba(255,255,255,.45); border-radius: 58px; overflow: hidden; }
+.gfade { position: absolute; left: 0; right: 0; top: 0; transform: translateX(400px); opacity: .55; -webkit-mask-image: linear-gradient(90deg, #000 25%, transparent 75%); }
+.gq2 { position: absolute; right: 70px; top: 50%; transform: translateY(-50%) rotate(14deg); font-size: 190px; font-weight: 800; color: #fff; text-shadow: 0 12px 30px rgba(0,0,0,.3); }
+.gbell { width: 62px; height: 62px; border-radius: 50%; background: #8e8e93; display: flex; align-items: center; justify-content: center; }
+/* 밝은 알림창 (다른 장과 같은 밝은 느낌) */
+.gsh { color: #1c1c1e; background: radial-gradient(circle at 15% 10%, #dfe6ff 0, rgba(223,230,255,0) 45%), radial-gradient(circle at 90% 55%, #efe4ff 0, rgba(239,228,255,0) 45%),
+  radial-gradient(circle at 25% 90%, #ddf1ff 0, rgba(221,241,255,0) 42%), linear-gradient(180deg, #f4f6fc, #e8ecf6); }
+.gq div { background: #fff; box-shadow: 0 6px 18px rgba(40, 50, 100, .07); }
+.gq div.on { background: #3e7bfa; }
+.gb { background: #fff; box-shadow: 0 6px 18px rgba(40, 50, 100, .07); }
+.gb div { background: #3e7bfa; }
+.gc { background: #fff; box-shadow: 0 10px 30px rgba(40, 50, 100, .09); }
+.gf span { background: #fff; color: #3a3f5c; box-shadow: 0 6px 18px rgba(40, 50, 100, .07); }
+.glab { background: #3a3f5c; color: #fff; }
+.gslot { height: auto; padding: 0; border-color: rgba(60, 70, 110, .28); }
+.gfade { position: relative; transform: translateX(170px); opacity: .5; box-shadow: none; -webkit-mask-image: linear-gradient(90deg, #000 35%, transparent 85%); }
+.gq2 { color: #5b6585; text-shadow: none; }
+/* 빠른 설정 패널 (갤럭시 느낌) */
+.gp { background: rgba(255,255,255,.92); border-radius: 60px; padding: 38px 38px 40px; box-shadow: 0 10px 30px rgba(40, 50, 100, .08); }
+.gp .r1 { display: flex; gap: 24px; }
+.gp .wt { flex: 1; height: 156px; border-radius: 48px; background: #f0f2f7; display: flex; align-items: center; gap: 24px; padding: 0 34px; }
+.gp .wt.on { background: #3e7bfa; color: #fff; }
+.gp .wt b { display: block; font-size: 38px; font-weight: 700; letter-spacing: -.5px; }
+.gp .wt span { display: block; margin-top: 4px; font-size: 30px; opacity: .75; }
+.gp .r2 { display: flex; justify-content: space-between; margin-top: 30px; padding: 0 6px; }
+.gp .ci { width: 132px; height: 132px; border-radius: 50%; background: #f0f2f7; display: flex; align-items: center; justify-content: center; }
+.gp .ci.on { background: #3e7bfa; }
+.gp .br { position: relative; margin-top: 32px; height: 100px; border-radius: 50px; background: #f0f2f7; overflow: hidden; }
+.gp .br div { position: absolute; left: 0; top: 0; bottom: 0; width: 64%; background: #3e7bfa; border-radius: 50px; display: flex; align-items: center; padding-left: 34px; }
+/* 빠른 설정: 흰 패널 배경 없이 버튼만 */
+.gp { background: none; box-shadow: none; padding: 0; border-radius: 0; }
+.gp .wt, .gp .ci, .gp .br { background: #fff; box-shadow: 0 6px 18px rgba(40, 50, 100, .08); }
+.gp .wt.on, .gp .ci.on { background: #3e7bfa; }
+.gsec { display: flex; align-items: center; gap: 24px; margin: 22px 10px 10px; }
+.gsec i { flex: none; width: 78px; height: 78px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+.gsec.no i { background: #ffe4e7; } .gsec.ok i { background: #3e7bfa; }
+.gsec b { display: block; font-size: 48px; font-weight: 800; letter-spacing: -1px; color: #1c1c1e; }
+.gsec.no b { color: #6b7280; }
+.gsec span { display: block; margin-top: 4px; font-size: 38px; font-weight: 600; letter-spacing: -.5px; color: #6b7280; }
+.gsec.ok span { color: #2f5fe0; }
+/* 빠른 설정을 연하게 (아래 알림에 눈이 가도록) */
+.gp .wt, .gp .ci, .gp .br { background: rgba(255,255,255,.55); box-shadow: none; }
+.gp .wt.on, .gp .ci.on { background: #9db8fb; color: #fff; }
+.gp .wt { color: #6b7290; }
+.gp .br div { background: #9db8fb; }
 </style>
 </head>
 <body>
@@ -174,51 +253,86 @@ function phone(sw, top, img, cut) {
   } else inner = `<div class="screen" style="width:${sw}px;height:${sh}px"><img class="crop" src="${R}${img}.png" style="top:${-SB * s}px"><div class="glare"></div></div>`;
   return `<div class="phone" style="top:${top}px">${inner}</div>`;
 }
-function head(t, s, brand = true) { return `<div class="head">${brand ? `<div class="brandpill"><img src="${ICON}">PinTodo</div>` : ""}<div class="title">${t}</div><div class="sub">${s}</div></div>`; }
+function head(t, s, brand = true, tall = false) { return `<div class="head"${tall ? ' style="height:580px;padding-top:120px"' : ""}>${brand ? `<div class="brandpill"><img src="${ICON}">PinTodo</div>` : ""}<div class="title">${t}</div><div class="sub">${s}</div></div>`; }
 function notiCrop(y, s) {  // cmp.png 의 알림 한 줄 안쪽 (x 62..1018, 높이 160 — 원본 둥근 모서리 제외)
   return `style="height:${160 * s}px;background-image:url(${R}cmp.png);background-size:${W * s}px auto;background-position:${-62 * s}px ${-y * s}px"`;
 }
 const sN = 960 / 956;
-const PS = 700 / W, PT = 600, PL = (1080 - 732) / 2 + 16;   // 폰(화면 너비 700) 화면 왼쪽 위 = (PL, PT+16)
+const PS = 700 / W, PT = 500, PL = (1080 - 732) / 2 + 16;   // 폰(화면 너비 700) 화면 왼쪽 위 = (PL, PT+16)
 const sy = (y, cut = 466) => PT + 16 + (80 + y - cut) * PS;         // 원본 y → 슬라이드 y (알림창 화면)
 const sx = x => PL + x * PS;
 function bg(img, x, y, s) { return `background-image:url(${R}${img}.png);background-size:${W * s}px auto;background-position:${-x * s}px ${-y * s}px`; }
+// ── 갤럭시(One UI) 느낌 알림창 ──
+const GI = { x: '<path d="M6 6l12 12M18 6L6 18"/>', flash: '<path d="M8 2h8l-1 6H9z"/><path d="M9 8h6v4l-1.5 2v8h-3v-8L9 12z"/>', plane: '<path d="M10.5 3.5a1.5 1.5 0 0 1 3 0V9l7 4v2l-7-2v5l2 1.5V21l-3.5-1-3.5 1v-1.5l2-1.5v-5l-7 2v-2l7-4z"/>', rotate: '<path d="M4 12a8 8 0 0 1 14-5.3M20 12a8 8 0 0 1-14 5.3"/><path d="M18 3v4h-4M6 21v-4h4"/>', bell: '<path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20a2 2 0 0 0 4 0"/>', wifi: '<path d="M2 9a15 15 0 0 1 20 0M5 12.5a10 10 0 0 1 14 0M8.5 16a5 5 0 0 1 7 0"/><circle cx="12" cy="19.5" r="1"/>',
+  sound: '<path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11"/>',
+  bt: '<path d="M7 7l10 10-5 4V3l5 4L7 17"/>', moon: '<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>',
+  sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
+  down: '<path d="M6 9l6 6 6-6"/>', up: '<path d="M6 15l6-6 6 6"/>', check: '<path d="M5 12.5l4.5 4.5L19 7.5"/>' };
+const gi = (k, c = "#fff", w = 60, sw = 2) => `<svg width="${w}" height="${w}" viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round">${GI[k]}</svg>`;
+function gcard(n) {
+  return `<div class="gc">
+    <div class="gh"><img src="${ICON}"><b>PinTodo</b><span>· ${n.when || "지금"}</span><i>${gi(n.open ? "up" : "down", "#6e6e73", 40, 2.5)}</i></div>
+    <div class="gt">${n.isNew ? "<em>신규 · </em>" : ""}${n.title}</div>
+    ${n.memo ? `<div class="gm">${n.memo}</div>` : ""}
+    ${n.items ? `<div class="gl">${n.items.map(([t, d]) => `<div class="${d ? "d" : ""}"><u>${d ? gi("check", "#fff", 34, 3.5) : ""}</u>${t}</div>`).join("")}</div>` : ""}
+    ${n.sched ? `<div class="gs">${n.sched}</div>` : ""}
+    ${n.open ? `<div class="ga"><span class="p">완료</span><span>10분 뒤</span><span>미루기…</span></div>` : ""}
+  </div>`;
+}
+function gshade(cards) {
+  return `<div class="gsh">
+    <div class="gp">
+      <div class="r1"><div class="wt on">${gi("wifi", "#fff", 60)}<div><b>Wi-Fi</b><span>집</span></div></div>
+        <div class="wt">${gi("bt", "#8a90a8", 60)}<div><b>블루투스</b><span>꺼짐</span></div></div></div>
+      <div class="r2">${[["sound", 1], ["flash", 0], ["moon", 0], ["plane", 0], ["rotate", 1]].map(([k, on]) => `<div class="ci ${on ? "on" : ""}">${gi(k, on ? "#fff" : "#8a90a8", 56)}</div>`).join("")}</div>
+    </div>
+    <div class="gn">${typeof cards === "string" ? cards : cards.map(gcard).join("")}</div>
+    <div class="gf"><span>알림 설정</span><span>모두 지우기</span></div>
+  </div>`;
+}
+function phoneHTML(sw, top, html) {
+  const s = sw / W, sh = Math.round((H - SB) * s);
+  return `<div class="phone" style="top:${top}px"><div class="screen" style="width:${sw}px;height:${sh}px"><div style="width:${W}px;height:${H - SB}px;transform:scale(${s});transform-origin:0 0">${html}</div><div class="glare"></div></div></div>`;
+}
+const C_RET = { title: "택배 반품 신청", memo: "수거 신청까지 해야 끝", sched: "11/23(월) 오후 11:59까지", isNew: true, open: true };
+const C_RET_S = { title: "택배 반품 신청", memo: "수거 신청까지 해야 끝", when: "40분 전" };
+const C_SHOP = { title: "장보기", memo: "체크리스트 2/5", when: "1시간 전" };
+const C_SHOP_OPEN = { title: "장보기", isNew: true, open: true, items: [["우유", 1], ["계란", 1], ["두부", 0], ["대파", 0], ["키친타월", 0]], sched: "완료할 때까지" };
+const C_MOM = { title: "엄마한테 전화하기", memo: "완료할 때까지", when: "3시간 전" };
+const PIN_SVG = `<svg width="200" height="200" viewBox="0 0 24 24"><defs><linearGradient id="pg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffe27a"/><stop offset=".55" stop-color="#ffc42e"/><stop offset="1" stop-color="#f59e0b"/></linearGradient></defs>
+  <path d="M12 15.5v6.2" stroke="#c9ced8" stroke-width="1.3" stroke-linecap="round"/>
+  <path d="M16 3H8a1 1 0 0 0 0 2h1v5.2c-1.3.7-2.5 1.9-3 3.5a.8.8 0 0 0 .8 1.1h10.4a.8.8 0 0 0 .8-1.1c-.5-1.6-1.7-2.8-3-3.5V5h1a1 1 0 0 0 0-2z" fill="url(#pg)" stroke="#b86e00" stroke-width=".5"/>
+  <path d="M10 5.2h1.3v5.4c-.9.5-1.7 1.2-2.1 2" stroke="#fff6cf" stroke-width=".7" fill="none" stroke-linecap="round" opacity=".9"/></svg>`;
+const PUSHPIN = `<svg width="200" height="200" viewBox="0 0 100 100"><defs>
+  <radialGradient id="ph" cx="38%" cy="32%" r="70%"><stop offset="0" stop-color="#ff8a95"/><stop offset=".45" stop-color="#f43f52"/><stop offset="1" stop-color="#b3132a"/></radialGradient>
+  <linearGradient id="pn" x1="0" x2="1"><stop offset="0" stop-color="#8d94a3"/><stop offset=".5" stop-color="#eef0f4"/><stop offset="1" stop-color="#8d94a3"/></linearGradient></defs>
+  <ellipse cx="50" cy="94" rx="9" ry="3" fill="rgba(30,40,80,.25)"/>
+  <path d="M48 50 L50 95 L52 50 Z" fill="url(#pn)"/>
+  <circle cx="50" cy="32" r="23" fill="url(#ph)"/>
+  <ellipse cx="42" cy="23" rx="8" ry="5.5" fill="#fff" opacity=".7" transform="rotate(-30 42 23)"/></svg>`;
 const CS = 888 / 956;
 const slides = [
-  // 1. 공감: 보통 알림은 밀면 사라지지만 PinTodo 알림은 남음 (직접 그린 카드)
-  head("알림, 밀면 끝이었죠?", "PinTodo는 끝낼 때까지 상단바에 남아 있어요") + `
-  <div class="pill w" style="left:60px;top:700px">보통 알림 · 밀면 사라지고 끝</div>
-  <div class="ghost2" style="top:790px"><div class="slot"></div>
-    <div class="in"><div class="ic"></div><div class="tx"><b>택배 반품 신청</b><span>오늘 자정까지 수거 신청하기</span></div></div></div>
-  <div class="swipe" style="top:830px">→</div>
-  <div class="qmark" style="top:790px">?</div>
-  <div class="pill y" style="left:60px;top:1080px">↻ PinTodo · 밀어도 다시 나타나요</div>
-  <div class="nc" style="top:1170px">
-    <div class="top"><img src="${ICON}">PinTodo · 지금</div>
-    <div class="tt">택배 반품 신청</div>
-    <div class="mm">수거 신청까지 해야 끝</div>
-    <div class="sc">오늘 오후 11:59까지</div>
-    <div class="ac"><span class="p">완료</span><span>10분 뒤</span><span>미루기…</span></div>
-  </div>
-  <div class="facts" style="top:1760px">
-    <div class="fact"><i>↻</i>밀어서 지워도, '모두 지우기'를 눌러도</div>
-    <div class="fact ok"><i>✓</i>[완료]를 눌러야만 사라져요</div>
-  </div>`,
-  // 2. 앱 화면
-  head("적어 두기만 하세요", "시간이 되면 상단바에 띄우고, 끝낼 때까지 남겨 둬요") + phone(700, PT, "list"),
-  // 3. 빠른 추가
-  head("생각난 그 순간,\n바로 적어요", "'내일 오후 3시'라고 쓰면 시간까지 자동으로") + phone(700, PT, "quick"),
-  // 4. 알림에서 바로 (펼친 체크리스트 알림을 크게)
-  head("앱 열 필요 없이\n상단바에서 바로 완료", "체크리스트도 알림에서 바로 확인") + phone(700, PT, "noti", 532) + `
-  <div class="zoom" style="top:1195px;height:${(1424 - 736) * 980 / 996}px;${bg("noti", 42, 736, 980 / 996)}"></div>`,
-  // 5. 미루기
-  head("지금은 못 하겠다면?", "미뤄 두면 그때 다시 알려 줘요") + phone(700, PT, "snooze"),
-  // 6. 반복
-  head("매일 영양제, 매달 관리비", "반복하는 일은 한 번만 적어 두세요") + phone(700, PT, "edit"),
+  // 1. 핵심: 할 일을 상단바에 꽂아 둠 (갤럭시 느낌 알림창 + 압정)
+  head("할 일을 상단바에\n꽂아 두세요", "완료할 때까지 사라지지 않는 할 일 알림") + phoneHTML(700, PT, gshade([C_RET, C_SHOP, C_MOM])),
+  // 2. 공감: 보통 알림은 밀면 사라지고, PinTodo는 다시 나타남 (밝은 알림창 안에서, 문구로 구분)
+  head("알림, 밀면 끝이었죠?", "PinTodo는 [완료]를 눌러야만 사라져요") + phoneHTML(700, PT, gshade(`
+    <div class="gsec no"><i>${gi("x", "#f04452", 44, 3)}</i><div><b>보통 알림</b><span>밀면 그대로 사라져요</span></div></div>
+    <div class="gslot"><div class="gc gfade"><div class="gh"><span class="gbell">${gi("bell", "#fff", 38, 2.2)}</span><b>리마인더</b><span>· 지금</span></div>
+      <div class="gt">택배 반품 신청</div><div class="gm">오늘 자정까지 수거 신청하기</div></div></div>
+    <div class="gsec ok" style="margin-top:56px"><i>${gi("check", "#fff", 44, 3)}</i><div><b>PinTodo</b><span>밀어도, 모두 지워도 다시 나타나요</span></div></div>
+    ${gcard(C_RET)}${gcard(C_MOM)}`)),
+  // 3. 알림에서 바로 완료 (갤럭시 느낌 알림창 + 펼친 체크리스트 확대)
+  head("앱 열 필요 없이\n상단바에서 바로 완료", "체크리스트도 알림에서 바로 확인") + phoneHTML(700, PT, gshade([C_SHOP_OPEN, C_RET_S, C_MOM])),
+  // 4. 앱에서 새 할 일 (날짜 인식)
+  head("적어 두면, 그 시간에\n상단바에 고정돼요", "'내일 오후 3시'처럼 쓰면 시간도 자동으로") + phone(700, PT, "newtodo"),
+  // 5. 반복
+  head("매일 그 시간,\n상단바에 다시 떠요", "영양제·관리비처럼 반복하는 일은 한 번만") + phone(700, PT, "edit"),
+  // 6. 미루기
+  head("지금은 못 하겠다면?\n미뤄 두세요", "그 시간이 되면 다시 상단바에") + phone(700, PT, "snooze"),
   // 7. 위젯
   head("홈 화면에서도\n한눈에", "위젯에서 바로 완료·미루기") + phone(700, PT, "home"),
   // 8. 광고·로그인 없음
-  head("광고 없이,\n로그인 없이", "필요한 기능만, 처음부터 끝까지 무료로", false) + `
+  head("광고 없이,\n로그인 없이", "필요한 기능만, 처음부터 끝까지 무료로", false, true) + `
   <div class="hero"><img src="${ICON}"><div class="nm">PinTodo</div></div>
   <div class="rows">
     <div class="row"><i><svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#3182f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg></i><div><b>광고 X</b><span>화면을 가리는 광고가 없어요</span></div></div>
@@ -249,7 +363,7 @@ const feat2 = `<div class="feat" id="feature2">
     <div class="cp">완료할 때까지<br>알림창에 고정되는 할 일</div>
     <div class="ft">체크리스트 · 반복 일정 · 위젯 · 스마트워치 알림</div>
   </div>
-  <div class="fphone"><div class="sc"><img src="${R}list.png" style="top:${-80 * 290 / 1080}px"></div></div>
+  <div class="fphone"><div class="sc"><div style="width:1080px;height:2320px;transform:scale(${290 / 1080});transform-origin:0 0">${gshade([C_RET, C_SHOP, C_MOM])}</div></div></div>
 </div>`;
 document.getElementById("out").innerHTML = slides.map((h, i) => `<div class="slide" id="s${i + 1}">${h}</div>`).join("") + feature + feat2;
 document.fonts.ready.then(() => Promise.all([...document.images].map(i => i.decode().catch(() => {})))).then(() => { window.READY = true; });
