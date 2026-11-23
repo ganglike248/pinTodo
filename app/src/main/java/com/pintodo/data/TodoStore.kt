@@ -14,6 +14,7 @@ object TodoStore {
     private const val PREFS = "todos"
     private const val KEY_LIST = "list"
     private const val KEY_NEXT_ID = "next_id"
+    private const val KEY_CORRUPT = "list_corrupt"   // 읽지 못한 원본 목록 (복구용으로 보관)
 
     private val state = MutableStateFlow<List<Todo>>(emptyList())
     private var loaded = false
@@ -75,9 +76,22 @@ object TodoStore {
         loaded = true
     }
 
+    /**
+     * 저장된 목록이 깨져 있어도 앱·위젯·알람이 멈추지 않게 (예외가 나면 켤 때마다 바로 꺼졌음).
+     * 전체를 못 읽으면 원본을 [KEY_CORRUPT]에 보관하고 빈 목록으로 시작
+     */
     private fun load(context: Context): List<Todo> {
-        val arr = JSONArray(prefs(context).getString(KEY_LIST, "[]")!!)
-        return (0 until arr.length()).map { fromJson(arr.getJSONObject(it)) }
+        val raw = prefs(context).getString(KEY_LIST, null) ?: return emptyList()
+        return runCatching { parseList(raw) }.getOrElse {
+            prefs(context).edit().putString(KEY_CORRUPT, raw).apply()
+            emptyList()
+        }
+    }
+
+    /** 항목 하나가 깨져도 나머지는 읽음 */
+    fun parseList(raw: String): List<Todo> {
+        val arr = JSONArray(raw)
+        return (0 until arr.length()).mapNotNull { i -> runCatching { fromJson(arr.getJSONObject(i)) }.getOrNull() }
     }
 
     private fun save(context: Context, todos: List<Todo>) {

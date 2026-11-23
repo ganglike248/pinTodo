@@ -146,6 +146,15 @@ class AlertAndStoreTest {
         assertEquals(setOf(1, 3), t.repeatDays)
     }
 
+    @Test fun `깨진 항목은 건너뛰고 나머지 할 일은 읽음`() {
+        val list = TodoStore.parseList("""[{"id":1,"title":"a","alertMode":"SOUND"}, {"title":"id 없음"}, "문자열", {"id":2,"title":"b","alertMode":"SOUND"}]""")
+        assertEquals(listOf(1, 2), list.map { it.id })
+    }
+
+    @Test(expected = Exception::class) fun `목록 전체가 깨지면 예외 (load에서 원본 보관 후 빈 목록)`() {
+        TodoStore.parseList("[{\"id\":1,")
+    }
+
     @Test fun `모르는 라벨 색은 무시하고 나머지는 읽음`() {
         val t = TodoStore.fromJson(JSONObject("""{"id":5,"title":"t","alertMode":"SOUND","color":"PINK"}"""))
         assertNull(t.color)

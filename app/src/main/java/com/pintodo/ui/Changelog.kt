@@ -57,6 +57,13 @@ private fun fixed(t: String) = Change(ChangeKind.FIXED, t)
 
 val RELEASES = listOf(
     Release(
+        "1.0.0", "2026.11.23",
+        listOf(
+            new("PinTodo가 정식으로 출시됐어요. 함께 써 주셔서 고마워요"),
+            improved("앱이 더 안정적으로 동작해요"),
+        ),
+    ),
+    Release(
         "0.4.15", "2026.11.20",
         listOf(
             moved("알림에서 완료해도 '완료했어요' 알림이 더 뜨지 않아요"),

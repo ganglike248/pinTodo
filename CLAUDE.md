@@ -1,8 +1,8 @@
 # PinTodo (패키지명 com.pintodo)
 
-완료할 때까지 알림창에 고정되는 안드로이드 투두 앱. **Google Play 출시 예정** (2026-10-02 결정, 아직 Play Console 등록 전). Kotlin + Jetpack Compose(Material 3), 외부 서버 없음.
+완료할 때까지 알림창에 고정되는 안드로이드 투두 앱. **Google Play 정식 출시**(1.0.0, 2026-11-23 — 비공개 테스트 후 프로덕션 승인). Kotlin + Jetpack Compose(Material 3), 외부 서버 없음.
 
-- **현재 버전**: v0.4.15 (스토어 출시 전이라 0.x, 출시 시 1.0.0) | GitHub: https://github.com/ganglike248/pinTodo (main 브랜치)
+- **현재 버전**: v1.0.0 (정식 출시. 이후 기능 추가는 1.x.0, 수정은 1.0.x) | GitHub: https://github.com/ganglike248/pinTodo (main 브랜치)
 - 사용 기기: 갤럭시 S26 울트라 (One UI / Android 16)
 
 ## 운영 방향 (2026-10-06 결정)
@@ -28,8 +28,8 @@
 - [x] ~~`REQUEST_IGNORE_BATTERY_OPTIMIZATIONS`~~ 제거 → 앱 정보 화면(배터리 > 제한 없음)으로 안내 (v0.4.2)
 - [x] 개인정보처리방침 `docs/privacy-policy.md` → GitHub Pages(main /docs) 켜면 https://ganglike248.github.io/pinTodo/privacy-policy
 - [x] 스토어 그래픽 `store/`(아이콘 512, 그래픽 1024×500, 스크린샷 1080×2160 — Play는 긴 변이 짧은 변의 2배 이하만 허용이라 화면을 자르지 말고 설명 문구와 함께 틀 안에 축소해 넣음)
-- [ ] Play Console 등록 → 비공개 테스트(개인 계정은 12명·14일) → 프로덕션
-- [ ] 정식 출시 시 버전 1.0.0, 이후 versionCode는 계속 증가
+- [x] Play Console 등록 → 비공개 테스트 → 프로덕션 승인 (2026-11)
+- [x] 정식 출시 1.0.0 (versionCode 22), 이후 versionCode는 계속 증가
 
 ## 빌드 / 설치
 ```bash
@@ -49,7 +49,7 @@ adb install -r app/build/outputs/apk/sideload/app-sideload.apk
 - MainActivity의 `editing`(열린 편집 화면)은 `rememberSaveable(EditTargetSaver)`로 저장 — `remember`였을 땐 다크 모드 전환·회전·글자 크기 변경 때 편집 화면이 닫히고 입력이 사라졌음
 - 목록 카드의 스와이프 상태는 `rememberSwipeToDismissBoxState`(saveable) 대신 `remember`로 생성 — saveable이면 실행 취소로 카드가 돌아올 때 '밀린 상태'로 복원되어 완료가 재실행되는 버그 있었음
 - 시스템 자동 그룹 요약 알림(tag 있음)은 `Notifier.activeIds`에서 제외
-- v1 데이터(`{id, text}`)는 `TodoStore.fromJson`에서 호환 처리
+- v1 데이터(`{id, text}`)는 `TodoStore.fromJson`에서 호환 처리. 목록 읽기(`parseList`)는 깨진 항목을 건너뛰고, 전체를 못 읽으면 원본을 `list_corrupt`에 보관 후 빈 목록 — 예외가 나면 앱·위젯·알람이 켤 때마다 꺼지므로 읽기 경로에서 예외를 던지지 말 것
 - 할 일·기록·설정 탭은 `PinnedHeaderList`(Components.kt): 머리글은 위에 고정, 아래 목록만 스크롤(스크롤되면 머리글 아래 구분선)
 - 디자인 토큰은 `ui/Theme.kt`(TDS 기반). 페이지 배경=`background`, 카드=`surface`, 칩·입력 채움=`surfaceVariant` 규칙 유지. Material You 사용 시 `asAppScheme()`으로 같은 규칙에 맞춤
 - 위젯은 RemoteViews + `AppWidgetManager.updateAppWidget`로 즉시 갱신. Glance는 WorkManager를 거쳐 그려서 삼성 기기에서 갱신이 지연·누락됐음 → 다시 Glance로 바꾸지 말 것. 위젯 클래스명 `widget.TodoWidgetReceiver`는 이미 놓인 위젯 유지를 위해 변경 금지
