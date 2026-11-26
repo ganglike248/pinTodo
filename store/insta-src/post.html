@@ -56,7 +56,26 @@ h1 em { font-style: normal; color: var(--blue); }
 .list2 > div:last-child { border-bottom: 2px solid var(--line); }
 .list2 .chip { flex: none; width: 190px; line-height: 68px; }
 .list2 b { font-weight: 700; color: var(--blue); }
-/* 5장 */
+/* 2번 게시물 */
+.n .t em { font-style: normal; color: var(--blue); }
+.acts { position: relative; display: flex; justify-content: flex-end; gap: 12px; margin-top: 8px; }
+.acts span { background: #fff; color: var(--body); font-size: 26px; font-weight: 600; line-height: 68px; padding: 0 30px; border-radius: 34px; letter-spacing: -.5px; }
+.acts .touch { position: absolute; right: 52px; top: -4px; width: 76px; height: 76px; border-radius: 50%; background: rgba(25,31,40,.12); border: 3px solid rgba(25,31,40,.22); }
+.lab { font-size: 28px; font-weight: 700; letter-spacing: -.5px; color: var(--mute); margin: 0 0 16px 4px; }
+.lab.b { color: var(--blue); }
+.slot2 { height: 238px; border: 3px dashed #c5ccd4; border-radius: 40px; display: flex; align-items: center; justify-content: center; font-size: 34px; font-weight: 600; letter-spacing: -.8px; color: var(--mute); }
+.opt { background: #fff; border-radius: 40px; padding: 40px 44px; display: flex; align-items: center; }
+.opt b { display: block; font-size: 42px; font-weight: 700; letter-spacing: -1.2px; }
+.opt span { display: block; margin-top: 6px; font-size: 32px; font-weight: 500; letter-spacing: -.8px; color: var(--body); }
+.opt i { margin-left: auto; flex: none; position: relative; width: 108px; height: 62px; border-radius: 31px; background: var(--blue); }
+.opt i::after { content: ""; position: absolute; right: 7px; top: 7px; width: 48px; height: 48px; border-radius: 50%; background: #fff; }
+/* 2번 게시물 1장: 어두운 바탕, 폰 틀 없이 알림 두 개 + 크게 그린 '모두 지우기' 버튼 (1번 게시물 첫 장과 다르게 보이도록) */
+.post.dark { background: #171c24; }
+.dark h1 em { color: #6aa8ff; }
+.acts2 { display: flex; justify-content: flex-end; gap: 44px; margin-top: 56px; }
+.acts2 span { position: relative; font-size: 34px; font-weight: 700; line-height: 92px; padding: 0 44px; border-radius: 46px; letter-spacing: -.8px; background: rgba(255,255,255,.1); color: rgba(255,255,255,.55); }
+.acts2 span.on { background: #fff; color: var(--ink); box-shadow: 0 0 0 14px rgba(255,255,255,.13), 0 0 0 32px rgba(255,255,255,.06); }
+/* 마지막 장 */
 .end { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; text-align: center; }
 .end > img { margin-top: 290px; width: 136px; height: 136px; border-radius: 36px; border: 4px solid rgba(255,255,255,.9); }
 .end h1 { padding-top: 56px; color: #fff; }
@@ -86,6 +105,13 @@ function noti(n) {
 const CAL = '<rect x="4" y="6" width="16" height="14" rx="2"/><path d="M4 10.5h16M8.5 3.5v4M15.5 3.5v4"/>';
 const shot = (name, up) => `<div class="shot"><img src="shots/${name}.png" style="margin-top:${-up}px"></div><div class="fade"></div>`;
 const page = (body, cls = "") => (i, total) => `<div class="post ${cls}"><div class="meta"><img src="${ICON}">PinTodo<span>${i} / ${total}</span></div>${body}</div>`;
+// 마지막 장(받기)은 모든 게시물이 같음
+const END = page(`<div class="end"><img src="${ICON}">
+      <h1>끝낼 때까지\n사라지지 않는 할 일</h1>
+      <div class="spec"><span>광고 없음</span><span>로그인 없음</span><span>전부 무료</span></div>
+      <div class="more">체크리스트 · 색 라벨 · 스마트워치 알림도 있어요</div>
+      <div class="search">${ic(FIND, "#8b95a1", 44, 2.2)}PinTodo<span>Google Play</span></div>
+      <div class="os">Google Play에서 검색해 보세요 · 안드로이드용</div></div>`, "blue");
 const posts = {
   // 1번 게시물: 앱 소개. 1장 관심 끌기(+설명 한 줄에 답) → 2 핵심(지워도 다시 뜸) → 3 알림에서 바로 → 4 날짜 인식 → 5 반복 → 6 위젯(4~6은 실제 화면) → 7 이런 분께 → 8 받기
   "01-intro": [
@@ -116,12 +142,41 @@ const posts = {
       <div class="sub">위젯에서 할 일을 보고, 끝내고, 미뤄요.</div>${shot("widget", 150)}`),
     page(`<h1>이런 분께\n<em>잘 맞아요</em></h1>
       <div class="list2" style="margin-top:96px">${["알림을 지우고 <b>“뭐였더라?”</b> 하는 분", "<b>영양제</b>를 먹었는지 헷갈리는 분", "<b>반품·공과금</b> 날짜를 자주 놓치는 분", "할 일 앱을 깔아 두고 <b>안 여는</b> 분"].map(t => `<div style="height:160px;gap:26px">${ic(CHECK, "#3182f6", 48, 2.6)}<div>${t}</div></div>`).join("")}</div>`),
-    page(`<div class="end"><img src="${ICON}">
-      <h1>끝낼 때까지\n사라지지 않는 할 일</h1>
-      <div class="spec"><span>광고 없음</span><span>로그인 없음</span><span>전부 무료</span></div>
-      <div class="more">체크리스트 · 색 라벨 · 스마트워치 알림도 있어요</div>
-      <div class="search">${ic(FIND, "#8b95a1", 44, 2.2)}PinTodo<span>Google Play</span></div>
-      <div class="os">Google Play에서 검색해 보세요 · 안드로이드용</div></div>`, "blue"),
+    END,
+  ],
+  // 2번 게시물: 고정(지워도 다시 뜸) 자세히. 1장 관심 끌기('모두 지우기') → 2 보통 알림과 비교 → 3 다시 뜰 땐 조용히 → 4 신규 표시 → 5 할 일마다 끄기 → 6 받기
+  "02-pin": [
+    page(`<h1>‘모두 지우기’를 눌러도
+<em>안 지워지는 알림</em></h1>
+      <div class="sub">일부러 그렇게 만들었어요. <b>끝낼 때까지 잊지 않게.</b></div>
+      <div style="margin-top:88px;zoom:1.2507;width:710px;display:flex;flex-direction:column;gap:13px">
+        ${noti({ title: "택배 반품 신청", memo: "오늘 오후 11:59까지" })}
+        ${noti({ title: "영양제 먹기", memo: "매일 오후 9:00", when: "1시간 전" })}</div>
+      <div class="acts2"><span>알림 설정</span><span class="on">모두 지우기</span></div>`, "blue dark"),
+    page(`<h1>똑같이 밀었는데
+<em>하나만 남아요</em></h1>
+      <div class="sub">보통 알림은 밀면 끝, PinTodo는 다시 떠요.</div>
+      <div class="lab" style="margin-top:64px">보통 알림</div><div class="slot2">밀었더니 사라졌어요</div>
+      <div class="lab b" style="margin-top:44px">PinTodo</div>
+      <div style="zoom:1.2507;width:710px">${noti({ title: "택배 반품 신청", memo: "오늘 오후 11:59까지" })}</div>`),
+    page(`<h1>다시 뜰 때는
+<em>조용히</em></h1>
+      <div class="sub">소리와 진동은 처음 한 번만 울려요.</div>
+      <div style="margin-top:64px;zoom:1.2507;width:710px">${noti({ title: "영양제 먹기", memo: "매일 오후 9:00" })}</div>
+      <div class="list2" style="margin-top:56px">${[["처음 뜰 때", "소리·진동으로 알려요", "p"], ["지워서 다시 뜰 때", "소리 없이 조용히"]].map(([c, t, p]) => `<div style="height:116px"><span class="chip ${p || ""}" style="width:290px">${c}</span>${t}</div>`).join("")}</div>`),
+    page(`<h1>방금 뜬 할 일엔
+<em>‘신규’ 표시</em></h1>
+      <div class="sub">여러 개가 쌓여도 새로 온 게 맨 위에 보여요.</div>
+      <div class="phone"><div class="sb">9:41${STATUS}</div><div class="list">
+        ${noti({ title: "<em>신규 · </em>택배 반품 신청", memo: "오늘 오후 11:59까지", open: true })}
+        ${noti({ title: "영양제 먹기", memo: "매일 오후 9:00", when: "1시간 전" })}
+        ${noti({ title: "엄마한테 전화하기", memo: "완료할 때까지", when: "3시간 전" })}</div></div><div class="fade"></div>`),
+    page(`<h1>고정이 필요 없는 일은
+<em>끌 수 있어요</em></h1>
+      <div class="sub">할 일마다 따로 정해요.</div>
+      <div class="opt" style="margin-top:64px"><div><b>알림창에 고정</b><span>밀어서 지워도 다시 나타나요</span></div><i></i></div>
+      <div class="list2" style="margin-top:56px">${[["켜면", "밀어서 지워도 다시 나타나요", "p"], ["끄면", "밀어서 지우면 이번엔 숨겨요"]].map(([c, t, p]) => `<div style="height:116px"><span class="chip ${p || ""}" style="width:150px">${c}</span>${t}</div>`).join("")}</div>`),
+    END,
   ],
 };
 const q = new URLSearchParams(location.search), list = posts[q.get("id") || "01-intro"], n = +(q.get("n") || 1);
