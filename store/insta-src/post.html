@@ -75,6 +75,20 @@ h1 em { font-style: normal; color: var(--blue); }
 .acts2 { display: flex; justify-content: flex-end; gap: 44px; margin-top: 56px; }
 .acts2 span { position: relative; font-size: 34px; font-weight: 700; line-height: 92px; padding: 0 44px; border-radius: 46px; letter-spacing: -.8px; background: rgba(255,255,255,.1); color: rgba(255,255,255,.55); }
 .acts2 span.on { background: #fff; color: var(--ink); box-shadow: 0 0 0 14px rgba(255,255,255,.13), 0 0 0 32px rgba(255,255,255,.06); }
+/* 3번 게시물: 첫 장은 미루기 알람 아이콘 색(노랑) 바탕 + 크게 그린 선택지 */
+.post.amber { background: #ffc83d; }
+.amber .meta span { color: rgba(25,31,40,.55); }
+.amber h1 { color: rgba(25,31,40,.5); }
+.amber h1 em { color: var(--ink); }
+.amber .sub { color: rgba(25,31,40,.75); }
+.big { display: flex; flex-direction: column; gap: 22px; margin-top: 104px; }
+.big div { height: 150px; border-radius: 75px; background: rgba(255,255,255,.6); display: flex; align-items: center; padding: 0 56px; font-size: 52px; font-weight: 700; letter-spacing: -1.6px; }
+.big div span { margin-left: auto; font-size: 34px; font-weight: 500; letter-spacing: -.8px; opacity: .6; }
+.big div.on { background: var(--ink); color: #fff; }
+.n .a span.hit { box-shadow: 0 0 0 9px rgba(49,130,246,.22); }
+.opts { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 64px; }
+.opts span { flex: 0 0 calc((100% - 32px) / 3); text-align: center; line-height: 108px; border-radius: 54px; font-size: 36px; font-weight: 700; letter-spacing: -.9px; background: #fff; color: var(--mute); }
+.opts span.on { background: var(--blue); color: #fff; }
 /* 마지막 장 */
 .end { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; text-align: center; }
 .end > img { margin-top: 290px; width: 136px; height: 136px; border-radius: 36px; border: 4px solid rgba(255,255,255,.9); }
@@ -100,10 +114,11 @@ const STATUS = `<svg width="92" height="28" viewBox="0 0 92 28" fill="#191f28"><
 function noti(n) {
   return `<div class="n"><div class="h">${n.app ? `<i style="--c:${n.c || "#b0b8c1"}">${ic(n.g || BELL, "#fff", 22)}</i>` : `<img src="${ICON}">`}<b>${n.app || "PinTodo"}</b><span>· ${n.when || "지금"}</span></div>
     <div class="t">${n.title}</div><div class="d">${n.memo}</div>
-    ${n.open ? `<div class="a"><span class="p">완료</span><span>10분 뒤</span><span>미루기…</span></div>` : ""}</div>`;
+    ${n.open ? `<div class="a"><span class="p">완료</span><span class="${n.hit ? "hit" : ""}">10분 뒤</span><span>미루기…</span></div>` : ""}</div>`;
 }
 const CAL = '<rect x="4" y="6" width="16" height="14" rx="2"/><path d="M4 10.5h16M8.5 3.5v4M15.5 3.5v4"/>';
-const shot = (name, up) => `<div class="shot"><img src="shots/${name}.png" style="margin-top:${-up}px"></div><div class="fade"></div>`;
+// 실제 화면: up = 위에서 잘라낼 높이. h를 주면 그 높이까지만 보여 주고 아래는 흰 바탕(시트처럼 화면 아래 모서리가 보이면 안 될 때)
+const shot = (name, up, h) => `<div class="shot" style="${h ? "background:#fff" : ""}"><div style="${h ? `height:${h}px;overflow:hidden` : ""}"><img src="shots/${name}.png" style="margin-top:${-up}px"></div></div><div class="fade"></div>`;
 const page = (body, cls = "") => (i, total) => `<div class="post ${cls}"><div class="meta"><img src="${ICON}">PinTodo<span>${i} / ${total}</span></div>${body}</div>`;
 // 마지막 장(받기)은 모든 게시물이 같음
 const END = page(`<div class="end"><img src="${ICON}">
@@ -176,6 +191,30 @@ const posts = {
       <div class="sub">할 일마다 따로 정해요.</div>
       <div class="opt" style="margin-top:64px"><div><b>알림창에 고정</b><span>밀어서 지워도 다시 나타나요</span></div><i></i></div>
       <div class="list2" style="margin-top:56px">${[["켜면", "밀어서 지워도 다시 나타나요", "p"], ["끄면", "밀어서 지우면 이번엔 숨겨요"]].map(([c, t, p]) => `<div style="height:116px"><span class="chip ${p || ""}" style="width:150px">${c}</span>${t}</div>`).join("")}</div>`),
+    END,
+  ],
+  // 3번 게시물: 미루기. 1장 관심 끌기('나중에'가 '안 함'이 되지 않게) → 2 알림에서 10분 뒤 → 3 미루기 시트(실제 화면) → 4 선택지 고르기 → 5 위젯(실제 화면) → 6 받기
+  "03-snooze": [
+    page(`<h1>‘나중에 해야지’가
+<em>‘안 함’이 되지 않게</em></h1>
+      <div class="sub">미뤄 두면 그 시간에 <b>다시 상단바에 떠요.</b></div>
+      <div class="big"><div class="on">10분 뒤<span>오늘 오후 3:25</span></div><div>1시간 뒤<span>오늘 오후 4:15</span></div><div>내일 아침<span>내일 오전 9:00</span></div></div>`, "amber"),
+    page(`<h1>알림에서 바로
+<em>10분 뒤로</em></h1>
+      <div class="sub">앱을 열지 않아도 버튼 한 번이면 돼요.</div>
+      <div style="margin-top:44px;zoom:1.2507;width:710px">${noti({ title: "엄마한테 전화하기", memo: "완료할 때까지", open: true, hit: true })}</div>
+      <div class="list2" style="margin-top:56px">${[["누르면", "알림이 잠깐 사라져요"], ["10분 뒤", "소리와 함께 다시 떠요", "p"]].map(([c, t, p]) => `<div style="height:116px"><span class="chip ${p || ""}" style="width:190px">${c}</span>${t}</div>`).join("")}</div>`),
+    page(`<h1>더 길게 미루려면
+<em>‘미루기…’</em></h1>
+      <div class="sub">1시간 뒤, 내일 아침, 아니면 원하는 시간으로.</div>${shot("snooze", 762, 650)}`),
+    page(`<h1>미루는 시간도
+<em>내가 정해요</em></h1>
+      <div class="sub">설정에서 자주 쓰는 시간만 골라 두세요.</div>
+      <div class="opts"><span class="on">10분</span><span>30분</span><span class="on">1시간</span><span>3시간</span><span>저녁 6시</span><span class="on">내일 아침 9시</span></div>
+      <div class="list2" style="margin-top:64px">${[["알림 버튼", "‘10분 뒤’ 자리도 바꿀 수 있어요"], ["직접 고르기", "날짜와 시각을 정해서 미뤄요"]].map(([c, t]) => `<div style="height:116px"><span class="chip" style="width:220px">${c}</span>${t}</div>`).join("")}</div>`),
+    page(`<h1>위젯에서도
+<em>바로 미뤄요</em></h1>
+      <div class="sub">할 일 옆의 주황색 알람 버튼을 누르면 돼요.</div>${shot("widget", 150)}`),
     END,
   ],
 };
