@@ -28,3 +28,18 @@
 | `12-work` (6장) | 직장인 쓰임새: 메일 보내야지 하고 퇴근 → 빠른 추가 → 시간에 맞춰 뜸 → 알림 없이 목록에만 → 내일 아침으로 미루기 → 받기. 예시는 `seed_work.py`, 빠른 추가 화면(`shots/quickadd.png`)은 `adb shell "am start -n com.pintodo/.ui.QuickAddActivity -a android.intent.action.SEND -t text/plain --es android.intent.extra.TEXT '3시 회의 자료 출력'"`로 열어 시트 부분만 자름 |
 
 첫 장 바탕색은 게시물마다 다르게(1 파랑, 2 어두운 남색, 3 노랑, 4 초록, 5 보라, 6 산호색, 7 흰색, 8 분홍, 9 청록, 10 주황, 11 하늘색, 12 연두) — 프로필 격자에서 구분되도록. 마지막 장(받기)은 `END` 하나를 모든 게시물이 같이 씀.
+
+## 릴스 영상
+`store/insta/reel-이름.mp4`(1080×1920, 30fps, 소리 없음 — 음악은 인스타에서 고름)와 설명 `reel-이름-caption.txt`.
+
+| 이름 | 길이 | 구성 |
+|---|---|---|
+| `intro` | 30.5초 | 소개: 관심 끌기(알림을 밀어 지움) → 공감(말풍선 세 개, "기억력 탓이 아니에요") → 해결(밀어도 다시 뜸, 완료를 눌러야 사라짐) → 실제 화면 세 개(한 장면 3.4초씩) → 광고·로그인 없음 → 받기 |
+| `day` | 27.8초 | 같은 하루, 다른 결과: 영양제 알림 — 보통 알림은 오전 9시에 밀고 밤 11시 40분에야 생각남 / PinTodo는 밀어도 다시 뜨고 오후 1시 20분에도 그대로 있어서 먹고 완료 → "의지가 아니라 알림이 문제였어요" → 받기 |
+
+- 장면·문구·시각은 `reel.html`의 `reels`에 있음(영상마다 장면 시작 시각을 맨 위 상수로 둠). 새 영상은 `reels`에 항목을 추가
+- 모든 움직임은 CSS 애니메이션이고, `render_reel.py`가 시각을 직접 넣어 한 프레임씩 찍은 뒤 묶음. 한 프레임을 6번 나눠 찍어 평균을 내서(`SUB`) 움직이는 부분에 잔상(모션 블러)이 생김
+- 글자는 위 250px·아래 420px(릴스 화면의 계정·설명·버튼 자리)을 피해서 둠. 첫 프레임이 미리보기로 쓰이므로 0초에 제목이 이미 보이게 함
+- 장면 전환은 새 장면이 아래에서 올라와 덮는 방식(겹쳐서 흐려지게 하면 글자끼리 겹쳐 보임)
+- 준비(한 번): `python -m venv venv && venv/Scripts/python -m pip install playwright imageio-ffmpeg` (브라우저는 이미 있는 Chrome·Playwright Chromium을 씀)
+- 렌더링: `python store/insta-src/render_reel.py intro` (영상 하나에 7~9분). 확인만 할 때는 `python store/insta-src/render_reel.py intro 2.1,9.5,20` 처럼 시각(초)을 주면 그 프레임만 `work/reel/`에 PNG로
