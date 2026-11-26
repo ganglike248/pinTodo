@@ -132,6 +132,12 @@ h1 em { font-style: normal; color: var(--blue); }
 .struck div { width: fit-content; font-size: 150px; font-weight: 800; line-height: 1.22; letter-spacing: -7px; color: #c9cfd6; text-decoration: line-through; text-decoration-thickness: 10px; text-decoration-color: var(--ink); }
 .no > div > b { flex: none; width: 290px; display: flex; align-items: center; gap: 16px; color: var(--ink); }
 .opt img { flex: none; width: 84px; height: 84px; border-radius: 22px; margin-right: 30px; }
+/* 8번 게시물: 기록·되돌리기. 첫 장은 분홍 바탕 + 완료된 할 일 카드(체크를 다시 누르는 순간) */
+.post.rose { background: #d93d74; }
+.opt.done b { color: var(--mute); text-decoration: line-through; }
+.opt em.fill { background: var(--blue); }
+.opt em.hit { box-shadow: 0 0 0 12px rgba(49,130,246,.2); }
+.back { margin-top: 44px; display: flex; align-items: center; gap: 20px; font-size: 38px; font-weight: 600; letter-spacing: -1px; }
 /* 마지막 장 */
 .end { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; text-align: center; }
 .end > img { margin-top: 290px; width: 136px; height: 136px; border-radius: 36px; border: 4px solid rgba(255,255,255,.9); }
@@ -363,6 +369,26 @@ const posts = {
 광고나 결제를 넣을 계획이 없어요.</div>
       <div class="opt" style="margin-top:72px"><img src="${ICON}"><div><b>PinTodo</b><span>모든 기능을 그냥 쓰면 돼요</span></div></div>
       <div class="list2" style="margin-top:56px">${[["앞으로도", "광고와 결제 없이"], ["불편한 점은", "앱의 ‘의견 보내기’로"], ["도움이 됐다면", "별점 한 번 부탁드려요"]].map(([c, t]) => `<div style="height:116px"><span class="chip" style="width:250px">${c}</span>${t}</div>`).join("")}</div>`),
+    END,
+  ],
+  // 8번 게시물: 기록·되돌리기. 1장 관심 끌기(실수로 완료) → 2 기록 탭의 이번 주 통계(실제 화면) → 3 날짜별 목록·검색(실제 화면) → 4 되돌리기·지우기 → 5 받기
+  "08-history": [
+    page(`<h1>실수로 완료를
+<em>눌러 버렸다면?</em></h1>
+      <div class="sub">기록 탭에서 <b>언제든 되돌릴 수 있어요.</b></div>
+      <div class="opt done" style="margin-top:150px;zoom:1.15;width:772px"><em class="fill hit">${ic(CHECK, "#fff", 44, 3)}</em><div><b>택배 반품 신청</b><span>오후 3:10 완료</span></div></div>
+      <div class="back">${ic('<path d="M9 14l-4-4 4-4"/><path d="M5 10h9a5 5 0 0 1 0 10h-3"/>', "#fff", 52, 2.4)}체크를 다시 누르면 할 일 목록으로 돌아와요</div>`, "blue rose"),
+    page(`<h1>끝낸 일은
+<em>기록에 모여요</em></h1>
+      <div class="sub">이번 주에 몇 개 끝냈는지 요일별로 보여요.</div>${shot("history", 20)}`),
+    page(`<h1>언제 끝냈는지도
+<em>날짜별로</em></h1>
+      <div class="sub">제목이나 메모로 찾아볼 수도 있어요.</div>${shot("history", 560)}`),
+    page(`<h1>체크를 다시 누르면
+<em>되돌아와요</em></h1>
+      <div class="sub">잘못 완료한 할 일이 목록으로 돌아가요.</div>
+      <div class="opt done" style="margin-top:64px"><em class="fill hit">${ic(CHECK, "#fff", 44, 3)}</em><div><b>택배 반품 신청</b><span>오후 3:10 완료</span></div></div>
+      <div class="list2" style="margin-top:56px">${[["되돌리기", "체크를 한 번 더 눌러요", "p"], ["지우기", "× 를 누르면 기록에서 빠져요"]].map(([c, t, p]) => `<div style="height:116px"><span class="chip ${p || ""}" style="width:190px">${c}</span>${t}</div>`).join("")}</div>`),
     END,
   ],
 };
