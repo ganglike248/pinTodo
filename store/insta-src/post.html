@@ -107,6 +107,25 @@ h1 em { font-style: normal; color: var(--blue); }
 .week .now i { background: #fff; color: #6548f0; }
 .week .yet i { background: none; border: 3px solid rgba(255,255,255,.3); }
 .opt em { flex: none; margin-right: 32px; width: 76px; height: 76px; border-radius: 50%; background: #e8f3ff; display: flex; align-items: center; justify-content: center; }
+/* 6번 게시물: 체크리스트·색 라벨. 첫 장은 산호색 바탕 + 크게 그린 체크리스트 */
+.post.coral { background: #e8483f; }
+.cl { margin-top: 14px; display: flex; flex-direction: column; gap: 12px; font-size: 30px; font-weight: 500; letter-spacing: -.6px; }
+.cl div, .bigcl .it { display: flex; align-items: center; }
+.cl u, .bigcl u { flex: none; text-decoration: none; display: flex; align-items: center; justify-content: center; border: 3px solid #c5ccd4; }
+.cl u { width: 36px; height: 36px; border-radius: 10px; margin-right: 16px; }
+.cl + .d { margin-top: 14px; }
+.cl .d, .bigcl .d { color: var(--mute); text-decoration: line-through; }
+.cl .d u, .bigcl .d u { background: var(--blue); border-color: var(--blue); }
+.bigcl { margin-top: 96px; background: #fff; color: var(--ink); border-radius: 52px; padding: 52px 60px 56px; }
+.bigcl .hd { display: flex; align-items: baseline; font-size: 54px; font-weight: 700; letter-spacing: -1.6px; }
+.bigcl .hd span { margin-left: auto; font-size: 38px; color: var(--blue); letter-spacing: -.5px; }
+.bigcl .bar { margin: 26px 0 30px; height: 10px; border-radius: 5px; background: #e5e8eb; }
+.bigcl .bar i { display: block; width: 40%; height: 100%; border-radius: 5px; background: var(--blue); }
+.bigcl .it { height: 84px; font-size: 44px; font-weight: 600; letter-spacing: -1.2px; }
+.bigcl u { width: 52px; height: 52px; border-radius: 14px; margin-right: 26px; }
+.dot { flex: none; width: 30px; height: 30px; border-radius: 50%; }
+.dots { display: flex; justify-content: space-between; margin-top: 72px; }
+.dots i { width: 108px; height: 108px; border-radius: 50%; }
 /* 마지막 장 */
 .end { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; text-align: center; }
 .end > img { margin-top: 290px; width: 136px; height: 136px; border-radius: 36px; border: 4px solid rgba(255,255,255,.9); }
@@ -131,13 +150,14 @@ const STATUS = `<svg width="92" height="28" viewBox="0 0 92 28" fill="#191f28"><
 // 알림 카드: app이 있으면 다른 앱(회색 종), 없으면 PinTodo
 function noti(n) {
   return `<div class="n"><div class="h">${n.app ? `<i style="--c:${n.c || "#b0b8c1"}">${ic(n.g || BELL, "#fff", 22)}</i>` : `<img src="${ICON}">`}<b>${n.app || "PinTodo"}</b><span>· ${n.when || "지금"}</span></div>
-    <div class="t">${n.title}</div><div class="d">${n.memo}</div>
+    <div class="t">${n.title}</div>${n.items ? `<div class="cl">${n.items.map(([t, d]) => `<div class="${d ? "d" : ""}"><u>${d ? ic(CHECK, "#fff", 26, 3.4) : ""}</u>${t}</div>`).join("")}</div>` : ""}${n.memo ? `<div class="d">${n.memo}</div>` : ""}
     ${n.open ? `<div class="a"><span class="p">완료</span><span class="${n.hit ? "hit" : ""}">10분 뒤</span><span>미루기…</span></div>` : ""}</div>`;
 }
 const CAL = '<rect x="4" y="6" width="16" height="14" rx="2"/><path d="M4 10.5h16M8.5 3.5v4M15.5 3.5v4"/>';
 // 실제 화면: up = 위에서 잘라낼 높이. h를 주면 그 높이까지만 보여 주고 아래는 흰 바탕(시트처럼 화면 아래 모서리가 보이면 안 될 때)
 const shot = (name, up, h) => `<div class="shot" style="${h ? "background:#fff" : ""}"><div style="${h ? `height:${h}px;overflow:hidden` : ""}"><img src="shots/${name}.png" style="margin-top:${-up}px"></div></div><div class="fade"></div>`;
 const page = (body, cls = "") => (i, total) => `<div class="post ${cls}"><div class="meta"><img src="${ICON}">PinTodo<span>${i} / ${total}</span></div>${body}</div>`;
+const SHOP = [["우유", 1], ["계란", 1], ["두부", 0], ["대파", 0], ["키친타월", 0]];
 // 마지막 장(받기)은 모든 게시물이 같음
 const END = page(`<div class="end"><img src="${ICON}">
       <h1>끝낼 때까지\n사라지지 않는 할 일</h1>
@@ -283,6 +303,35 @@ const posts = {
       <div class="sub">‘다시 울리기’를 켠 할 일만요.</div>
       <div style="margin-top:64px;zoom:1.2507;width:710px">${noti({ title: "영양제 먹기", memo: "매일 오후 9:00", when: "1시간 전" })}</div>
       <div class="list2" style="margin-top:56px">${[["다시 울리기", "끝낼 때까지 1시간마다", "p"], ["밤에는", "쉬게 할 수도 있어요"]].map(([c, t, p]) => `<div style="height:116px"><span class="chip ${p || ""}" style="width:220px">${c}</span>${t}</div>`).join("")}</div>`),
+    END,
+  ],
+  // 6번 게시물: 체크리스트·색 라벨. 1장 관심 끌기(장 보러 가서 빼먹음) → 2 앱에서 체크리스트 작성(실제 화면) → 3 알림을 펼치면 목록 → 4 앱 목록의 진행 막대(실제 화면) → 5 색 라벨 → 6 위젯(실제 화면) → 7 받기
+  "06-checklist": [
+    page(`<h1>장 보러 가서 꼭
+<em>하나씩 빼먹죠?</em></h1>
+      <div class="sub">살 것을 적어 두면 <b>상단바에서 바로 보여요.</b></div>
+      <div class="bigcl"><div class="hd">장보기<span>2 / 5</span></div><div class="bar"><i></i></div>
+        ${SHOP.map(([t, d]) => `<div class="it ${d ? "d" : ""}"><u>${d ? ic(CHECK, "#fff", 38, 3.2) : ""}</u>${t}</div>`).join("")}</div>`, "blue coral"),
+    page(`<h1>할 일 하나에
+<em>목록을 붙여요</em></h1>
+      <div class="sub">살 것, 챙길 것을 항목으로 적어 두세요.</div>${shot("checklist", 100)}`),
+    page(`<h1>알림을 펼치면
+<em>목록이 보여요</em></h1>
+      <div class="sub">마트에서 앱을 찾을 필요 없이 상단바만 내려요.</div>
+      <div class="phone"><div class="sb">9:41${STATUS}</div><div class="list">
+        ${noti({ title: "장보기", items: SHOP, memo: "완료할 때까지", open: true })}
+        ${noti({ title: "영양제 먹기", memo: "매일 오후 9:00", when: "1시간 전" })}</div></div><div class="fade"></div>`),
+    page(`<h1>앱 목록에서는
+<em>진행 막대로</em></h1>
+      <div class="sub">눌러서 펼치면 항목이 그 자리에 보여요.</div>${shot("list", 150)}`),
+    page(`<h1>색 라벨로
+<em>한눈에 구분</em></h1>
+      <div class="sub">목록, 알림, 위젯에 같은 색으로 보여요.</div>
+      <div class="dots">${["#f04452", "#ff8a00", "#f5b800", "#15b86a", "#3182f6", "#8b5cf6"].map(c => `<i style="background:${c}"></i>`).join("")}</div>
+      <div class="list2" style="margin-top:72px">${[["#3182f6", "택배 반품 신청"], ["#15b86a", "장보기"], ["#f5b800", "엄마한테 전화하기"], ["#8b5cf6", "영양제 먹기"]].map(([c, t]) => `<div style="height:116px;gap:28px"><i class="dot" style="background:${c}"></i>${t}</div>`).join("")}</div>`),
+    page(`<h1>위젯에서도
+<em>어디까지 했는지</em></h1>
+      <div class="sub">색 점과 체크리스트 진행(2/5)이 같이 보여요.</div>${shot("widget", 150)}`),
     END,
   ],
 };
