@@ -172,6 +172,12 @@ h1 em { font-style: normal; color: var(--blue); }
 .count .nm { display: flex; align-items: center; gap: 20px; font-size: 46px; font-weight: 700; letter-spacing: -1.3px; }
 .count .left { margin-top: 22px; font-size: 136px; font-weight: 800; letter-spacing: -6px; line-height: 1.1; color: var(--blue); }
 .count .by { margin-top: 10px; font-size: 36px; font-weight: 500; letter-spacing: -.8px; color: var(--body); }
+/* 12번 게시물: 직장인. 첫 장은 연두 바탕(검은 글씨) + 자잘한 일 세 줄 */
+.post.lime { background: #c5ec6a; }
+.lime .meta span { color: rgba(25,31,40,.5); }
+.lime h1 { color: rgba(25,31,40,.5); }
+.lime h1 em { color: var(--ink); }
+.lime .sub { color: rgba(25,31,40,.75); }
 /* 마지막 장 */
 .end { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; text-align: center; }
 .end > img { margin-top: 290px; width: 136px; height: 136px; border-radius: 36px; border: 4px solid rgba(255,255,255,.9); }
@@ -496,6 +502,26 @@ const posts = {
     page(`<h1>수업 중에는
 <em>무음으로</em></h1>
       <div class="sub">소리 없이 상단바에만 떠요.</div>${shot("alert-silent", 500, 1000)}`),
+    END,
+  ],
+  // 12번 게시물: 직장인 쓰임새. 1장 관심 끌기(메일 보내야지 하고 퇴근) → 2 빠른 추가 → 3 시간에 맞춰 뜸 → 4 알림 없이 목록에만 → 5 내일 아침으로 미루기(2~5는 실제 화면) → 6 받기
+  "12-work": [
+    page(`<h1>‘이따 메일 보내야지’
+<em>하고 퇴근했죠?</em></h1>
+      <div class="sub">일하다 생각난 건 <b>그 자리에서 적어 두세요.</b></div>
+      <div class="big"><div class="on">거래처 메일 회신<span>아직 안 함</span></div><div>회의 자료 출력<span>오후 3:00</span></div><div>경비 정산 올리기<span>오늘까지</span></div></div>`, "lime"),
+    page(`<h1>생각난 그 자리에서
+<em>한 줄로</em></h1>
+      <div class="sub">상단바에서 눌러 바로 적어요. 앱을 열 필요가 없어요.</div>${shot("quickadd", 0, 668)}`),
+    page(`<h1>‘3시 회의 자료’는
+<em>3시에 떠요</em></h1>
+      <div class="sub">그 전에는 ‘예정’에서 조용히 기다려요.</div>${shot("work-list", 150)}`),
+    page(`<h1>알림이 필요 없는 일은
+<em>목록에만</em></h1>
+      <div class="sub">‘알림 없이’로 적으면 상단바에 뜨지 않아요.</div>${shot("work-list", 700)}`),
+    page(`<h1>오늘 못 끝낸 일은
+<em>내일 아침으로</em></h1>
+      <div class="sub">미루기에서 ‘내일 아침 9시’를 고르면 돼요.</div>${shot("snooze", 762, 650)}`),
     END,
   ],
 };
