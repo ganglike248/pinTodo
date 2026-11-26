@@ -89,6 +89,15 @@ h1 em { font-style: normal; color: var(--blue); }
 .opts { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 64px; }
 .opts span { flex: 0 0 calc((100% - 32px) / 3); text-align: center; line-height: 108px; border-radius: 54px; font-size: 36px; font-weight: 700; letter-spacing: -.9px; background: #fff; color: var(--mute); }
 .opts span.on { background: var(--blue); color: #fff; }
+/* 4번 게시물: 첫 장은 초록 바탕 + 크게 그린 입력창과 읽어 낸 일정 */
+.post.green { background: #0c9a6a; }
+.type { margin-top: 120px; height: 164px; border-radius: 44px; background: #fff; color: var(--ink); display: flex; align-items: center; padding: 0 52px; font-size: 52px; font-weight: 600; letter-spacing: -1.6px; }
+.type i { width: 5px; height: 64px; margin-left: 8px; border-radius: 3px; background: var(--blue); }
+.down { display: block; margin: 36px auto; }
+.res { display: flex; gap: 20px; }
+.res div { flex: 1; border-radius: 40px; background: rgba(255,255,255,.16); padding: 34px 40px 38px; font-size: 44px; font-weight: 700; letter-spacing: -1.3px; }
+.res div span { display: block; margin-bottom: 8px; font-size: 28px; font-weight: 600; letter-spacing: -.5px; color: rgba(255,255,255,.7); }
+.ex > div b { margin-left: auto; }
 /* 마지막 장 */
 .end { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; text-align: center; }
 .end > img { margin-top: 290px; width: 136px; height: 136px; border-radius: 36px; border: 4px solid rgba(255,255,255,.9); }
@@ -215,6 +224,26 @@ const posts = {
     page(`<h1>위젯에서도
 <em>바로 미뤄요</em></h1>
       <div class="sub">할 일 옆의 주황색 알람 버튼을 누르면 돼요.</div>${shot("widget", 150)}`),
+    END,
+  ],
+  // 4번 게시물: 적기(날짜 인식·빠른 추가). 1장 관심 끌기(날짜 고르기 귀찮음) → 2 실제 새 할 일 화면 → 3 알아듣는 말 → 4 어디서든 추가 → 5 받기
+  "04-write": [
+    page(`<h1>날짜 고르기 귀찮아서
+<em>안 적은 적 있죠?</em></h1>
+      <div class="sub">한 줄만 쓰세요. <b>시간은 알아서 맞춰져요.</b></div>
+      <div class="type">내일 오후 3시 약국 가기<i></i></div>
+      ${ic('<path d="M12 5v14M6 13l6 6 6-6"/>', "rgba(255,255,255,.7)", 64, 2.4).replace("<svg", '<svg class="down"')}
+      <div class="res"><div><span>시작</span>내일 오후 3:00</div><div><span>종료</span>완료할 때까지</div></div>`, "blue green"),
+    page(`<h1>쓰는 대로
+<em>일정이 돼요</em></h1>
+      <div class="sub">읽어 낸 날짜를 바로 알려 주고, 되돌릴 수도 있어요.</div>${shot("newtodo", 90)}`),
+    page(`<h1>이런 말도
+<em>알아들어요</em></h1>
+      <div class="list2 ex" style="margin-top:96px">${[["금요일까지 과제", "금요일 자정까지"], ["30분 뒤 전화", "30분 뒤에 시작"], ["다음 주 월요일 2시", "월요일 오후 2:00"], ["2시~4시 스터디", "오후 2:00 ~ 4:00"]].map(([t, r]) => `<div style="height:150px"><div>${t}</div><b>${r}</b></div>`).join("")}</div>`),
+    page(`<h1>생각난 그 순간
+<em>어디서든 추가</em></h1>
+      <div class="sub">앱을 찾아 열 필요가 없어요.</div>
+      <div class="list2" style="margin-top:64px">${[["상단바", "빠른 설정 버튼으로"], ["홈 화면", "위젯의 + 버튼으로"], ["앱 아이콘", "길게 눌러서 바로"], ["다른 앱", "공유하기로 보내서"]].map(([c, t]) => `<div style="height:130px"><span class="chip" style="width:210px">${c}</span>${t}</div>`).join("")}</div>`),
     END,
   ],
 };
