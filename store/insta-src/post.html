@@ -162,6 +162,16 @@ h1 em { font-style: normal; color: var(--blue); }
 .steps { display: flex; flex-direction: column; gap: 20px; margin-top: 104px; }
 .steps div { height: 150px; border-radius: 44px; background: rgba(255,255,255,.16); display: flex; align-items: center; gap: 30px; padding: 0 40px; font-size: 48px; font-weight: 700; letter-spacing: -1.4px; }
 .steps i { flex: none; width: 76px; height: 76px; border-radius: 50%; background: #fff; color: #e2570f; font-style: normal; font-size: 40px; font-weight: 800; letter-spacing: 0; display: flex; align-items: center; justify-content: center; }
+/* 11번 게시물: 학생(과제·시험). 첫 장은 하늘색 바탕(검은 글씨) + 남은 시간을 크게 */
+.post.sky { background: #cfe2ff; }
+.sky .meta span { color: rgba(25,31,40,.5); }
+.sky h1 { color: rgba(25,31,40,.5); }
+.sky h1 em { color: var(--ink); }
+.sky .sub { color: rgba(25,31,40,.75); }
+.count { margin-top: 110px; background: #fff; border-radius: 52px; padding: 56px 60px 60px; }
+.count .nm { display: flex; align-items: center; gap: 20px; font-size: 46px; font-weight: 700; letter-spacing: -1.3px; }
+.count .left { margin-top: 22px; font-size: 136px; font-weight: 800; letter-spacing: -6px; line-height: 1.1; color: var(--blue); }
+.count .by { margin-top: 10px; font-size: 36px; font-weight: 500; letter-spacing: -.8px; color: var(--body); }
 /* 마지막 장 */
 .end { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; text-align: center; }
 .end > img { margin-top: 290px; width: 136px; height: 136px; border-radius: 36px; border: 4px solid rgba(255,255,255,.9); }
@@ -198,9 +208,9 @@ const SHOP = [["우유", 1], ["계란", 1], ["두부", 0], ["대파", 0], ["키�
 const END = page(`<div class="end"><img src="${ICON}">
       <h1>끝낼 때까지\n사라지지 않는 할 일</h1>
       <div class="spec"><span>광고 없음</span><span>로그인 없음</span><span>전부 무료</span></div>
-      <div class="more">체크리스트 · 색 라벨 · 스마트워치 알림도 있어요</div>
+      <div class="more">체크리스트 · 색 라벨 · 스마트워치 알림</div>
       <div class="search">${ic(FIND, "#8b95a1", 44, 2.2)}PinTodo<span>Google Play</span></div>
-      <div class="os">Google Play에서 검색해 보세요 · 안드로이드용</div></div>`, "blue");
+      <div class="os">Google Play에서 검색해 보세요</div></div>`, "blue");
 const posts = {
   // 1번 게시물: 앱 소개. 1장 관심 끌기(+설명 한 줄에 답) → 2 핵심(지워도 다시 뜸) → 3 알림에서 바로 → 4 날짜 인식 → 5 반복 → 6 위젯(4~6은 실제 화면) → 7 이런 분께 → 8 받기
   "01-intro": [
@@ -464,6 +474,28 @@ const posts = {
       <div class="sub">오늘은 사라지고, 내일 그 시간에 다시 떠요.</div>
       <div style="margin-top:44px;zoom:1.2507;width:710px">${noti({ title: "영양제 먹기", memo: "매일 오후 9:00", open: true })}</div>
       <div class="list2" style="margin-top:48px">${[["안 먹었으면", "상단바에 그대로 남아요"], ["먹었으면", "완료를 눌러요", "p"]].map(([c, t, p]) => `<div style="height:108px"><span class="chip ${p || ""}" style="width:230px">${c}</span>${t}</div>`).join("")}</div>`),
+    END,
+  ],
+  // 11번 게시물: 학생(과제·시험) 쓰임새. 1장 관심 끌기(마감 당일에 생각남) → 2 '금요일까지'로 적기 → 3 남은 시간(2·3은 실제 화면) → 4 시험 범위 체크리스트 → 5 수업 중엔 무음(실제 화면) → 6 받기
+  "11-student": [
+    page(`<h1>과제 마감,
+<em>또 당일에 생각났죠?</em></h1>
+      <div class="sub">적어 두면 <b>마감까지 상단바에</b> 떠 있어요.</div>
+      <div class="count"><div class="nm"><i class="dot" style="background:#f04452"></i>자료구조 과제 제출</div><div class="left">23시간 남음</div><div class="by">오늘 자정까지</div></div>`, "sky"),
+    page(`<h1>‘금요일까지 과제’
+<em>이렇게만 쓰세요</em></h1>
+      <div class="sub">마감 시간이 알아서 맞춰져요.</div>${shot("student-new", 100)}`),
+    page(`<h1>남은 시간이
+<em>계속 보여요</em></h1>
+      <div class="sub">마감 전까지 상단바와 목록에 그대로 있어요.</div>${shot("student-list", 150)}`),
+    page(`<h1>시험 범위는
+<em>체크리스트로</em></h1>
+      <div class="sub">단원별로 나눠 적고 하나씩 끝내요.</div>
+      <div class="bigcl" style="margin-top:64px"><div class="hd">중간고사 범위 정리<span>1 / 3</span></div><div class="bar"><i style="width:33.3%"></i></div>
+        ${[["3장 스택·큐", 1], ["4장 트리", 0], ["5장 그래프", 0]].map(([t, d]) => `<div class="it ${d ? "d" : ""}"><u>${d ? ic(CHECK, "#fff", 38, 3.2) : ""}</u>${t}</div>`).join("")}</div>`),
+    page(`<h1>수업 중에는
+<em>무음으로</em></h1>
+      <div class="sub">소리 없이 상단바에만 떠요.</div>${shot("alert-silent", 500, 1000)}`),
     END,
   ],
 };
