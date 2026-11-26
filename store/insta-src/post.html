@@ -138,6 +138,25 @@ h1 em { font-style: normal; color: var(--blue); }
 .opt em.fill { background: var(--blue); }
 .opt em.hit { box-shadow: 0 0 0 12px rgba(49,130,246,.2); }
 .back { margin-top: 44px; display: flex; align-items: center; gap: 20px; font-size: 38px; font-weight: 600; letter-spacing: -1px; }
+/* 9번 게시물: 어디서든 보임(상단바·위젯·워치·잠금화면). 첫 장은 청록 바탕 + 네 칸 */
+.post.teal { background: #0b8591; }
+.places { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 104px; }
+.places div { height: 250px; border-radius: 44px; background: rgba(255,255,255,.15); padding: 38px 42px; display: flex; flex-direction: column; justify-content: space-between; font-size: 46px; font-weight: 700; letter-spacing: -1.3px; }
+/* 워치(직접 그림): 줄 + 둥근 몸체 + 검은 화면 */
+.watch { position: absolute; left: 50%; top: 600px; width: 640px; height: 900px; transform: translateX(-50%); }
+.watch .band { position: absolute; left: 150px; top: -40px; width: 340px; height: 1000px; border-radius: 60px; background: #c9cfd8; }
+.watch .case { position: absolute; left: 0; top: 60px; width: 640px; height: 640px; border-radius: 50%; background: #0f1319; border: 16px solid #39414d; color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.watch .app { display: flex; align-items: center; gap: 12px; font-size: 26px; font-weight: 600; color: #aab2bd; }
+.watch .app img { width: 40px; height: 40px; border-radius: 50%; }
+.watch .tt { margin-top: 18px; font-size: 52px; font-weight: 700; letter-spacing: -1.5px; }
+.watch .mm { margin-top: 6px; font-size: 30px; font-weight: 500; color: #aab2bd; }
+.watch .bt { margin-top: 30px; width: 360px; display: flex; flex-direction: column; gap: 14px; }
+.watch .bt span { text-align: center; line-height: 84px; border-radius: 42px; font-size: 34px; font-weight: 700; background: #262c36; }
+.watch .bt span.p { background: var(--blue); }
+/* 잠금화면(직접 그림) */
+.lock { padding: 70px 24px 0; text-align: center; color: var(--ink); }
+.lock .tm { margin: 26px 0 60px; font-size: 170px; font-weight: 300; letter-spacing: -6px; line-height: 1; }
+.lock .n { text-align: left; }
 /* 마지막 장 */
 .end { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; text-align: center; }
 .end > img { margin-top: 290px; width: 136px; height: 136px; border-radius: 36px; border: 4px solid rgba(255,255,255,.9); }
@@ -389,6 +408,35 @@ const posts = {
       <div class="sub">잘못 완료한 할 일이 목록으로 돌아가요.</div>
       <div class="opt done" style="margin-top:64px"><em class="fill hit">${ic(CHECK, "#fff", 44, 3)}</em><div><b>택배 반품 신청</b><span>오후 3:10 완료</span></div></div>
       <div class="list2" style="margin-top:56px">${[["되돌리기", "체크를 한 번 더 눌러요", "p"], ["지우기", "× 를 누르면 기록에서 빠져요"]].map(([c, t, p]) => `<div style="height:116px"><span class="chip ${p || ""}" style="width:190px">${c}</span>${t}</div>`).join("")}</div>`),
+    END,
+  ],
+  // 9번 게시물: 어디서든 보임. 1장 관심 끌기(깔아 놓고 안 여는 앱) → 2 상단바 → 3 위젯(실제 화면) → 4 스마트워치(그림) → 5 잠금화면(그림) → 6 받기
+  "09-everywhere": [
+    page(`<h1>할 일 앱,
+<em>깔아 놓고 안 열죠?</em></h1>
+      <div class="sub">그래서 <b>안 열어도 보이는 곳</b>에 뒀어요.</div>
+      <div class="places">${[[BELL, "상단바"], ['<rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/>', "홈 화면"], ['<circle cx="12" cy="12" r="5.5"/><path d="M9.5 6.8L10.3 3h3.4l.8 3.8M9.5 17.2l.8 3.8h3.4l.8-3.8"/>', "손목 위"], ['<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>', "잠금화면"]].map(([d, t]) => `<div>${ic(d, "#fff", 68, 2)}${t}</div>`).join("")}</div>`, "blue teal"),
+    page(`<h1>상단바를 내리면
+<em>거기 있어요</em></h1>
+      <div class="sub">하루에도 수십 번 내려 보는 곳이니까요.</div>
+      <div class="phone"><div class="sb">9:41${STATUS}</div><div class="list">
+        ${noti({ title: "택배 반품 신청", memo: "오늘 오후 11:59까지", open: true })}
+        ${noti({ title: "영양제 먹기", memo: "매일 오후 9:00", when: "1시간 전" })}
+        ${noti({ title: "엄마한테 전화하기", memo: "완료할 때까지", when: "3시간 전" })}</div></div><div class="fade"></div>`),
+    page(`<h1>홈 화면에는
+<em>위젯으로</em></h1>
+      <div class="sub">켜자마자 보이고, 완료와 미루기도 그 자리에서.</div>${shot("widget", 150)}`),
+    page(`<h1>손목에서도
+<em>완료 · 10분 뒤</em></h1>
+      <div class="sub">갤럭시 워치 같은 스마트워치로도 알림이 가요.</div>
+      <div class="watch"><div class="band"></div><div class="case">
+        <div class="app"><img src="${ICON}">PinTodo</div><div class="tt">영양제 먹기</div><div class="mm">매일 오후 9:00</div>
+        <div class="bt"><span class="p">완료</span><span>10분 뒤</span></div></div></div>`),
+    page(`<h1>잠금화면에서는
+<em>내용을 가려요</em></h1>
+      <div class="sub">원하면 설정에서 내용이 보이게 바꿀 수 있어요.</div>
+      <div class="phone"><div class="lock">${ic('<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>', "#4e5968", 48, 2.2)}<div class="tm">9:41</div>
+        ${noti({ title: "할 일 알림" })}</div></div><div class="fade"></div>`),
     END,
   ],
 };
