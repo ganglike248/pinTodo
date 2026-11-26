@@ -98,6 +98,15 @@ h1 em { font-style: normal; color: var(--blue); }
 .res div { flex: 1; border-radius: 40px; background: rgba(255,255,255,.16); padding: 34px 40px 38px; font-size: 44px; font-weight: 700; letter-spacing: -1.3px; }
 .res div span { display: block; margin-bottom: 8px; font-size: 28px; font-weight: 600; letter-spacing: -.5px; color: rgba(255,255,255,.7); }
 .ex > div b { margin-left: auto; }
+/* 5번 게시물: 첫 장은 보라 바탕 + 요일 동그라미(오늘만 물음표) */
+.post.violet { background: #6548f0; }
+.week { display: flex; justify-content: space-between; margin-top: 110px; }
+.week div { width: 108px; text-align: center; font-size: 28px; font-weight: 600; color: rgba(255,255,255,.7); }
+.week i { display: flex; align-items: center; justify-content: center; width: 108px; height: 108px; margin-bottom: 18px; border-radius: 50%; font-style: normal; font-size: 52px; font-weight: 800; background: rgba(255,255,255,.2); }
+.week .now { color: #fff; font-weight: 700; }
+.week .now i { background: #fff; color: #6548f0; }
+.week .yet i { background: none; border: 3px solid rgba(255,255,255,.3); }
+.opt em { flex: none; margin-right: 32px; width: 76px; height: 76px; border-radius: 50%; background: #e8f3ff; display: flex; align-items: center; justify-content: center; }
 /* 마지막 장 */
 .end { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; text-align: center; }
 .end > img { margin-top: 290px; width: 136px; height: 136px; border-radius: 36px; border: 4px solid rgba(255,255,255,.9); }
@@ -244,6 +253,36 @@ const posts = {
 <em>어디서든 추가</em></h1>
       <div class="sub">앱을 찾아 열 필요가 없어요.</div>
       <div class="list2" style="margin-top:64px">${[["상단바", "빠른 설정 버튼으로"], ["홈 화면", "위젯의 + 버튼으로"], ["앱 아이콘", "길게 눌러서 바로"], ["다른 앱", "공유하기로 보내서"]].map(([c, t]) => `<div style="height:130px"><span class="chip" style="width:210px">${c}</span>${t}</div>`).join("")}</div>`),
+    END,
+  ],
+  // 5번 게시물: 반복. 1장 관심 끌기(오늘 먹었나?) → 2 실제 반복 화면 → 3 주기 네 가지 → 4 반복 종료 → 5 완료하면 다음 회차에 다시 → 6 다시 울리기 → 7 받기
+  "05-repeat": [
+    page(`<h1>영양제, 오늘
+<em>먹었나 안 먹었나?</em></h1>
+      <div class="sub">먹을 때까지 상단바에 떠 있으면 <b>헷갈릴 일이 없어요.</b></div>
+      <div class="week">${["월", "화", "수"].map(d => `<div><i>${ic(CHECK, "#fff", 52, 3)}</i>${d}</div>`).join("")}<div class="now"><i>?</i>오늘</div>${["금", "토", "일"].map(d => `<div class="yet"><i></i>${d}</div>`).join("")}</div>
+      <div style="margin-top:64px;zoom:1.2507;width:710px">${noti({ title: "영양제 먹기", memo: "매일 오후 9:00" })}</div>`, "blue violet"),
+    page(`<h1>한 번 적어 두면
+<em>매일 그 시간에</em></h1>
+      <div class="sub">요일을 고르면 그때마다 상단바에 다시 떠요.</div>${shot("repeat", 110)}`),
+    page(`<h1>반복하는 주기는
+<em>네 가지</em></h1>
+      <div class="list2" style="margin-top:96px">${[["매주", "요일을 골라서, 평일만·주말만도"], ["격주", "2주에 한 번"], ["매월", "매달 25일처럼, 말일도 돼요"], ["며칠마다", "3일에 한 번처럼"]].map(([c, t]) => `<div style="height:140px"><span class="chip p" style="width:190px">${c}</span>${t}</div>`).join("")}</div>`),
+    page(`<h1>언제까지 할지도
+<em>정할 수 있어요</em></h1>
+      <div class="sub">끝나는 날이 지나면 더 뜨지 않아요.</div>
+      <div class="opts"><span class="on">계속</span><span>날짜까지</span><span>횟수</span></div>
+      <div class="list2" style="margin-top:64px">${[["날짜까지", "12월 31일까지만 반복"], ["횟수", "10번 하고 나면 끝"]].map(([c, t]) => `<div style="height:116px"><span class="chip" style="width:190px">${c}</span>${t}</div>`).join("")}</div>`),
+    page(`<h1>했으면 오늘은 끝,
+<em>내일 다시 떠요</em></h1>
+      <div class="sub">매번 새로 적을 필요가 없어요.</div>
+      <div class="opt" style="margin-top:64px"><em>${ic(CHECK, "#3182f6", 44, 3)}</em><div><b>영양제 먹기</b><span>오늘 완료 · 내일 오후 9:00 다시</span></div></div>
+      <div class="list2" style="margin-top:56px">${[["완료하면", "오늘 알림은 사라져요", "p"], ["다음 날", "그 시간에 다시 떠요"]].map(([c, t, p]) => `<div style="height:116px"><span class="chip ${p || ""}" style="width:190px">${c}</span>${t}</div>`).join("")}</div>`),
+    page(`<h1>계속 안 하면
+<em>다시 울려요</em></h1>
+      <div class="sub">‘다시 울리기’를 켠 할 일만요.</div>
+      <div style="margin-top:64px;zoom:1.2507;width:710px">${noti({ title: "영양제 먹기", memo: "매일 오후 9:00", when: "1시간 전" })}</div>
+      <div class="list2" style="margin-top:56px">${[["다시 울리기", "끝낼 때까지 1시간마다", "p"], ["밤에는", "쉬게 할 수도 있어요"]].map(([c, t, p]) => `<div style="height:116px"><span class="chip ${p || ""}" style="width:220px">${c}</span>${t}</div>`).join("")}</div>`),
     END,
   ],
 };
