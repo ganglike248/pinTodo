@@ -2,6 +2,7 @@
 
 `store/insta/이름/1.png…`(1080×1350, 피드 4:5)와 `caption.txt`(게시물 설명)를 만드는 소스.
 
+- 첫 장 왼쪽 위 로고 옆에 앱 버전(`post.html`의 `VERSION`)을 작게 표시. 버전을 올리면 `VERSION`을 `version.txt`와 같게 고치고 각 게시물의 1장만 다시 그림(`render.sh 이름 1`)
 - 문구·배치: `post.html`의 `posts`(게시물 이름 → 장 배열). 틀은 모든 장이 같음 — 위에 작은 PinTodo·쪽 번호, 제목(핵심 낱말만 파랑), 설명 한 줄, 그림 하나. 글자 크기는 26 / 38 / 84 세 단계만
 - 알림창 그림은 직접 그린 것(`noti`), 실제 앱 화면은 `shots/*.png` — 스토어 스크린샷(`store/screenshots/`)에서 폰 화면(700×1504)만 잘라 낸 것. 화면이 바뀌면 `shots-src`로 스토어 스크린샷을 다시 만든 뒤 `(190, 514, 890, 2018)`로 잘라 넣음
 - `shots/checklist.png`(장보기 편집 화면)·`list.png`(할 일 목록)는 에뮬레이터에서 직접 찍은 것: `Pixel_9`에 디버그 빌드 설치 → `shots-src/seed.py`로 예시 할 일을 넣고 → 목록에서 장보기를 눌러 `adb exec-out screencap` → 위 130px(상태 표시줄)을 자르고 너비 700으로 줄임. 키보드가 뜨면 `adb shell settings put secure show_ime_with_hard_keyboard 0`. 화면이 검게 찍히면 `adb shell input keyevent 224`(화면 켜기), 날짜가 어긋나면 `adb shell cmd alarm set-timezone Asia/Seoul`

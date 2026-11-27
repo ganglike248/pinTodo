@@ -15,6 +15,7 @@ body { font-family: P, sans-serif; word-break: keep-all; -webkit-font-smoothing:
 .post.blue { background: var(--deep); color: #fff; }
 .meta { position: absolute; left: var(--m); right: var(--m); top: 92px; display: flex; align-items: center; gap: 12px; font-size: 26px; font-weight: 700; letter-spacing: -.3px; }
 .meta img { width: 36px; height: 36px; border-radius: 10px; }
+.meta .ver { font-style: normal; margin-left: 2px; padding: 3px 11px; border-radius: 99px; font-size: 19px; font-weight: 600; letter-spacing: 0; font-variant-numeric: tabular-nums; background: color-mix(in srgb, currentColor 10%, transparent); opacity: .7; }
 .meta span { margin-left: auto; font-weight: 500; color: var(--mute); font-variant-numeric: tabular-nums; letter-spacing: .5px; }
 .blue .meta span { color: rgba(255,255,255,.65); }
 h1 { padding-top: 196px; font-size: 84px; font-weight: 700; line-height: 1.24; letter-spacing: -3.4px; white-space: pre-line; }
@@ -196,6 +197,7 @@ h1 em { font-style: normal; color: var(--blue); }
 <script>
 // 게시물(여러 장)은 posts에 추가하고 post.html?id=이름&n=장 으로 연다. render.sh가 store/insta/이름/1.png… 로 저장
 const ICON = "../icon-512.png";
+const VERSION = "1.1.0"; // 첫 장 로고 옆에 표시. 버전을 올리면 version.txt와 같게 고치고 각 게시물 1장을 다시 그림
 const ic = (d, c, w, sw = 2) => `<svg width="${w}" height="${w}" viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
 const BELL = '<path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20a2 2 0 0 0 4 0"/>', CHECK = '<path d="M5 12.5l4.5 4.5L19 7.5"/>', FIND = '<circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/>';
 const STATUS = `<svg width="92" height="28" viewBox="0 0 92 28" fill="#191f28"><path d="M2 20h4v6H2zM9 15h4v11H9zM16 10h4v16h-4zM23 5h4v21h-4z"/><rect x="42" y="6" width="42" height="18" rx="5" fill="none" stroke="#191f28" stroke-width="2"/><rect x="45" y="9" width="28" height="12" rx="2.5"/><rect x="86" y="11" width="3" height="8" rx="1.5"/></svg>`;
@@ -208,7 +210,7 @@ function noti(n) {
 const CAL = '<rect x="4" y="6" width="16" height="14" rx="2"/><path d="M4 10.5h16M8.5 3.5v4M15.5 3.5v4"/>';
 // 실제 화면: up = 위에서 잘라낼 높이. h를 주면 그 높이까지만 보여 주고 아래는 흰 바탕(시트처럼 화면 아래 모서리가 보이면 안 될 때)
 const shot = (name, up, h) => `<div class="shot" style="${h ? "background:#fff" : ""}"><div style="${h ? `height:${h}px;overflow:hidden` : ""}"><img src="shots/${name}.png" style="margin-top:${-up}px"></div></div><div class="fade"></div>`;
-const page = (body, cls = "") => (i, total) => `<div class="post ${cls}"><div class="meta"><img src="${ICON}">PinTodo<span>${i} / ${total}</span></div>${body}</div>`;
+const page = (body, cls = "") => (i, total) => `<div class="post ${cls}"><div class="meta"><img src="${ICON}">PinTodo${i === 1 ? `<em class="ver">v${VERSION}</em>` : ""}<span>${i} / ${total}</span></div>${body}</div>`;
 const SHOP = [["우유", 1], ["계란", 1], ["두부", 0], ["대파", 0], ["키친타월", 0]];
 // 마지막 장(받기)은 모든 게시물이 같음
 const END = page(`<div class="end"><img src="${ICON}">
